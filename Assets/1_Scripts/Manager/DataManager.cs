@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -6,6 +6,8 @@ using UnityEngine;
 public class DataManager : MonoBehaviour
 {
     public static DataManager Inst { get; private set; }
+
+    private readonly Dictionary<Type, object> dataTableList = new();
 
     private void Awake()
     {
@@ -51,8 +53,20 @@ public class DataManager : MonoBehaviour
         return new Dictionary<string, T>();
     }
 
-    public void LoadAll()
+    public Dictionary<string, T> ReadData<T>() where T : GameDataBase
     {
+        Type type = typeof(T);
 
+        if (!dataTableList.TryGetValue(type, out object cachedTable))
+        {
+            string tableName = type.Name;
+            var table = LoadData<T>(tableName);
+
+            dataTableList.Add(type, table);
+            return table;
+        }
+
+        return (Dictionary<string, T>)cachedTable;
     }
+
 }

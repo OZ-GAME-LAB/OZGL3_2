@@ -1,0 +1,72 @@
+[
+  {
+    "Id": "dialogue_mainstream_1_1_100",
+    "CharacterDataId": "나레이터",
+    "Description": "토끼는 행복하지만 배가 고픕니다! 토끼 당근을 모두 모을 수 있게 도와주세요!\n맵은 3개이며 각 맵마다 5개의 당근이 있습니다.\n[텍스트 창을 눌러 다음 대사를 출력하세요.]",
+    "NextDialogueId": "dialogue_mainstream_1_1_200",
+    "SelectionNameList": null,
+    "SelectionDialogueIdList": null,
+    "TexturePath": null,
+    "VoicePath": null
+  },
+  {
+    "Id": "dialogue_mainstream_1_1_200",
+    "CharacterDataId": "나레이터",
+    "Description": "[A / D] 키로 좌우로 이동하고 [SPACE]키로 점프를 할 수 있습니다.",
+    "NextDialogueId": "dialogue_mainstream_1_1_300",
+    "SelectionNameList": null,
+    "SelectionDialogueIdList": null,
+    "TexturePath": null,
+    "VoicePath": null
+  },
+  {
+    "Id": "dialogue_mainstream_1_1_300",
+    "CharacterDataId": "나레이터",
+    "Description": "F 키를 누르면 토끼가 공격합니다.",
+    "NextDialogueId": "dialogue_mainstream_1_1_400",
+    "SelectionNameList": null,
+    "SelectionDialogueIdList": null,
+    "TexturePath": null,
+    "VoicePath": null
+  },
+  {
+    "Id": "dialogue_mainstream_1_1_400",
+    "CharacterDataId": "나레이터",
+    "Description": "키보드 상단 숫자키를 누르거나 우하단 스킬 카드를 드래그&드랍하면 투사체를 날리는 스킬을 사용할 수 있습니다.",
+    "NextDialogueId": "dialogue_mainstream_1_1_500",
+    "SelectionNameList": null,
+    "SelectionDialogueIdList": null,
+    "TexturePath": null,
+    "VoicePath": null
+  },
+  {
+    "Id": "dialogue_mainstream_1_1_500",
+    "CharacterDataId": "나레이터",
+    "Description": "스킬은 공격력의 3배의 피해를 줄 수 있습니다.",
+    "NextDialogueId": "dialogue_mainstream_1_1_600",
+    "SelectionNameList": null,
+    "SelectionDialogueIdList": null,
+    "TexturePath": null,
+    "VoicePath": null
+  },
+  {
+    "Id": "dialogue_mainstream_1_1_600",
+    "CharacterDataId": "나레이터",
+    "Description": "맵 어딘가에 숨겨진 포탈을 통해 다음 맵으로 이동할 수 있습니다.",
+    "NextDialogueId": "dialogue_mainstream_1_1_700",
+    "SelectionNameList": null,
+    "SelectionDialogueIdList": null,
+    "TexturePath": null,
+    "VoicePath": null
+  },
+  {
+    "Id": "dialogue_mainstream_1_1_700",
+    "CharacterDataId": "나레이터",
+    "Description": "그럼 행운을 빕니다!",
+    "NextDialogueId": null,
+    "SelectionNameList": null,
+    "SelectionDialogueIdList": null,
+    "TexturePath": null,
+    "VoicePath": null
+  }
+]
