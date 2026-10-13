@@ -1,0 +1,8 @@
+[
+  {
+    "Id": "con_red_berry",
+    "EffectId": "effect_heal_hp",
+    "EffectValue": 20,
+    "CooldownSec": 0
+  }
+]
