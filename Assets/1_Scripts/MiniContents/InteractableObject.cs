@@ -28,8 +28,10 @@ public class InteractableObject : MonoBehaviour
         
     }
 
-    public void CloseContent()
-    {
+    public virtual void CloseContent() { }
+    public virtual void BeginInteraction() { }
+    public virtual void UpdateInteraction(float deltaTime) { }
+    public virtual void CancelInteraction() { }
 
-    }
+    public virtual void BeginInteraction(Transform playerUIAnchor, Camera playerCamera) { }
 }
