@@ -32,6 +32,5 @@ public class InteractableObject : MonoBehaviour
     public virtual void BeginInteraction() { }
     public virtual void UpdateInteraction(float deltaTime) { }
     public virtual void CancelInteraction() { }
-
-    public virtual void BeginInteraction(Transform playerUIAnchor, Camera playerCamera) { }
+    public virtual void BeginInteraction(Transform[] playerUIAnchor, Camera playerCamera) { }
 }

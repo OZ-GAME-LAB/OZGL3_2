@@ -4,6 +4,8 @@ using UnityEngine;
 public class InteractionGatheringObject : InteractableObject
 {
     private readonly InteractionGatheringVM _viewModel = new();
+    private Transform[] _playerUIAnchors;
+    private Camera _playerCamera;
 
     protected override void PlayContent()
     {
@@ -25,10 +27,23 @@ public class InteractionGatheringObject : InteractableObject
 
         _openUI = gatheringUI;
         gatheringUI.Bind(_viewModel);
+
+        if (gatheringUI.TryGetComponent(out InteractionUIPositioner positioner))
+        {
+            positioner.SetTargets(_playerUIAnchors, _playerCamera);
+        }
+        else
+        {
+            Debug.LogError(
+                "GatheringUI에 InteractionUIPositioner가 필요합니다.");
+        }
     }
 
-    public override void BeginInteraction()
+    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera)
     {
+        _playerUIAnchors = playerUIAnchors;
+        _playerCamera = playerCamera;
+
         // 필요한 초기화 및 서버 승인 이후 실행
         _viewModel.BeginGathering();
         PlayContent();

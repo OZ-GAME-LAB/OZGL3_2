@@ -209,6 +209,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3898889442634779769}
+  - component: {fileID: 2572778744561585885}
+  - component: {fileID: 864117858764963586}
   m_Layer: 0
   m_Name: GatheringUI
   m_TagString: Untagged
@@ -236,6 +238,33 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 162.8402, y: 30.019}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2572778744561585885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7590389501437440335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5939d583284f4bb4bbb7d0000876be8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GatheringUI
+  _progressSlider: {fileID: 5745443332774200804}
+--- !u!114 &864117858764963586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7590389501437440335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ab52d8d87ebb634abec5bc48e0e2d39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionUIPositioner
+  _edgePadding: 12
+  _returnPadding: 16
 --- !u!1 &8332664002047186269
 GameObject:
   m_ObjectHideFlags: 0
