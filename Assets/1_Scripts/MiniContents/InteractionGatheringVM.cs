@@ -1,5 +1,5 @@
 
-public class InteractionGatheringVM : ViewModelBase
+public class InteractionGatheringVM : InteractionVMBase
 {
     public void InvokeOnceOnInit()
     {
@@ -37,6 +37,7 @@ public class InteractionGatheringVM : ViewModelBase
 
     private float _gatheringSeconds;
     private bool _isGathering;
+    public override string InteractionInfoText => "채집 (F 길게 누르기)";
 
     public void InitGatheringVM(string id)
     {
@@ -70,12 +71,14 @@ public class InteractionGatheringVM : ViewModelBase
     }
 
     public void CancelGathering()
-{
-    if (!_isGathering)
-        return;
+    {
+        if (!_isGathering)
+            return;
 
-    _isGathering = false;
-    _gatheringSeconds = 0f;
-    GatheringProgress = 0f;
-}
+        _isGathering = false;
+        _gatheringSeconds = 0f;
+        GatheringProgress = 0f;
+    }
+
+
 }

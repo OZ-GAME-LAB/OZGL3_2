@@ -4,8 +4,11 @@ using UnityEngine;
 public class InteractionGatheringObject : InteractableObject
 {
     private readonly InteractionGatheringVM _viewModel = new();
+    public override InteractionVMBase ViewModel => _viewModel;
+
     private Transform[] _playerUIAnchors;
     private Camera _playerCamera;
+
 
     protected override void PlayContent()
     {
