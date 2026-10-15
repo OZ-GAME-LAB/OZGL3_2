@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7231283223429422717}
   - component: {fileID: 3693622537353303065}
+  - component: {fileID: 3043592747504697797}
   m_Layer: 0
   m_Name: InteractableInfoUI
   m_TagString: Untagged
@@ -50,6 +51,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableInfoUI
   _infoText: {fileID: 1033261901706190860}
+--- !u!114 &3043592747504697797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 799553009339308340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ab52d8d87ebb634abec5bc48e0e2d39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionUIPositioner
+  _edgePadding: 12
+  _returnPadding: 16
 --- !u!1 &2699447765784739385
 GameObject:
   m_ObjectHideFlags: 0

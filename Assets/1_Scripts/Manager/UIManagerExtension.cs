@@ -18,7 +18,8 @@ public enum UIType
 {
     //DNSimplePopup,
     MainUI,
-    GatheringUI
+    GatheringUI,
+    InteractableInfoUI
 }
 
 

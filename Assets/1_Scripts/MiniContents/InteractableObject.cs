@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ public enum MiniContentsType
 
 public abstract class InteractableObject : MonoBehaviour
 {
+    private InteractableInfoUI _infoUI;
     protected UIBase _openUI;
     private InteractionNetwork _interactionNetwork;
     public abstract InteractionVMBase ViewModel { get; }
@@ -44,6 +46,7 @@ public abstract class InteractableObject : MonoBehaviour
         }
 
         HandleAvailabilityChanged(false);
+        HideInteractionInfo();
     }
 
     public void PlayerInteract(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/)
@@ -56,12 +59,42 @@ public abstract class InteractableObject : MonoBehaviour
         ViewModel.IsAvailable = isAvailable;
     }
 
+    public virtual void ShowInteractionInfo()
+    {
+        OpenInteractionInfoAsync().Forget();
+    }
+
+    private async UniTask OpenInteractionInfoAsync()
+    {
+        UIBase ui = await UIManager.Inst.OpenMainRootAsync(UIType.InteractableInfoUI);
+
+        if (ui == null)
+            return;
+
+        if (ui is not InteractableInfoUI infoUI)
+        {
+            Debug.LogError("프리팹에 InteractableInfoUI 컴포넌트가 필요합니다.");
+            return;
+        }
+
+        _infoUI = infoUI;
+        _infoUI.Bind(ViewModel);
+    }
+
+    public virtual void HideInteractionInfo()
+    {
+        if (_infoUI == null)
+            return;
+
+        UIManager.Inst.Close(UIType.InteractableInfoUI);
+        _infoUI = null;
+    }
+
     protected virtual void PlayContent(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/) { }
     public virtual void CloseContent() { }
     public virtual void BeginInteraction() { }
     public virtual void UpdateInteraction(float deltaTime) { }
     public virtual void CancelInteraction() { }
     public virtual void BeginInteraction(Transform[] playerUIAnchor, Camera playerCamera) { }
-    public virtual void ShowInteractionInfo() { }
-    public virtual void HideInteractionInfo() { }
+    
 }
