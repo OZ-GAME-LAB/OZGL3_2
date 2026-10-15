@@ -16,6 +16,5 @@ public abstract class InteractionVMBase : ViewModelBase
         }
     }
 
-    // 자식 VM이 자기 상호작용에 맞는 안내 문구를 제공한다.
     public abstract string InteractionInfoText { get; }
 }

@@ -59,12 +59,12 @@ public abstract class InteractableObject : MonoBehaviour
         ViewModel.IsAvailable = isAvailable;
     }
 
-    public virtual void ShowInteractionInfo()
+    public virtual void ShowInteractionInfo(Transform[] playerUIAnchors, Camera playerCamera)
     {
-        OpenInteractionInfoAsync().Forget();
+        OpenInteractionInfoAsync(playerUIAnchors, playerCamera).Forget();
     }
 
-    private async UniTask OpenInteractionInfoAsync()
+    private async UniTask OpenInteractionInfoAsync(Transform[] playerUIAnchors, Camera playerCamera)
     {
         UIBase ui = await UIManager.Inst.OpenMainRootAsync(UIType.InteractableInfoUI);
 
@@ -79,6 +79,15 @@ public abstract class InteractableObject : MonoBehaviour
 
         _infoUI = infoUI;
         _infoUI.Bind(ViewModel);
+
+        if (_infoUI.TryGetComponent(out InteractionUIPositioner positioner))
+        {
+            positioner.SetTargets(playerUIAnchors, playerCamera);
+        }
+        else
+        {
+            Debug.LogError("안내 UI에 InteractionUIPositioner가 필요합니다.");
+        }
     }
 
     public virtual void HideInteractionInfo()
