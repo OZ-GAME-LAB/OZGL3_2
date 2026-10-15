@@ -75,4 +75,6 @@ public class InteractionGatheringObject : InteractableObject
         UIManager.Inst.Close(UIType.GatheringUI);
         _openUI = null;
     }
+
+
 }
