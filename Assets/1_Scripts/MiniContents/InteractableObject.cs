@@ -12,10 +12,6 @@ public enum MiniContentsType
 
 public class InteractableObject : MonoBehaviour
 {
-    protected NetworkVariable<bool> _isInteracting = new NetworkVariable<bool>
-    (true,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Owner);
     protected UIBase _openUI;
 
     public void PlayerInteract(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/)

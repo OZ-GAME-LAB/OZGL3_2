@@ -34,8 +34,7 @@ public class InteractionGatheringObject : InteractableObject
         }
         else
         {
-            Debug.LogError(
-                "GatheringUI에 InteractionUIPositioner가 필요합니다.");
+            Debug.LogError("GatheringUI에 InteractionUIPositioner가 필요합니다.");
         }
     }
 
