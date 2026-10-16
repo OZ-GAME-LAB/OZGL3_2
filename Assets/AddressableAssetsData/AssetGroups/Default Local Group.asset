@@ -15,6 +15,21 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 33fe2f9940a326a42987a9dde1940703
   m_SerializeEntries:
+  - m_GUID: 40e6d5735b921af419b3d1b710c6342c
+    m_Address: Prefab/Mesh/TestPrefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 594b28e92b9e5344c93ba6d1cefbf299
+    m_Address: UI/GatheringUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b7a137ad163c3342a3b5395e024f6be
+    m_Address: UI/InteractableInfoUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: edbd770ff7e3664418e79130440b5174
     m_Address: UI/MainUI
     m_ReadOnly: 0
