@@ -106,3 +106,11 @@ public class CraftingRecipeData : GameDataBase
     public string[] RequiredMaterialId;
     public int[] RequiredMaterialQuantity;
 }
+
+[System.Serializable]
+public class ItemModel
+{
+    public string InstanceId;      
+    public string ItemId;          
+    public int CurrentStackCount;  
+}
