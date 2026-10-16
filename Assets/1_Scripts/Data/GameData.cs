@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+using System;
 
-public class GameDataBase : MonoBehaviour
+[Serializable]
+public class GameDataBase
 {
     public string Id;
 }

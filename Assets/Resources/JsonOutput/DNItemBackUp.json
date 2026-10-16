@@ -1,0 +1,110 @@
+[
+  {
+    "Id": "Item_DummyBox_1",
+    "Name": "상자",
+    "Description": "상자다. 딱히 의미가 있진 않다.",
+    "ItemType": "Normal",
+    "Grade": "Normal",
+    "MaxStackCount": 20,
+    "SellingPrice": 100,
+    "IconPath": "Icon/Icon_Item_Box_1",
+    "UseItemType": [
+      "RandomItemBox"
+    ],
+    "UseItemParameterList": [
+      "Item_Equip_Hat_1",
+      "Item_Corn_1",
+      "Item_Gold_1:100"
+    ],
+    "UseItemSelectableBuffList": [
+      "ChangeHp",
+      "ChangeAtk",
+      "GetSkillCard"
+    ]
+  },
+  {
+    "Id": "Item_Gold_1",
+    "Name": "화폐",
+    "Description": "지역에 나타나는 금화",
+    "ItemType": "Normal",
+    "Grade": "Legend",
+    "MaxStackCount": 1000,
+    "SellingPrice": 1000,
+    "IconPath": "Icon/Icon_Item_Gold_1",
+    "UseItemType": null,
+    "UseItemParameterList": null,
+    "UseItemSelectableBuffList": null
+  },
+  {
+    "Id": "Item_Equip_Hat_1",
+    "Name": "의문의 모자",
+    "Description": "착용하면 공격력이 강해진다.",
+    "ItemType": "Equipment",
+    "Grade": "Epic",
+    "MaxStackCount": 0,
+    "SellingPrice": 1,
+    "IconPath": "Icon/Icon_Item_Equip_Hat_1",
+    "UseItemType": [
+      "StatChangeAtk"
+    ],
+    "UseItemParameterList": [
+      "700"
+    ],
+    "UseItemSelectableBuffList": null
+  },
+  {
+    "Id": "Item_Corn_1",
+    "Name": "옥수수",
+    "Description": "먹으면 힘이 솟아나는 옥수수. \n공격력 + 20",
+    "ItemType": "Normal",
+    "Grade": "Normal",
+    "MaxStackCount": 100,
+    "SellingPrice": 20,
+    "IconPath": "Icon/Icon_Items[Icon_Corn]",
+    "UseItemType": [
+      "StatChangeAtk"
+    ],
+    "UseItemParameterList": [
+      "20"
+    ],
+    "UseItemSelectableBuffList": null
+  },
+  {
+    "Id": "Item_Potato_1",
+    "Name": "감자",
+    "Description": "맛있는 감자.\nHP + 30",
+    "ItemType": "Normal",
+    "Grade": "Normal",
+    "MaxStackCount": 20,
+    "SellingPrice": 100,
+    "IconPath": "Icon/Icon_Items[Icon_Potato]",
+    "UseItemType": [
+      "StatChangeHp"
+    ],
+    "UseItemParameterList": [
+      "30"
+    ],
+    "UseItemSelectableBuffList": null
+  },
+  {
+    "Id": "Item_Carrot_1",
+    "Name": "당근",
+    "Description": "엄청난 힘을 제공하는 신비한 당근.\nHP + 70 / 공격력 + 30/ 스킬카드 획득 중 1개를 선택할 수 있다.",
+    "ItemType": "Carrot",
+    "Grade": "Normal",
+    "MaxStackCount": 20,
+    "SellingPrice": 100,
+    "IconPath": "Icon/Icon_Item_Carrot[Carrot_1]",
+    "UseItemType": [
+      "StatChangeHp",
+      "StatChangeAtk",
+      "AddSkillCard"
+    ],
+    "UseItemParameterList": [
+      "70",
+      "30",
+      "1"
+    ],
+    "UseItemSelectableBuffList": null
+  }
+]

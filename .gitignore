@@ -104,3 +104,9 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+Assets/ThirdParty
+# Ignore Excel inputs while keeping converter source files trackable.
+/JsonConverter/**/ExcelFiles/**/*.xls
+/JsonConverter/**/ExcelFiles/**/*.xlsx
+/JsonConverter/**/ExcelFiles/**/*.xlsm
+/JsonConverter/**/ExcelFiles/**/*.xlsb

@@ -1,0 +1,110 @@
+[
+  {
+    "Id": "mob_slim_1",
+    "Name": "슬라이무",
+    "Description": "슬라이무는 공격을 받을 때마다 딸기맛, 초코맛, 바닐라맛으로 변한다",
+    "BaseHp": 100,
+    "BaseAtk": 20,
+    "NormalAtkMultiple": 1,
+    "SkillAtkMultipleList": [
+      2
+    ],
+    "IconPath": "Icon/Icon_ slime",
+    "PrefabPath": "2DObject/Monster_Slime"
+  },
+  {
+    "Id": "mob_dog_1",
+    "Name": "도그",
+    "Description": "도그는 도그다",
+    "BaseHp": null,
+    "BaseAtk": null,
+    "NormalAtkMultiple": null,
+    "SkillAtkMultipleList": null,
+    "IconPath": null,
+    "PrefabPath": null
+  },
+  {
+    "Id": "mob_pigme_1",
+    "Name": "피그미",
+    "Description": "피그미는 충돌하면 사라진다. 간헐적으로 금화가 터져나온다.",
+    "BaseHp": null,
+    "BaseAtk": null,
+    "NormalAtkMultiple": null,
+    "SkillAtkMultipleList": null,
+    "IconPath": null,
+    "PrefabPath": null
+  },
+  {
+    "Id": "mob_bear_1",
+    "Name": "곰",
+    "Description": "쮸쀼쮸쀼",
+    "BaseHp": 1000,
+    "BaseAtk": 100,
+    "NormalAtkMultiple": 2,
+    "SkillAtkMultipleList": [
+      1.5,
+      5
+    ],
+    "IconPath": "Icon/Icon_Bear",
+    "PrefabPath": "2DObject/Monster_Bear"
+  },
+  {
+    "Id": "mob_pigslime_1",
+    "Name": "피그 슬라임",
+    "Description": "귀엽지만 강한 힘을 가졌다.",
+    "BaseHp": 1500,
+    "BaseAtk": 150,
+    "NormalAtkMultiple": 2,
+    "SkillAtkMultipleList": [
+      2
+    ],
+    "IconPath": null,
+    "PrefabPath": "2DObject/Monster_PigSlime"
+  },
+  {
+    "Id": "mob_helldog_1",
+    "Name": "지옥견",
+    "Description": "지옥에서 올라온 개. 강하다.",
+    "BaseHp": 2000,
+    "BaseAtk": 200,
+    "NormalAtkMultiple": 3,
+    "SkillAtkMultipleList": [
+      3
+    ],
+    "IconPath": null,
+    "PrefabPath": "2DObject/Monster_HellDog"
+  },
+  {
+    "Id": "mob_frog_1",
+    "Name": null,
+    "Description": null,
+    "BaseHp": null,
+    "BaseAtk": null,
+    "NormalAtkMultiple": null,
+    "SkillAtkMultipleList": null,
+    "IconPath": null,
+    "PrefabPath": null
+  },
+  {
+    "Id": "mob_eagle_1",
+    "Name": null,
+    "Description": null,
+    "BaseHp": null,
+    "BaseAtk": null,
+    "NormalAtkMultiple": null,
+    "SkillAtkMultipleList": null,
+    "IconPath": null,
+    "PrefabPath": null
+  },
+  {
+    "Id": "mob_vulture_1",
+    "Name": null,
+    "Description": null,
+    "BaseHp": null,
+    "BaseAtk": null,
+    "NormalAtkMultiple": null,
+    "SkillAtkMultipleList": null,
+    "IconPath": null,
+    "PrefabPath": null
+  }
+]

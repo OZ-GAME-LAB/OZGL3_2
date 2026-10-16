@@ -1,0 +1,61 @@
+[
+  {
+    "Id": "Item_Corn_1",
+    "Name": "옥수수",
+    "Description": "먹으면 힘이 솟아나는 옥수수. \n공격력 + 20",
+    "ItemType": "Normal",
+    "Grade": "Normal",
+    "MaxStackCount": 10,
+    "SellingPrice": 20,
+    "IconPath": "Icon/Icon_Items[Icon_Corn]",
+    "UseItemType": [
+      "StatChangeAtk"
+    ],
+    "UseItemParameterList": [
+      "20"
+    ],
+    "UseItemSelectableBuffList": [
+      "ChangeHp",
+      "ChangeAtk",
+      "GetSkillCard"
+    ]
+  },
+  {
+    "Id": "Item_Potato_1",
+    "Name": "감자",
+    "Description": "맛있는 감자.\nHP + 30",
+    "ItemType": "Normal",
+    "Grade": "Normal",
+    "MaxStackCount": 10,
+    "SellingPrice": 100,
+    "IconPath": "Icon/Icon_Items[Icon_Potato]",
+    "UseItemType": [
+      "StatChangeHp"
+    ],
+    "UseItemParameterList": [
+      "30"
+    ],
+    "UseItemSelectableBuffList": null
+  },
+  {
+    "Id": "Item_Carrot_1",
+    "Name": "당근",
+    "Description": "엄청난 힘을 제공하는 신비한 당근.\n선택) HP + 70 / 공격력 + 30 / 스킬카드 획득",
+    "ItemType": "Carrot",
+    "Grade": "Normal",
+    "MaxStackCount": 1,
+    "SellingPrice": 100,
+    "IconPath": "Icon/Icon_Item_Carrot[Carrot_1]",
+    "UseItemType": [
+      "StatChangeHp",
+      "StatChangeAtk",
+      "AddSkillCard"
+    ],
+    "UseItemParameterList": [
+      "70",
+      "30",
+      "1"
+    ],
+    "UseItemSelectableBuffList": null
+  }
+]
