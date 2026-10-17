@@ -41,7 +41,6 @@ public class InteractionGatheringVM : InteractionVMBase
 
     public void InitGatheringVM(string id)
     {
-        // 데이터 매니저로부터 설정
         _gatheringDurationSeconds =
             DataManager.Inst.ReadData<InteractionGatheringData>()[id].GatheringTime;
     }

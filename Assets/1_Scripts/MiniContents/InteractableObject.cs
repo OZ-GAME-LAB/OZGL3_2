@@ -49,6 +49,8 @@ public abstract class InteractableObject : MonoBehaviour
         HideInteractionInfo();
     }
 
+    public abstract UniTask InitObject(string id);
+
     public void PlayerInteract(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/)
     {
         PlayContent(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/);

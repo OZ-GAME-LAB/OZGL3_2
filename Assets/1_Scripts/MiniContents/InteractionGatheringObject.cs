@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using UnityEditor.Compilation;
 using UnityEngine;
 
 public class InteractionGatheringObject : InteractableObject
@@ -9,6 +11,28 @@ public class InteractionGatheringObject : InteractableObject
     private Transform[] _playerUIAnchors;
     private Camera _playerCamera;
 
+    public override async UniTask InitObject(string id)
+    {
+        if (!DataManager.Inst.ReadData<InteractionGatheringData>().ContainsKey(id))
+        {
+            Debug.Log($"ID값 {id}은 InteractionGatheringData에 존재하지 않습니다.");
+            return;
+        }    
+
+
+        _viewModel.InitGatheringVM(id);
+
+        GameObject meshPrefab = await ResourceManager.Inst.InstantiateAsync(
+            DataManager.Inst.ReadData<InteractionGatheringData>()[id].MeshAddress,
+            this.transform,
+            false,
+            true);
+
+        if(meshPrefab == null)
+        {
+            Debug.Log($"{id} ID 값을 가진 MeshPrefab이 생성되지 않았습니다.");
+        }
+    }
 
     protected override void PlayContent()
     {
