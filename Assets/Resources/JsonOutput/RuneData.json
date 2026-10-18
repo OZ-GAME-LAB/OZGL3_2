@@ -1,0 +1,10 @@
+[
+  {
+    "Id": "rune_ember",
+    "EffectId": "effect_apply_burn",
+    "Trigger": "OnHit",
+    "EffectValue": 5,
+    "DurationSec": 3,
+    "ProcChance": 0.25
+  }
+]
