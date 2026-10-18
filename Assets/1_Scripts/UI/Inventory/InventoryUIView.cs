@@ -8,7 +8,7 @@ public class InventoryUIView : UIBase
     [SerializeField] private Button _closeButton;
     [SerializeField] private GameObject _inventorySlotPrefab;
 
-    private readonly Dictionary<InventorySlotUIView, ItemData> _inventorySlots = new();
+    private readonly Dictionary<InventorySlotUIView, InventoryUIViewModel> _inventorySlots = new();
 
     private void OnEnable()
     {
@@ -22,22 +22,32 @@ public class InventoryUIView : UIBase
             _closeButton.onClick.RemoveListener(OnClickCloseButton);
     }
 
-    public void Bind(List<ItemData> inventoryDataList)
+    public void Bind(List<InventoryUIViewModel> inventory)
     {
         ClearInventorySlots();
 
-        if (inventoryDataList == null)
+        if (inventory == null)
             return;
 
-        foreach (var itemData in inventoryDataList)
-            AddItembyInventory(itemData);
+        foreach (var item in inventory)
+        {
+            if (item == null)
+                continue;
+
+            MakeItemSlot(item);
+        }
     }
 
-    public void AddItembyInventory(ItemData itemData)
+    public void AddItembyInventory(InventoryUIViewModel item)
     {
-        if (itemData == null)
+        if (item == null)
             return;
 
+        MakeItemSlot(item);
+    }
+
+    private void MakeItemSlot(InventoryUIViewModel item)
+    {
         var slotObject = Instantiate(_inventorySlotPrefab, _inventorySlotRoot);
         var slotView = slotObject.GetComponent<InventorySlotUIView>();
 
@@ -48,19 +58,18 @@ public class InventoryUIView : UIBase
             return;
         }
 
-        slotView.Bind(itemData);
+        slotView.Bind(item);
         slotView.ItemUsed += OnItemUsed;
-        _inventorySlots.Add(slotView, itemData);
+        _inventorySlots.Add(slotView, item);
     }
 
-    private void OnItemUsed(InventorySlotUIView usedSlot, ItemData usedItem)
+    private void OnItemUsed(InventorySlotUIView slot, InventoryUIViewModel item)
     {
-        if (!_inventorySlots.Remove(usedSlot))
+        if (!_inventorySlots.Remove(slot))
             return;
 
-        usedSlot.ItemUsed -= OnItemUsed;
-        Destroy(usedSlot.gameObject);
-
+        slot.ItemUsed -= OnItemUsed;
+        Destroy(slot.gameObject);
     }
 
     private void ClearInventorySlots()

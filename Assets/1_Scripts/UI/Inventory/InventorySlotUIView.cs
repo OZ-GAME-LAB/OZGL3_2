@@ -1,14 +1,43 @@
 using System;
+using System.ComponentModel;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class InventorySlotUIView : MonoBehaviour
 {
     [SerializeField] private Button _useButton;
+    [SerializeField] private TMP_Text _itemName;
 
-    private ItemData _itemData;
+    private InventoryUIViewModel _viewModel;
+    public event Action<InventorySlotUIView, InventoryUIViewModel> ItemUsed;
 
-    public event Action<InventorySlotUIView, ItemData> ItemUsed;
+    public void Bind(InventoryUIViewModel viewModel)
+    {
+        Unbind();
+
+        _viewModel = viewModel;
+
+        if (_viewModel != null)
+            _viewModel.PropertyChanged += OnItemPropertyChanged;
+        _viewModel.InvokeOnceOnInit();
+
+
+    }
+
+    private void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(_viewModel.Name):
+                {
+                    _itemName.text = _viewModel.Name;
+
+                    break;
+                }
+        }
+    }
+
 
     private void OnEnable()
     {
@@ -20,20 +49,20 @@ public class InventorySlotUIView : MonoBehaviour
     {
         if (_useButton != null)
             _useButton.onClick.RemoveListener(OnClickUseButton);
+        Unbind();
     }
 
-    public void Bind(ItemData itemData)
+    private void Unbind()
     {
-        _itemData = itemData;
+        if (_viewModel != null)
+            _viewModel.PropertyChanged -= OnItemPropertyChanged;
+
+        _viewModel = null;
     }
 
     private void OnClickUseButton()
     {
-        if (_itemData == null)
-            return;
-
-        // 실제 아이템 효과가 있다면 이벤트 발생 전에 처리하거나,
-        // 별도의 아이템 사용 로직을 여기서 호출하세요.
-        ItemUsed?.Invoke(this, _itemData);
+        if (_viewModel != null)
+            ItemUsed?.Invoke(this, _viewModel);
     }
 }

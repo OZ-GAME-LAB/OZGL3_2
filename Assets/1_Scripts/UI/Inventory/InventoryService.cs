@@ -36,26 +36,8 @@ public class InventoryService
             Debug.LogError("InventoryUIView가 null입니다.");
             return;
         }
-
-        var inventoryDataList = new List<ItemData>(_inventoryList.Count);
-
-        foreach (var itemViewModel in _inventoryList.Values)
-        {
-            inventoryDataList.Add(new ItemData
-            {
-                Id = itemViewModel.Id,
-                Name = itemViewModel.Name,
-                ItemType = itemViewModel.ItemType,
-                Description = itemViewModel.Description,
-                MaxStack = itemViewModel.MaxStack,
-                Price = itemViewModel.Price,
-                SellingPrice = itemViewModel.SellingPrice,
-                IconPath = itemViewModel.IconPath,
-                PrefabPath = itemViewModel.PrefabPath
-            });
-        }
-
-        inventoryView.Bind(inventoryDataList);
+        var inventoryViewModels = new List<InventoryUIViewModel>(_inventoryList.Values);
+        inventoryView.Bind(inventoryViewModels);
     }
 
     //서비스를 가지고 있는 곳에서 실행시켜주기
@@ -64,6 +46,8 @@ public class InventoryService
         _inventoryList.Clear();
 
         Dictionary<string, ItemData> dataTable = DataManager.Inst.ReadData<ItemData>();
+        Debug.Log($"DataManager 아이템 수: {dataTable.Count}");
+
 
         foreach (var pair in dataTable)
         {
