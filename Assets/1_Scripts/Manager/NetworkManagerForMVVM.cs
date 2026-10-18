@@ -7,8 +7,6 @@ public class NetworkManager : MonoBehaviour
 
     public static NetworkManager Inst { get; private set; }
 
-    public static NetworkManager Inst { get; private set; }
-
     public NetworkCraftingService CraftingService { get; private set; }
 
     private void Awake()
