@@ -19,7 +19,7 @@ public enum UIType
     //DNSimplePopup,
     MainUI,
     GatheringUI,
-    InteractableInfoUI
+    InteractableInfoUI,
     InventoryUI,
     InventorySlotUI,
 }
