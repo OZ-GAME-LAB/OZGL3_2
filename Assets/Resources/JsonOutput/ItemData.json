@@ -6,7 +6,9 @@
     "Description": "오염에 침식된 슬라임의 핵이다. 오염을 정화하는 힘이 있지만 지금은 거의 바랬다.",
     "MaxStack": 999,
     "Price": null,
-    "SellingPrice": 3
+    "SellingPrice": 3,
+	"IconPath": "mat_slime_lump",
+	"PrefabPath": ""
   },
   {
     "Id": "con_red_berry",
@@ -15,7 +17,9 @@
     "Description": "아직 오염되지 않은 붉은 베리다. 시큼하면서도 은은한 단맛이 난다.",
     "MaxStack": 999,
     "Price": null,
-    "SellingPrice": 2
+    "SellingPrice": 2,
+	"IconPath": "con_red_berry",
+	"PrefabPath": ""
   },
   {
     "Id": "rune_ember",
@@ -24,7 +28,9 @@
     "Description": "무기 룬 슬롯에 장착하면 공격 적중 시 확률적으로 화상을 부여한다.",
     "MaxStack": 99,
     "Price": null,
-    "SellingPrice": 50
+    "SellingPrice": 50,
+	"IconPath": "rune_ember",
+	"PrefabPath": ""
   },
   {
     "Id": "eq_worn_axe",
@@ -33,7 +39,9 @@
     "Description": "벌목용 기본 도끼. 도끼 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
     "Price": null,
-    "SellingPrice": 10
+    "SellingPrice": 10,
+	"IconPath": "eq_worn_axe",
+	"PrefabPath": ""
   },
   {
     "Id": "eq_worn_fishingrod",
@@ -42,7 +50,9 @@
     "Description": "기본 낚시대. 낚시 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
     "Price": null,
-    "SellingPrice": 10
+    "SellingPrice": 10,
+	"IconPath": "eq_worn_fishingrod",
+	"PrefabPath": ""
   },
   {
     "Id": "eq_worn_pickaxe",
@@ -51,7 +61,9 @@
     "Description": "기본 곡괭이. 곡괭이 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
     "Price": null,
-    "SellingPrice": 10
+    "SellingPrice": 10,
+	"IconPath": "eq_worn_pickaxe",
+	"PrefabPath": ""
   },
   {
     "Id": "eq_normal_axe",
@@ -60,6 +72,8 @@
     "Description": "손을 본 도끼.",
     "MaxStack": 1,
     "Price": null,
-    "SellingPrice": 10
+    "SellingPrice": 10,
+	"IconPath": "eq_normal_axe",
+	"PrefabPath": ""
   }
 ]
