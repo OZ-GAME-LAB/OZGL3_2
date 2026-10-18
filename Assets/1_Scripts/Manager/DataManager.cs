@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -69,4 +69,15 @@ public class DataManager : MonoBehaviour
         return (Dictionary<string, T>)cachedTable;
     }
 
+    public T GetData<T>(string id) where T : GameDataBase
+    {
+        var dataTable = ReadData<T>();
+        if (dataTable.TryGetValue(id, out T data))
+        {
+            return data;
+        }
+
+        Debug.LogWarning($"[{typeof(T).Name}] 데이터가 존재하지 않습니다. ID: {id}");
+        return null;
+    }
 }
