@@ -1,3 +1,4 @@
+﻿using System.Collections;
 using UnityEngine;
 
 public class NetworkManager : MonoBehaviour
@@ -6,22 +7,21 @@ public class NetworkManager : MonoBehaviour
 
     public static NetworkManager Inst { get; private set; }
 
+    public NetworkCraftingService CraftingService { get; private set; }
 
     private void Awake()
     {
         Inst = this;
+        InitNetworkService();
     }
 
-    private void Start()
+    //추후 추가되는 서비스들은 상단에 public NetworkXXXService XXXService { get; private set; } 를 추가하고 아래 메서드에도 추가하면 됩니다.
+    private void InitNetworkService()
     {
-        InitService();
-
-    }
-    private void InitService()
-    {
-        //���񽺸� ����Ϸ��� ���⿡ �߰�!
+        CraftingService = new NetworkCraftingService();
         _inventoryService = new InventoryService();
         _inventoryService.InitInventoryList();
     }
+
 
 }
