@@ -9,7 +9,13 @@ public class NetworkManager : MonoBehaviour
 
     private void Awake()
     {
+        Inst = this;
+    }
+
+    private void Start()
+    {
         InitService();
+
     }
     private void InitService()
     {
