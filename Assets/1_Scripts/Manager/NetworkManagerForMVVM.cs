@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class NetworkManager : MonoBehaviour
 {
+    public InventoryService _inventoryService { get; private set; }
+
+    public static NetworkManager Inst { get; private set; }
+
     public static NetworkManager Inst { get; private set; }
 
     public NetworkCraftingService CraftingService { get; private set; }
@@ -17,6 +21,8 @@ public class NetworkManager : MonoBehaviour
     private void InitNetworkService()
     {
         CraftingService = new NetworkCraftingService();
+        _inventoryService = new InventoryService();
+        _inventoryService.InitInventoryList();
     }
 
 

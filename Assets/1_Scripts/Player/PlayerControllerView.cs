@@ -1,5 +1,3 @@
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,8 +10,19 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField] private float _jumpForce = 5f;
     [SerializeField] private PlayerInput _playerInput;
     [SerializeField] private Rigidbody2D _rigidbody2D;
-    private InputAction moveAction;
-    private InputAction jumpAction;
+    private InputAction _moveAction;
+    private InputAction _jumpAction;
+    private InputAction _upAction;
+    private InputAction _downAction;
+    private InputAction _specialAbilityAction;
+    private InputAction _consumableAction;
+    private InputAction _fieldInteractAction;
+    private InputAction _attackAction;
+    private InputAction _specialAttackAction;
+    private InputAction _switchConsumableAction;
+    private InputAction _inventoryAction;
+    private InputAction _journalAction;
+    private InputAction _settingsAction;
 
     [Header("Áö¸é Ã¼Å© ¼³Á¤")]
     [SerializeField] private Transform _groundCheck;    // ¹ß ¹Ø¿¡ ¹èÄ¡ÇÒ ºó ¿ÀºêÁ§Æ®
@@ -40,22 +49,49 @@ public class PlayerControllerView : MonoBehaviour
             enabled = false;
             return;
         }
-        moveAction = _playerInput.actions["Move"];
-        jumpAction = _playerInput.actions["Jump"];
+        _moveAction = _playerInput.actions["Move"];
+        _jumpAction = _playerInput.actions["Jump"];
+        _specialAbilityAction = _playerInput.actions["SpecialAbility"];
+        _consumableAction = _playerInput.actions["Consumable"];
+        _fieldInteractAction = _playerInput.actions["FieldInteract"];
+        _attackAction = _playerInput.actions["Attack"];
+        _specialAttackAction = _playerInput.actions["SpecialAttack"];
+        _switchConsumableAction = _playerInput.actions["SwitchConsumable"];
+        _inventoryAction = _playerInput.actions["OpenInventory"];
+        _journalAction = _playerInput.actions["OpenJournal"];
+        _settingsAction = _playerInput.actions["OpenSettings"];
     }
 
     private void OnEnable()
     {
-        moveAction.performed += OnMove;
-        moveAction.canceled += OnMoveCanceled;
-        jumpAction.performed += OnJump;
+        _moveAction.performed += OnMove;
+        _moveAction.canceled += OnMoveCanceled;
+        _jumpAction.performed += OnJump;
+        _specialAbilityAction.performed += OnSpecialAbility;
+        _consumableAction.performed += OnConsumable;
+        _fieldInteractAction.performed += OnFieldInteract;
+        _attackAction.performed += OnAttack;
+        _specialAttackAction.performed += OnSpecialAttack;
+        _switchConsumableAction.performed += OnSwitchConsumable;
+        _inventoryAction.performed += OnOpenInventory;
+        _journalAction.performed += OnOpenJournal;
+        _settingsAction.performed += OnOpenSettings;
     }
 
     private void OnDisable()
     {
-        moveAction.performed -= OnMove;
-        moveAction.canceled -= OnMoveCanceled;
-        jumpAction.performed -= OnJump;
+        _moveAction.performed -= OnMove;
+        _moveAction.canceled -= OnMoveCanceled;
+        _jumpAction.performed -= OnJump;
+        _specialAbilityAction.performed -= OnSpecialAbility;
+        _consumableAction.performed -= OnConsumable;
+        _fieldInteractAction.performed -= OnFieldInteract;
+        _attackAction.performed -= OnAttack;
+        _specialAttackAction.performed -= OnSpecialAttack;
+        _switchConsumableAction.performed -= OnSwitchConsumable;
+        _inventoryAction.performed -= OnOpenInventory;
+        _journalAction.performed -= OnOpenJournal;
+        _settingsAction.performed -= OnOpenSettings;
     }
 
 
@@ -88,11 +124,60 @@ public class PlayerControllerView : MonoBehaviour
         if (_isGrounded)
             _rigidbody2D.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
     }
-  
+
+    private void OnSpecialAbility(InputAction.CallbackContext context)
+    {
+        Debug.Log($"{nameof(OnSpecialAbility)} ½ÇÇÜ");
+    }
+
+    private void OnConsumable(InputAction.CallbackContext context)
+    {
+        Debug.Log($"{nameof(OnConsumable)} ½ÇÇÜ");
+    }
+
+    private void OnFieldInteract(InputAction.CallbackContext context)
+    {
+        Debug.Log($"{nameof(OnFieldInteract)} ½ÇÇÜ");
+    }
+
+    private void OnAttack(InputAction.CallbackContext context)
+    {
+        Debug.Log($"{nameof(OnAttack)} ½ÇÇÜ");
+    }
+
+    private void OnSpecialAttack(InputAction.CallbackContext context)
+    {
+        Debug.Log($"{nameof(OnSpecialAttack)} ½ÇÇÜ");
+
+    }
+
+    private void OnSwitchConsumable(InputAction.CallbackContext context)
+    {
+        Debug.Log($"{nameof(OnSwitchConsumable)} ½ÇÇÜ");
+
+    }
+
+    private async void OnOpenInventory(InputAction.CallbackContext context)
+    {
+        var view = await UIManager.Inst.OpenInventoryUIAsync();
+        NetworkManager.Inst._inventoryService.BindInventoryView(view);
+
+    }
+
+    private void OnOpenJournal(InputAction.CallbackContext context)
+    {
+        Debug.Log($"{nameof(OnOpenJournal)} ½ÇÇÜ");
+
+    }
+
+    private void OnOpenSettings(InputAction.CallbackContext context)
+    {
+        Debug.Log($"{nameof(OnOpenSettings)} ½ÇÇÜ");
+
+    }
 
 
 
-   
 
     void Flip()
     {
