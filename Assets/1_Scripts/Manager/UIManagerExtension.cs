@@ -19,7 +19,9 @@ public enum UIType
     //DNSimplePopup,
     MainUI,
     GatheringUI,
-    InteractableInfoUI
+    InteractableInfoUI,
+    InventoryUI,
+    InventorySlotUI,
 }
 
 
@@ -31,9 +33,20 @@ public static class UIManagerExtension
         await uiManager.OpenMainRootAsync(UIType.MainUI, cancellationToken);
     }
 
-    public static void CloseBuildUI(this UIManager uiManager)
+    public static void CloseMainUI(this UIManager uiManager)
     {
         uiManager.Close(UIType.MainUI);
+    }
+
+    public static async UniTask<InventoryUIView> OpenInventoryUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        UIBase uiBase = await uiManager.OpenMainRootAsync(UIType.InventoryUI, cancellationToken);
+        return GetView<InventoryUIView>(uiBase, UIType.InventoryUI);
+    }
+
+    public static void CloseInventoryUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.InventoryUI);
     }
 
 

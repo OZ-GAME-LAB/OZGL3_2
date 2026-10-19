@@ -1,0 +1,20 @@
+[
+  {
+    "Id": "eq_worn_axe",
+    "EquipmentSlot": "Axe",
+    "ToolAction": "Logging",
+    "Power": null
+  },
+  {
+    "Id": "eq_worn_fishingrod",
+    "EquipmentSlot": "FishingRod",
+    "ToolAction": "Fishing",
+    "Power": null
+  },
+  {
+    "Id": "eq_worn_pickaxe",
+    "EquipmentSlot": "PickAxe",
+    "ToolAction": "Mining",
+    "Power": null
+  }
+]

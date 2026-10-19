@@ -1,0 +1,16 @@
+[
+  {
+    "Id": "effect_heal_hp",
+    "EffectType": "InstantHeal",
+    "Target": "Self",
+    "ValueUnit": "HP",
+    "Description": "사용한 캐릭터의 HP를 EffectValue만큼 즉시 회복한다."
+  },
+  {
+    "Id": "effect_apply_burn",
+    "EffectType": "StatusDamage",
+    "Target": "HitEnemy",
+    "ValueUnit": "HPPerSec",
+    "Description": "공격 적중 대상에 DurationSec초 동안 매초 EffectValue의 화상 피해를 적용한다."
+  }
+]

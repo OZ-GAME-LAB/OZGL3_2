@@ -1,0 +1,14 @@
+[
+  {
+    "Id": "recipe_normal_axe",
+    "Item_Id": "eq_normal_axe",
+    "RequiredMaterialId": [
+      "eq_worn_axe",
+      "mat_slime_lump"
+    ],
+    "RequiredMaterialQuantity": [
+      1,
+      10
+    ]
+  }
+]

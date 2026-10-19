@@ -1,16 +1,17 @@
+﻿using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class GameUtil : MonoBehaviour
+public static class GameUtil
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public static async UniTask<Sprite> LoadAndSetSpriteImage(Image targetImage, string spritePath)
     {
-        
-    }
+        Sprite sprite = await ResourceManager.Inst.LoadAsset<Sprite>(spritePath);
+        if (sprite != null)
+        {
+            targetImage.sprite = sprite;
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        return sprite;
     }
 }
