@@ -41,8 +41,7 @@ public class InteractionGatheringVM : InteractionVMBase
 
     public void InitGatheringVM(string id)
     {
-        _gatheringDurationSeconds =
-            DataManager.Inst.ReadData<InteractionGatheringData>()[id].GatheringTime;
+        _gatheringDurationSeconds = 5f;
     }
 
     public void BeginGathering()
@@ -80,6 +79,4 @@ public class InteractionGatheringVM : InteractionVMBase
         _gatheringSeconds = 0f;
         GatheringProgress = 0f;
     }
-
-
 }
