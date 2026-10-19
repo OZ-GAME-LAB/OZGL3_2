@@ -159,21 +159,20 @@ public class InteractionNetwork : NetworkBehaviour
         AvailabilityChanged?.Invoke(IsAvailable);
     }
 
-    public bool CompleteInteraction(ulong clientId, ulong requestId)
+    public virtual bool CompleteInteraction(ulong clientId, ulong requestId)
     {
         if (!IsServer || !IsSpawned || !_hasInteractor)
             return false;
 
-        if (_interactorClientId != clientId ||
-            _interactionRequestId != requestId)
+        if (_interactorClientId != clientId || _interactionRequestId != requestId)
             return false;
 
         _serverAllowsInteraction = false;
         ReleaseInteractorOnServer();
 
         // TODO : ObjectManager를 통해 아이템 스폰 부분 추가 필요
-        // TODO : 나중에 Mesh에도 변화가 있다면 여기에서 해당 되는 Mesh 프리팹 교체 요청 필요
 
+        NetworkObject.Despawn();
         return true;
     }
 

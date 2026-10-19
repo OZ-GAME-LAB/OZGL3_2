@@ -266,6 +266,9 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!_candidates.Contains(_lockedTarget))
             return false;
 
+        _lockedTarget.Completed -= CompleteRequestedInteraction;
+        _lockedTarget.Completed += CompleteRequestedInteraction;
+
         _lockedTarget.BeginInteraction(_uiAnchors, _playerCamera);
         return true;
     }
@@ -362,6 +365,9 @@ public class PlayerInteractionController : NetworkBehaviour
 
     private void ClearLocalRequest()
     {
+        if (_requestedTarget != null)
+            _requestedTarget.Completed -= CompleteRequestedInteraction;
+
         _hasLocalRequest = false;
         _localInteractionStarted = false;
         _requestedTarget = null;

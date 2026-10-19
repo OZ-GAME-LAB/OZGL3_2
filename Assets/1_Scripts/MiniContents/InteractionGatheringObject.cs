@@ -79,6 +79,7 @@ public class InteractionGatheringObject : InteractableObject
         if (_viewModel.UpdateGathering(deltaTime))
         {
             // 서버에 채집 완료 요청 및 처리 추가 필요
+            NotifyCompleted();
 
             CloseContent();
         }
