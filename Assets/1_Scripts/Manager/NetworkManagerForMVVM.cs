@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class NetworkManager : MonoBehaviour
 {
-    public InventoryService _inventoryService { get; private set; }
-
     public static NetworkManager Inst { get; private set; }
 
+    //인벤토리 서비스는 프로퍼티라서 대문자로 시작하게 수정했습니다.
+    public InventoryService InventoryService { get; private set; }
     public NetworkCraftingService CraftingService { get; private set; }
 
     private void Awake()
@@ -19,8 +19,12 @@ public class NetworkManager : MonoBehaviour
     private void InitNetworkService()
     {
         CraftingService = new NetworkCraftingService();
-        _inventoryService = new InventoryService();
-        _inventoryService.InitInventoryList();
+        InventoryService = new InventoryService();
+    }
+
+    public void InitInventory()
+    {
+        InventoryService.InitInventoryList();
     }
 
 
