@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 public class InventoryService
@@ -33,20 +33,20 @@ public class InventoryService
     {
         if (inventoryView == null)
         {
-            Debug.LogError("InventoryUIView°¡ nullÀÔ´Ï´Ù.");
+            Debug.LogError("InventoryUIViewê°€ nullì…ë‹ˆë‹¤.");
             return;
         }
         var inventoryViewModels = new List<InventoryUIViewModel>(_inventoryList.Values);
         inventoryView.Bind(inventoryViewModels);
     }
 
-    //¼­ºñ½º¸¦ °¡Áö°í ÀÖ´Â °÷¿¡¼­ ½ÇÇà½ÃÄÑÁÖ±â
+    //ì„œë¹„ìŠ¤ë¥¼ ê°€ì§€ê³  ìˆëŠ” ê³³ì—ì„œ ì‹¤í–‰ì‹œì¼œì£¼ê¸°
     public void InitInventoryList()
     {
         _inventoryList.Clear();
 
         Dictionary<string, ItemData> dataTable = DataManager.Inst.ReadData<ItemData>();
-        Debug.Log($"DataManager ¾ÆÀÌÅÛ ¼ö: {dataTable.Count}");
+        Debug.Log($"DataManager ì•„ì´í…œ ìˆ˜: {dataTable.Count}");
 
 
         foreach (var pair in dataTable)

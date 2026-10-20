@@ -67,7 +67,6 @@ public class ItemData : GameDataBase
     public int MaxStack;
     public int Price;
     public int SellingPrice;
-
     public string IconPath;
     public string PrefabPath;
 }
