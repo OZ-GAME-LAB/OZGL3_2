@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using System;
+using Unity.Collections;
 using Unity.Netcode;
 
 public class InteractionNetwork : NetworkBehaviour
@@ -8,9 +10,16 @@ public class InteractionNetwork : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
 
+    private NetworkVariable<FixedString128Bytes> _objectId = new(
+    default,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server);
+
     public bool IsAvailable => IsSpawned && _isAvailable.Value;
 
     public event Action<bool> AvailabilityChanged;
+
+    
 
     public override void OnNetworkSpawn()
     {
@@ -25,7 +34,7 @@ public class InteractionNetwork : NetworkBehaviour
             RefreshAvailabilityOnServer();
         }
 
-        AvailabilityChanged?.Invoke(IsAvailable);
+        InitializeObject().Forget();
     }
 
     public override void OnNetworkDespawn()
@@ -65,8 +74,6 @@ public class InteractionNetwork : NetworkBehaviour
 
         if (_hasInteractor || !_serverAllowsInteraction)
             return false;
-
-        // 서버 기준 플레이어 존재·거리·행동 상태 검증 구현 필요
 
         _hasInteractor = true;
         _interactorClientId = clientId;
@@ -122,6 +129,51 @@ public class InteractionNetwork : NetworkBehaviour
         {
             ReleaseInteractorOnServer();
         }
+    }
+
+    public void SetObjectId(string id)
+    {
+        var manager = Unity.Netcode.NetworkManager.Singleton;
+
+        if (manager == null || !manager.IsServer)
+            return;
+
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+
+        _objectId.Value = new FixedString128Bytes(id);
+    }
+
+    private async UniTask InitializeObject()
+    {
+        if (!TryGetComponent<InteractableObject>(out var interactableObject))
+            return;
+
+        string id = _objectId.Value.ToString();
+
+        await interactableObject.InitObject(id);
+
+        if (!IsSpawned)
+            return;
+
+        AvailabilityChanged?.Invoke(IsAvailable);
+    }
+
+    public virtual bool CompleteInteraction(ulong clientId, ulong requestId)
+    {
+        if (!IsServer || !IsSpawned || !_hasInteractor)
+            return false;
+
+        if (_interactorClientId != clientId || _interactionRequestId != requestId)
+            return false;
+
+        _serverAllowsInteraction = false;
+        ReleaseInteractorOnServer();
+
+        // TODO : ObjectManager를 통해 아이템 스폰 부분 추가 필요
+
+        NetworkObject.Despawn();
+        return true;
     }
 
     //-------------------------------------------------------------------------------

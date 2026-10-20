@@ -110,4 +110,33 @@ public class ObjectManager : MonoBehaviour
 
         target.Despawn(destroy: true);
     }
+
+    public InteractableObject SpawnInteractionObject(
+    InteractableObject prefab,
+    string id,
+    Vector3 position,
+    Quaternion rotation)
+    {
+        if (!CanSpawn())
+            return null;
+
+        if (prefab == null || string.IsNullOrWhiteSpace(id))
+        {
+            Debug.LogError("상호작용 프리팹 또는 ID가 유효하지 않습니다.");
+            return null;
+        }
+
+        if (!prefab.TryGetComponent<NetworkObject>(out _) || !prefab.TryGetComponent<InteractionNetwork>(out _))
+        {
+            Debug.LogError("프리팹에 NetworkObject와 InteractionNetwork가 필요합니다.");
+            return null;
+        }
+
+        InteractableObject instance = Instantiate(prefab, position, rotation);
+
+        instance.GetComponent<InteractionNetwork>().SetObjectId(id);
+        instance.GetComponent<NetworkObject>().Spawn();
+
+        return instance;
+    }
 }

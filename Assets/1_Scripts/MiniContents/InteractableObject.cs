@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using Unity.Netcode;
+using System;
 using UnityEngine;
 
 public enum MiniContentsType
@@ -17,6 +17,8 @@ public abstract class InteractableObject : MonoBehaviour
     protected UIBase _openUI;
     private InteractionNetwork _interactionNetwork;
     public abstract InteractionVMBase ViewModel { get; }
+
+    public event Action Completed;
 
     protected virtual void Awake()
     {
@@ -48,6 +50,8 @@ public abstract class InteractableObject : MonoBehaviour
         HandleAvailabilityChanged(false);
         HideInteractionInfo();
     }
+
+    public abstract UniTask InitObject(string id);
 
     public void PlayerInteract(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/)
     {
@@ -106,4 +110,8 @@ public abstract class InteractableObject : MonoBehaviour
     public virtual void CancelInteraction() { }
     public virtual void BeginInteraction(Transform[] playerUIAnchor, Camera playerCamera) { }
     
+    protected void NotifyCompleted()
+    {
+        Completed?.Invoke();
+    }
 }

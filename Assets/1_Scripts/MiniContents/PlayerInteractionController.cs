@@ -266,6 +266,9 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!_candidates.Contains(_lockedTarget))
             return false;
 
+        _lockedTarget.Completed -= CompleteRequestedInteraction;
+        _lockedTarget.Completed += CompleteRequestedInteraction;
+
         _lockedTarget.BeginInteraction(_uiAnchors, _playerCamera);
         return true;
     }
@@ -362,6 +365,9 @@ public class PlayerInteractionController : NetworkBehaviour
 
     private void ClearLocalRequest()
     {
+        if (_requestedTarget != null)
+            _requestedTarget.Completed -= CompleteRequestedInteraction;
+
         _hasLocalRequest = false;
         _localInteractionStarted = false;
         _requestedTarget = null;
@@ -515,5 +521,40 @@ public class PlayerInteractionController : NetworkBehaviour
 
         _localInteractionStarted = true;
         InteractionStartResolved?.Invoke(true);
+    }
+
+    private void CompleteRequestedInteraction()
+    {
+        if (!IsSpawned || !IsOwner ||
+            !_hasLocalRequest || !_localInteractionStarted)
+            return;
+
+        ulong requestId = _activeRequestId;
+
+        // 완료 후 입력 해제가 취소 요청을 보내지 않도록 정리
+        ClearLocalRequest();
+
+        RequestCompleteServerRpc(requestId);
+
+        ReleaseTarget();
+    }
+
+    [ServerRpc]
+    private void RequestCompleteServerRpc(
+    ulong requestId,
+    ServerRpcParams rpcParams = default)
+    {
+        if (_serverTarget == null || _serverRequestId != requestId)
+            return;
+
+        bool completed = _serverTarget.CompleteInteraction(
+            rpcParams.Receive.SenderClientId,
+            requestId);
+
+        if (!completed)
+            return;
+
+        _serverTarget = null;
+        _serverRequestId = 0;
     }
 }
