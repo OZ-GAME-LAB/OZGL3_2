@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 public enum ItemType
 {
@@ -50,6 +51,13 @@ public enum Trigger
 {
     None = 0,
     OnHit = 1
+}
+
+public enum MoveType
+{
+    None = 0,
+    Fix = 1,
+    Move = 2
 }
 
 [Serializable]
@@ -133,4 +141,35 @@ public class DropGroupData : GameDataBase
     public int MinQuantity;
     public int MaxQuantity;
     public float DropChance;
+}
+
+public class MonsterData : GameDataBase
+{
+    public string Name;
+    public string Description;
+    public float Hp;
+    public float PhysicalResistance;
+    public float FireResistance;
+    public float IceResistance;
+    public float ElectricalResistance;
+    public float PoisonResistance;
+    public bool BleedAble;
+    public string[] HaveSkillIdList;
+    public MoveType MonsterType;
+    public string MonsterAddressableId;
+}
+
+[Serializable]
+public class MonsterPatrolData : GameDataBase
+{
+    public string[] PatrolSpotIdList;
+}
+
+[Serializable]
+public class MonsterPatrolSpotData : GameDataBase
+{
+    public float PositionX;
+    public float PositionY;
+    public float PositionZ;
+    public Vector3 Position => new Vector3(PositionX, PositionY, PositionZ);
 }
