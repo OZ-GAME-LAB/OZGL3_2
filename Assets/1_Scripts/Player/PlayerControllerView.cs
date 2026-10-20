@@ -1,11 +1,11 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.InputSystem;
 
 
 
 public class PlayerControllerView : MonoBehaviour
 {
-    [Header("ÀÌµ¿ ¼³Á¤")]
+    [Header("ì´ë™ ì„¤ì •")]
     [SerializeField] private float _moveSpeed = 8f;
     [SerializeField] private float _jumpForce = 5f;
     [SerializeField] private PlayerInput _playerInput;
@@ -24,10 +24,10 @@ public class PlayerControllerView : MonoBehaviour
     private InputAction _journalAction;
     private InputAction _settingsAction;
 
-    [Header("Áö¸é Ã¼Å© ¼³Á¤")]
-    [SerializeField] private Transform _groundCheck;    // ¹ß ¹Ø¿¡ ¹èÄ¡ÇÒ ºó ¿ÀºêÁ§Æ®
-    [SerializeField] private float _checkRadius = 0.5f; // Ã¼Å© ¹üÀ§
-    [SerializeField] private LayerMask _groundLayer;    // Áö¸éÀ¸·Î ÀÎ½ÄÇÒ ·¹ÀÌ¾î (Platforms µî)
+    [Header("ì§€ë©´ ì²´í¬ ì„¤ì •")]
+    [SerializeField] private Transform _groundCheck;    // ë°œ ë°‘ì— ë°°ì¹˜í•  ë¹ˆ ì˜¤ë¸Œì íŠ¸
+    [SerializeField] private float _checkRadius = 0.5f; // ì²´í¬ ë²”ìœ„
+    [SerializeField] private LayerMask _groundLayer;    // ì§€ë©´ìœ¼ë¡œ ì¸ì‹í•  ë ˆì´ì–´ (Platforms ë“±)
 
     private bool _isGrounded;
     private bool _lookRight = true;
@@ -38,14 +38,14 @@ public class PlayerControllerView : MonoBehaviour
     {
         if (_playerInput == null && !TryGetComponent(out _playerInput))
         {
-            Debug.LogError($"{nameof(_playerInput)}ÀÌ ¾ø½À´Ï´Ù.");
+            Debug.LogError($"{nameof(_playerInput)}ì´ ì—†ìŠµë‹ˆë‹¤.");
             enabled = false;
             return;
         }
 
         if (_rigidbody2D == null && !TryGetComponent(out _rigidbody2D))
         {
-            Debug.LogError($"{nameof(_rigidbody2D)}ÀÌ ¾ø½À´Ï´Ù.");
+            Debug.LogError($"{nameof(_rigidbody2D)}ì´ ì—†ìŠµë‹ˆë‹¤.");
             enabled = false;
             return;
         }
@@ -127,52 +127,52 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnSpecialAbility(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnSpecialAbility)} ½ÇÇÜ");
+        Debug.Log($"{nameof(OnSpecialAbility)} ì‹¤í–‰");
     }
 
     private void OnConsumable(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnConsumable)} ½ÇÇÜ");
+        Debug.Log($"{nameof(OnConsumable)} ì‹¤í–‰");
     }
 
     private void OnFieldInteract(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnFieldInteract)} ½ÇÇÜ");
+        Debug.Log($"{nameof(OnFieldInteract)} ì‹¤í–‰");
     }
 
     private void OnAttack(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnAttack)} ½ÇÇÜ");
+        Debug.Log($"{nameof(OnAttack)} ì‹¤í–‰");
     }
 
     private void OnSpecialAttack(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnSpecialAttack)} ½ÇÇÜ");
+        Debug.Log($"{nameof(OnSpecialAttack)} ì‹¤í–‰");
 
     }
 
     private void OnSwitchConsumable(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnSwitchConsumable)} ½ÇÇÜ");
+        Debug.Log($"{nameof(OnSwitchConsumable)} ì‹¤í–‰");
 
     }
 
     private async void OnOpenInventory(InputAction.CallbackContext context)
     {
         var view = await UIManager.Inst.OpenInventoryUIAsync();
-        NetworkManager.Inst._inventoryService.BindInventoryView(view);
+        NetworkManager.Inst.InventoryService.BindInventoryView(view);
 
     }
 
     private void OnOpenJournal(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnOpenJournal)} ½ÇÇÜ");
+        Debug.Log($"{nameof(OnOpenJournal)} ì‹¤í–‰");
 
     }
 
     private void OnOpenSettings(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnOpenSettings)} ½ÇÇÜ");
+        Debug.Log($"{nameof(OnOpenSettings)} ì‹¤í–‰");
 
     }
 
