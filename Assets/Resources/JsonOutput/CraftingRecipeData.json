@@ -1,5 +1,15 @@
 [
   {
+    "Id": "recipe_worn_axe",
+    "Item_Id": "eq_worn_axe",
+    "RequiredMaterialId": [
+      "mat_slime_lump"
+    ],
+    "RequiredMaterialQuantity": [
+      5
+    ]
+  },
+  {
     "Id": "recipe_normal_axe",
     "Item_Id": "eq_normal_axe",
     "RequiredMaterialId": [
