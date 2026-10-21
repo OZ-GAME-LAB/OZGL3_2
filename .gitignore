@@ -111,8 +111,3 @@ Assets/ThirdParty
 /JsonConverter/**/ExcelFiles/**/*.xlsm
 /JsonConverter/**/ExcelFiles/**/*.xlsb
 Assets/99_ThirdPartyAssets
-
-# AI temporary work files
-/Assets/AIWork/
-/Assets/AIWork.meta
-/기획/

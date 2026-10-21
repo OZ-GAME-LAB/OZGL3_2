@@ -1,6 +1,5 @@
-ï»¿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using System;
-using Unity.Netcode;
 using UnityEngine;
 
 public enum MiniContentsType
@@ -21,33 +20,20 @@ public abstract class InteractableObject : MonoBehaviour
 
     public event Action Completed;
 
-    public event Action InteractionEndRequested; //ìƒí˜¸ì‘ìš© ì¢…ë£Œ ì´ë²¤íŠ¸ ì¶”ê°€
-    public virtual bool RequiresServerReservation => true; //ì ìœ ê°€ í•„ìš”í•œ ìƒí˜¸ì‘ìš©ì¸ì§€ ì—¬ë¶€ë¥¼ ë‚˜íƒ€ë‚´ëŠ” í”„ë¡œí¼í‹°
-
     protected virtual void Awake()
     {
         _interactionNetwork = GetComponent<InteractionNetwork>();
 
-        if (RequiresServerReservation && _interactionNetwork == null)
+        if (_interactionNetwork == null)
         {
-            Debug.LogError($"{name}: InteractionNetwork ì»´í¬ë„ŒíŠ¸ê°€ í•„ìš”í•©ë‹ˆë‹¤.", this);
+            Debug.LogError($"{name}: InteractionNetwork ÄÄÆ÷³ÍÆ®°¡ ÇÊ¿äÇÕ´Ï´Ù.", this);
         }
     }
 
     protected virtual void OnEnable()
     {
-        if (RequiresServerReservation == false)
-        {
-            // ì§€ê¸ˆ ì œì‘ëŒ€ëŠ” í™œì„± ìƒíƒœë¼ë©´ ë¡œì»¬ UIë¥¼ ì—´ ìˆ˜ ìˆìŒ
-            HandleAvailabilityChanged(true);
-            return;
-        }
-
         if (_interactionNetwork == null)
-        {
-            HandleAvailabilityChanged(false);
             return;
-        }
 
         _interactionNetwork.AvailabilityChanged += HandleAvailabilityChanged;
 
@@ -67,9 +53,9 @@ public abstract class InteractableObject : MonoBehaviour
 
     public abstract UniTask InitObject(string id);
 
-    public void PlayerInteract(/*ì¥ë¹„ íƒ€ì…ì„ ê²€ì‚¬í•  ìˆ˜ ìˆëŠ” ì¥ë¹„ ID(string íƒ€ì…) ë§¤ê°œë³€ìˆ˜ ì¶”ê°€*/)
+    public void PlayerInteract(/*Àåºñ Å¸ÀÔÀ» °Ë»çÇÒ ¼ö ÀÖ´Â Àåºñ ID(string Å¸ÀÔ) ¸Å°³º¯¼ö Ãß°¡*/)
     {
-        PlayContent(/*ì¥ë¹„ íƒ€ì…ì„ ê²€ì‚¬í•  ìˆ˜ ìˆëŠ” ì¥ë¹„ ID(string íƒ€ì…) ë§¤ê°œë³€ìˆ˜ ì¶”ê°€*/);
+        PlayContent(/*Àåºñ Å¸ÀÔÀ» °Ë»çÇÒ ¼ö ÀÖ´Â Àåºñ ID(string Å¸ÀÔ) ¸Å°³º¯¼ö Ãß°¡*/);
     }
 
     private void HandleAvailabilityChanged(bool isAvailable)
@@ -91,7 +77,7 @@ public abstract class InteractableObject : MonoBehaviour
 
         if (ui is not InteractableInfoUI infoUI)
         {
-            Debug.LogError("í”„ë¦¬íŒ¹ì— InteractableInfoUI ì»´í¬ë„ŒíŠ¸ê°€ í•„ìš”í•©ë‹ˆë‹¤.");
+            Debug.LogError("ÇÁ¸®ÆÕ¿¡ InteractableInfoUI ÄÄÆ÷³ÍÆ®°¡ ÇÊ¿äÇÕ´Ï´Ù.");
             return;
         }
 
@@ -104,7 +90,7 @@ public abstract class InteractableObject : MonoBehaviour
         }
         else
         {
-            Debug.LogError("ì•ˆë‚´ UIì— InteractionUIPositionerê°€ í•„ìš”í•©ë‹ˆë‹¤.");
+            Debug.LogError("¾È³» UI¿¡ InteractionUIPositioner°¡ ÇÊ¿äÇÕ´Ï´Ù.");
         }
     }
 
@@ -117,21 +103,15 @@ public abstract class InteractableObject : MonoBehaviour
         _infoUI = null;
     }
 
-    protected void NotifyCompleted()
-    {
-        Completed?.Invoke();
-    }
-
-    protected virtual void PlayContent(/*ì¥ë¹„ íƒ€ì…ì„ ê²€ì‚¬í•  ìˆ˜ ìˆëŠ” ì¥ë¹„ ID(string íƒ€ì…) ë§¤ê°œë³€ìˆ˜ ì¶”ê°€*/) { }
+    protected virtual void PlayContent(/*Àåºñ Å¸ÀÔÀ» °Ë»çÇÒ ¼ö ÀÖ´Â Àåºñ ID(string Å¸ÀÔ) ¸Å°³º¯¼ö Ãß°¡*/) { }
     public virtual void CloseContent() { }
     public virtual void BeginInteraction() { }
     public virtual void UpdateInteraction(float deltaTime) { }
     public virtual void CancelInteraction() { }
     public virtual void BeginInteraction(Transform[] playerUIAnchor, Camera playerCamera) { }
-
-    // ìƒí˜¸ì‘ìš© ì¢…ë£Œ ìš”ì²­ ì´ë²¤íŠ¸ë¥¼ í˜¸ì¶œ ë©”ì„œë“œ ì¶”ê°€
-    protected void RequestInteractionEnd()
+    
+    protected void NotifyCompleted()
     {
-        InteractionEndRequested?.Invoke();
+        Completed?.Invoke();
     }
 }
