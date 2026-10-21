@@ -12,6 +12,10 @@ public class CraftingObject : InteractableObject
     private int _openVersion;
     public override bool RequiresServerReservation => false;
 
+    public override async UniTask InitObject(string id)
+    {
+    }
+
     public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera)
     {
         if (isActiveAndEnabled == false || _sessionActive)

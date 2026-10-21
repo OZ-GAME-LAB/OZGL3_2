@@ -13,13 +13,10 @@ public class PlayerInteractionController : NetworkBehaviour
     private Camera _playerCamera;
     private bool _isLocalPlayer;
 
-    //private readonly Dictionary<Collider, InteractableObject>_contacts = new();
     private readonly Dictionary<Collider2D, InteractableObject> _contacts = new();
-
 
     private readonly HashSet<InteractableObject> _candidates = new();
 
-    //private readonly List<Collider> _removeBuffer = new();
     private readonly List<Collider2D> _removeBuffer = new();
 
     private bool _usesServerReservation;
@@ -272,6 +269,9 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!_candidates.Contains(_lockedTarget))
             return false;
 
+        _lockedTarget.Completed -= CompleteRequestedInteraction;
+        _lockedTarget.Completed += CompleteRequestedInteraction;
+
         _lockedTarget.BeginInteraction(_uiAnchors, _playerCamera);
         return true;
     }
@@ -523,6 +523,40 @@ public class PlayerInteractionController : NetworkBehaviour
             requestId,
             approved,
             clientRpcParams);
+    }
+
+    private void CompleteRequestedInteraction()
+    {
+        if (!IsSpawned || !IsOwner ||
+            !_hasLocalRequest || !_localInteractionStarted)
+            return;
+
+        ulong requestId = _activeRequestId;
+
+        ClearLocalRequest();
+
+        RequestCompleteServerRpc(requestId);
+
+        ReleaseTarget();
+    }
+
+    [ServerRpc]
+    private void RequestCompleteServerRpc(
+    ulong requestId,
+    ServerRpcParams rpcParams = default)
+    {
+        if (_serverTarget == null || _serverRequestId != requestId)
+            return;
+
+        bool completed = _serverTarget.CompleteInteraction(
+            rpcParams.Receive.SenderClientId,
+            requestId);
+
+        if (!completed)
+            return;
+
+        _serverTarget = null;
+        _serverRequestId = 0;
     }
 
     [ServerRpc]
