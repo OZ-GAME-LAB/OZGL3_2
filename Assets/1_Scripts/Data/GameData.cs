@@ -148,6 +148,7 @@ public class MonsterData : GameDataBase
     public string Name;
     public string Description;
     public float Hp;
+    public float Atk;
     public float PhysicalResistance;
     public float FireResistance;
     public float IceResistance;
