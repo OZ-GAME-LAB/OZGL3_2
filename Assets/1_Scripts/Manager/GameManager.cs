@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        NetworkManager.Inst.InitInventory();
         StartGame();
     }
 

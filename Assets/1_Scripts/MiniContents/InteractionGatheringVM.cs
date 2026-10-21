@@ -41,7 +41,7 @@ public class InteractionGatheringVM : InteractionVMBase
 
     public void InitGatheringVM(string id)
     {
-        // 데이터 매니저로부터 설정
+        _gatheringDurationSeconds = 5f;
     }
 
     public void BeginGathering()
@@ -79,6 +79,4 @@ public class InteractionGatheringVM : InteractionVMBase
         _gatheringSeconds = 0f;
         GatheringProgress = 0f;
     }
-
-
 }

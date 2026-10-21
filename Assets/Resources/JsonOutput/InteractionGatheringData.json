@@ -1,0 +1,12 @@
+[
+  {
+    "Id": "GatherObj_01",
+    "GatheringTime": 5,
+    "DropItemList": [
+      "con_red_berry"
+    ],
+    "MinDropCount": 2,
+    "MaxDropCount": 4,
+    "MeshAddress": "Prefab/Mesh/TestPrefab"
+  }
+]

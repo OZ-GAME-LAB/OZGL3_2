@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+Ôªøusing Cysharp.Threading.Tasks;
 using System.Threading;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -19,7 +19,10 @@ public enum UIType
     //DNSimplePopup,
     MainUI,
     GatheringUI,
-    InteractableInfoUI
+    InteractableInfoUI,
+    InventoryUI,
+    InventorySlotUI,
+    CraftingUI,
 }
 
 
@@ -31,14 +34,34 @@ public static class UIManagerExtension
         await uiManager.OpenMainRootAsync(UIType.MainUI, cancellationToken);
     }
 
-    public static void CloseBuildUI(this UIManager uiManager)
+    public static void CloseMainUI(this UIManager uiManager)
     {
         uiManager.Close(UIType.MainUI);
     }
 
+    public static async UniTask<InventoryUIView> OpenInventoryUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        UIBase uiBase = await uiManager.OpenMainRootAsync(UIType.InventoryUI, cancellationToken);
+        return GetView<InventoryUIView>(uiBase, UIType.InventoryUI);
+    }
 
+    public static void CloseInventoryUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.InventoryUI);
+    }
 
-    //UI∏¶ ª˝º∫«œ∞Ì View∏¶ ∞°¡Æø¿∞Ì ΩÕ¿ª ∂ß ªÁøÎ
+    public static async UniTask<CraftingUI> OpenCraftingUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        UIBase uiBase = await uiManager.OpenPopupRootAsync(UIType.CraftingUI, cancellationToken);
+        return GetView<CraftingUI>(uiBase, UIType.CraftingUI);
+    }
+
+    public static void CloseCraftingUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.CraftingUI);
+    }
+
+    //UIÎ•º ÏÉùÏÑ±ÌïòÍ≥† ViewÎ•º Í∞ÄÏ†∏Ïò§Í≥† Ïã∂ÏùÑ Îïå ÏÇ¨Ïö©
     private static T GetView<T>(UIBase baseUI, UIType uiType) where T : UIBase
     {
         if (baseUI == null)

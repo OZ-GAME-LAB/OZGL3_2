@@ -110,3 +110,4 @@ Assets/ThirdParty
 /JsonConverter/**/ExcelFiles/**/*.xlsx
 /JsonConverter/**/ExcelFiles/**/*.xlsm
 /JsonConverter/**/ExcelFiles/**/*.xlsb
+Assets/99_ThirdPartyAssets
