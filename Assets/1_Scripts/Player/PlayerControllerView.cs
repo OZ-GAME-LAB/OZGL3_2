@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 
@@ -10,6 +10,7 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField] private float _jumpForce = 5f;
     [SerializeField] private PlayerInput _playerInput;
     [SerializeField] private Rigidbody2D _rigidbody2D;
+    private float _moveInput;
     private InputAction _moveAction;
     private InputAction _jumpAction;
     private InputAction _upAction;
@@ -82,6 +83,8 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnDisable()
     {
+        _moveInput = 0f;
+
         _moveAction.performed -= OnMove;
         _moveAction.canceled -= OnMoveCanceled;
         _jumpAction.performed -= OnJump;
@@ -97,27 +100,27 @@ public class PlayerControllerView : MonoBehaviour
     }
 
 
-    private void OnMove(InputAction.CallbackContext context)
+    private void FixedUpdate()
     {
-        Vector2 move = context.ReadValue<Vector2>();
-
         _rigidbody2D.linearVelocity = new Vector2(
-            move.x * _moveSpeed,
+            _moveInput * _moveSpeed,
             _rigidbody2D.linearVelocity.y
         );
+    }
 
-        if (move.x > 0 && !_lookRight)
+    private void OnMove(InputAction.CallbackContext context)
+    {
+        _moveInput = context.ReadValue<Vector2>().x;
+
+        if (_moveInput > 0 && !_lookRight)
             Flip();
-        else if (move.x < 0 && _lookRight)
+        else if (_moveInput < 0 && _lookRight)
             Flip();
     }
 
     private void OnMoveCanceled(InputAction.CallbackContext context)
     {
-        _rigidbody2D.linearVelocity = new Vector2(
-            0f,
-            _rigidbody2D.linearVelocity.y
-        );
+        _moveInput = 0f;
     }
 
     private void OnJump(InputAction.CallbackContext context)
@@ -188,6 +191,29 @@ public class PlayerControllerView : MonoBehaviour
 
 
 
+
+    public bool PlaceAtPosition(Vector3 footPosition, bool faceRight)
+    {
+        if (_rigidbody2D == null || _groundCheck == null)
+        {
+            Debug.LogWarning("플레이어 배치에 Rigidbody2D와 Ground Check가 필요합니다.", this);
+            return false;
+        }
+
+        _lookRight = transform.localScale.x >= 0f;
+        if (_lookRight != faceRight)
+            Flip();
+
+        Vector3 targetPosition = transform.position + footPosition - _groundCheck.position;
+        targetPosition.z = footPosition.z;
+
+        _rigidbody2D.linearVelocity = Vector2.zero;
+        _rigidbody2D.angularVelocity = 0f;
+        _rigidbody2D.position = new Vector2(targetPosition.x, targetPosition.y);
+        transform.position = targetPosition;
+        _isGrounded = false;
+        return true;
+    }
 
     void Flip()
     {
