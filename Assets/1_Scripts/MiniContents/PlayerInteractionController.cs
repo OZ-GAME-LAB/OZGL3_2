@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,19 +7,16 @@ public class PlayerInteractionController : NetworkBehaviour
 {
     [SerializeField] private Transform _distanceOrigin;
 
-    // Inspectorì—ì„œ ìœ„ â†’ ì•„ë˜ â†’ ì˜¤ë¥¸ìª½ â†’ ì™¼ìª½ ìˆœì„œë¡œ ì—°ê²°
+    // Inspector¿¡¼­ À§ ¡æ ¾Æ·¡ ¡æ ¿À¸¥ÂÊ ¡æ ¿ŞÂÊ ¼ø¼­·Î ¿¬°á
     [SerializeField] private Transform[] _uiAnchors = new Transform[4];
 
     private Camera _playerCamera;
     private bool _isLocalPlayer;
 
-    private readonly Dictionary<Collider2D, InteractableObject> _contacts = new();
+    private readonly Dictionary<Collider, InteractableObject>_contacts = new();
 
     private readonly HashSet<InteractableObject> _candidates = new();
-
-    private readonly List<Collider2D> _removeBuffer = new();
-
-    private bool _usesServerReservation;
+    private readonly List<Collider> _removeBuffer = new();
 
     private InteractableObject _selectedTarget;
     private InteractableObject _lockedTarget;
@@ -41,11 +38,11 @@ public class PlayerInteractionController : NetworkBehaviour
 
     public event Action<InteractableObject> SelectionChanged;
 
-    // ì…ë ¥ ë‹´ë‹¹ìê°€ ì´ ì´ë²¤íŠ¸ë¥¼ ë°›ì•„ ì§„í–‰ ì¤‘ì¸ ìƒí˜¸ì‘ìš©ì„ ì·¨ì†Œí•œë‹¤.
+    // ÀÔ·Â ´ã´çÀÚ°¡ ÀÌ ÀÌº¥Æ®¸¦ ¹Ş¾Æ ÁøÇà ÁßÀÎ »óÈ£ÀÛ¿ëÀ» Ãë¼ÒÇÑ´Ù.
     public event Action<InteractableObject> LockedTargetLost;
 
-    // ë³¸ì¸ í”Œë ˆì´ì–´ ì—¬ë¶€ì™€ ì‹¤ì œ ì‚¬ìš©í•  ì¹´ë©”ë¼ë¥¼ ì „ë‹¬í•œë‹¤.
-    // í”Œë ˆì´ì–´ ë„¤íŠ¸ì›Œí¬ ì´ˆê¸°í™” í›„ í˜¸ì¶œ í•¨ìˆ˜
+    // º»ÀÎ ÇÃ·¹ÀÌ¾î ¿©ºÎ¿Í ½ÇÁ¦ »ç¿ëÇÒ Ä«¸Ş¶ó¸¦ Àü´ŞÇÑ´Ù.
+    // ÇÃ·¹ÀÌ¾î ³×Æ®¿öÅ© ÃÊ±âÈ­ ÈÄ È£Ãâ ÇÔ¼ö
     public void Initialize(bool isLocalPlayer, Camera playerCamera)
     {
         _isLocalPlayer = false;
@@ -59,7 +56,7 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!HasValidUIReferences())
         {
             Debug.LogError(
-                "í”Œë ˆì´ì–´ ì¹´ë©”ë¼ì™€ ìƒÂ·í•˜Â·ìš°Â·ì¢Œ Anchorë¥¼ ì—°ê²°í•´ ì£¼ì„¸ìš”.", this);
+                "ÇÃ·¹ÀÌ¾î Ä«¸Ş¶ó¿Í »ó¡¤ÇÏ¡¤¿ì¡¤ÁÂ Anchor¸¦ ¿¬°áÇØ ÁÖ¼¼¿ä.", this);
             return;
         }
 
@@ -82,23 +79,23 @@ public class PlayerInteractionController : NetworkBehaviour
         return true;
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerEnter(Collider other)
     {
         RegisterContact(other);
     }
 
-    private void OnTriggerStay2D(Collider2D other)
+    private void OnTriggerStay(Collider other)
     {
-        // ì´ˆê¸°í™” ì „ì— ì´ë¯¸ ë²”ìœ„ ì•ˆì— ìˆë˜ ëŒ€ìƒë„ ë“±ë¡í•œë‹¤.
+        // ÃÊ±âÈ­ Àü¿¡ ÀÌ¹Ì ¹üÀ§ ¾È¿¡ ÀÖ´ø ´ë»óµµ µî·ÏÇÑ´Ù.
         RegisterContact(other);
     }
 
-    private void OnTriggerExit2D(Collider2D other)
+    private void OnTriggerExit(Collider other)
     {
         _contacts.Remove(other);
     }
 
-    private void RegisterContact(Collider2D other)
+    private void RegisterContact(Collider other)
     {
         if (!_isLocalPlayer || _contacts.ContainsKey(other))
             return;
@@ -132,7 +129,7 @@ public class PlayerInteractionController : NetworkBehaviour
             InteractableObject lostTarget = _lockedTarget;
             _lockedTarget = null;
 
-            // ê¸°ì¡´ ëŒ€ìƒì˜ ì·¨ì†Œê°€ ìƒˆ ì•ˆë‚´ í‘œì‹œë³´ë‹¤ ë¨¼ì € ì´ë¤„ì§€ë„ë¡ í•œë‹¤.
+            // ±âÁ¸ ´ë»óÀÇ Ãë¼Ò°¡ »õ ¾È³» Ç¥½Ãº¸´Ù ¸ÕÀú ÀÌ·ïÁöµµ·Ï ÇÑ´Ù.
             LockedTargetLost?.Invoke(lostTarget);
         }
 
@@ -146,7 +143,7 @@ public class PlayerInteractionController : NetworkBehaviour
 
         foreach (var pair in _contacts)
         {
-            Collider2D contact = pair.Key;
+            Collider contact = pair.Key;
             InteractableObject target = pair.Value;
 
             if (contact == null ||
@@ -162,7 +159,7 @@ public class PlayerInteractionController : NetworkBehaviour
             _candidates.Add(target);
         }
 
-        foreach (Collider2D contact in _removeBuffer)
+        foreach (Collider contact in _removeBuffer)
             _contacts.Remove(contact);
     }
 
@@ -226,8 +223,8 @@ public class PlayerInteractionController : NetworkBehaviour
         }
     }
 
-    // Fë¥¼ ëˆ„ë¥¸ ìˆœê°„ í˜¸ì¶œí•œë‹¤.
-    // ì„ íƒì„ ê³ ì •í•  ë¿, ì„œë²„ ì„ ì  ìŠ¹ì¸ì€ ì•„ë‹ˆë‹¤.
+    // F¸¦ ´©¸¥ ¼ø°£ È£ÃâÇÑ´Ù.
+    // ¼±ÅÃÀ» °íÁ¤ÇÒ »Ó, ¼­¹ö ¼±Á¡ ½ÂÀÎÀº ¾Æ´Ï´Ù.
     public bool TryLockSelectedTarget(out InteractableObject target)
     {
         target = null;
@@ -254,7 +251,7 @@ public class PlayerInteractionController : NetworkBehaviour
         return true;
     }
 
-    // ì„œë²„ê°€ ì‹œì‘ì„ ìŠ¹ì¸í•œ ë’¤, ì…ë ¥ ë‹´ë‹¹ìê°€ í˜¸ì¶œí•œë‹¤.
+    // ¼­¹ö°¡ ½ÃÀÛÀ» ½ÂÀÎÇÑ µÚ, ÀÔ·Â ´ã´çÀÚ°¡ È£ÃâÇÑ´Ù.
     public bool BeginLockedInteraction()
     {
         if (!_isLocalPlayer ||
@@ -276,7 +273,7 @@ public class PlayerInteractionController : NetworkBehaviour
         return true;
     }
 
-    // ì·¨ì†ŒÂ·ì™„ë£ŒÂ·ì„œë²„ ê±°ì ˆ ì²˜ë¦¬ê°€ ëë‚œ í›„ í˜¸ì¶œí•œë‹¤.
+    // Ãë¼Ò¡¤¿Ï·á¡¤¼­¹ö °ÅÀı Ã³¸®°¡ ³¡³­ ÈÄ È£ÃâÇÑ´Ù.
     public void ReleaseTarget()
     {
         _lockedTarget = null;
@@ -316,75 +313,20 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!TryLockSelectedTarget(out InteractableObject target))
             return false;
 
-        InteractionNetwork network = null;
-
-        if (target.RequiresServerReservation == true)
+        if (!target.TryGetComponent(out InteractionNetwork network) || !network.IsSpawned)
         {
-            if (!target.TryGetComponent(out network) || !network.IsSpawned)
-            {
-                ReleaseTarget();
-                return false;
-            }
+            ReleaseTarget();
+            return false;
         }
-
-        ulong requestId = ++_nextRequestId;
 
         _activeRequestId = ++_nextRequestId;
         _requestedTarget = target;
         _hasLocalRequest = true;
         _localInteractionStarted = false;
 
-        _usesServerReservation = target.RequiresServerReservation;
-
-        //ìƒí˜¸ì‘ìš© ì¢…ë£Œ ì´ë²¤íŠ¸ êµ¬ë…
-        target.InteractionEndRequested += OnInteractionEndRequested;
-
-        if (!_usesServerReservation)
-        {
-            return StartCurrentInteraction(requestId);
-        }
-
         RequestStartServerRpc(new NetworkObjectReference(network.NetworkObject), _activeRequestId);
 
         return true;
-    }
-
-    //ê³µí†µ ì‹œì‘ í•¨ìˆ˜ ì¶”ê°€
-    private bool StartCurrentInteraction(ulong requestId)
-    {
-        if ((_hasLocalRequest == false) || (_activeRequestId != requestId))
-        {
-            return false;
-        }
-
-        // BeginInteraction ë‚´ë¶€ì—ì„œ ì¦‰ì‹œ ì¢…ë£Œ ì´ë²¤íŠ¸ê°€ ë°œìƒí•˜ë”ë¼ë„
-        // CancelInteractionê¹Œì§€ ì‹¤í–‰ë  ìˆ˜ ìˆë„ë¡ ë¨¼ì € ì„¤ì •
-        _localInteractionStarted = true;
-
-        bool started = BeginLockedInteraction();
-
-        // ì‹¤í–‰ ë„ì¤‘ ì‹¤íŒ¨Â·ì·¨ì†Œ ì´ë²¤íŠ¸ë¡œ ìš”ì²­ì´ ì¢…ë£Œëœ ê²½ìš°
-        if ((_hasLocalRequest == false) || (_activeRequestId != requestId))
-        {
-            InteractionStartResolved?.Invoke(false);
-            return false;
-        }
-
-        if (started == false)
-        {
-            CancelRequestedInteraction();
-            InteractionStartResolved?.Invoke(false);
-            return false;
-        }
-
-        InteractionStartResolved?.Invoke(true);
-        return true;
-    }
-
-    // ìƒí˜¸ì‘ìš© ì¢…ë£Œ ì´ë²¤íŠ¸ê°€ ë°œìƒí•˜ë©´ ìš”ì²­ì„ ì·¨ì†Œí•˜ëŠ” ë©”ì„œë“œ ì¶”ê°€
-    private void OnInteractionEndRequested()
-    {
-        CancelRequestedInteraction();
     }
 
     public void TickInteraction(float deltaTime)
@@ -408,15 +350,14 @@ public class PlayerInteractionController : NetworkBehaviour
         ulong requestId = _activeRequestId;
         InteractableObject target = _requestedTarget;
         bool wasStarted = _localInteractionStarted;
-        bool usesServerReservation = _usesServerReservation;
 
-        // ëŠ¦ê²Œ ì˜¤ëŠ” ìŠ¹ì¸ ì‘ë‹µì´ ì§„í–‰ì„ ì‹œì‘í•˜ì§€ ì•Šë„ë¡ ë¨¼ì € ì •ë¦¬
+        // ´Ê°Ô ¿À´Â ½ÂÀÎ ÀÀ´äÀÌ ÁøÇàÀ» ½ÃÀÛÇÏÁö ¾Êµµ·Ï ¸ÕÀú Á¤¸®
         ClearLocalRequest();
 
         if (wasStarted && target != null)
             target.CancelInteraction();
 
-        if (usesServerReservation &&IsSpawned && IsOwner)
+        if (IsSpawned && IsOwner)
             RequestCancelServerRpc(requestId);
 
         ReleaseTarget();
@@ -424,13 +365,9 @@ public class PlayerInteractionController : NetworkBehaviour
 
     private void ClearLocalRequest()
     {
-        // ìƒí˜¸ì‘ìš© ì¢…ë£Œ ì´ë²¤íŠ¸ êµ¬ë… í•´ì œ
         if (_requestedTarget != null)
-        {
-            _requestedTarget.InteractionEndRequested -= OnInteractionEndRequested;
-        }
+            _requestedTarget.Completed -= CompleteRequestedInteraction;
 
-        _usesServerReservation = false;
         _hasLocalRequest = false;
         _localInteractionStarted = false;
         _requestedTarget = null;
@@ -464,7 +401,7 @@ public class PlayerInteractionController : NetworkBehaviour
         _serverTarget = null;
         _serverRequestId = 0;
 
-        // ì—¬ê¸°ì„œëŠ” RPCë¥¼ ë³´ë‚´ì§€ ì•Šê³  ë¡œì»¬ í‘œì‹œë§Œ ì •ë¦¬
+        // ¿©±â¼­´Â RPC¸¦ º¸³»Áö ¾Ê°í ·ÎÄÃ Ç¥½Ã¸¸ Á¤¸®
         InteractableObject target = _requestedTarget;
         bool wasStarted = _localInteractionStarted;
 
@@ -493,7 +430,7 @@ public class PlayerInteractionController : NetworkBehaviour
             targetObject.IsSpawned &&
             targetObject.TryGetComponent(out InteractionNetwork target))
         {
-            // ì´ í”Œë ˆì´ì–´ì—ê²Œ ì´ë¯¸ ì§„í–‰ ì¤‘ì¸ ë‹¤ë¥¸ ìš”ì²­ì´ ìˆëŠ”ì§€ í™•ì¸
+            // ÀÌ ÇÃ·¹ÀÌ¾î¿¡°Ô ÀÌ¹Ì ÁøÇà ÁßÀÎ ´Ù¸¥ ¿äÃ»ÀÌ ÀÖ´ÂÁö È®ÀÎ
             if (_serverTarget == null)
             {
                 approved = target.TryBeginOnServer(senderId, requestId);
@@ -525,40 +462,6 @@ public class PlayerInteractionController : NetworkBehaviour
             clientRpcParams);
     }
 
-    private void CompleteRequestedInteraction()
-    {
-        if (!IsSpawned || !IsOwner ||
-            !_hasLocalRequest || !_localInteractionStarted)
-            return;
-
-        ulong requestId = _activeRequestId;
-
-        ClearLocalRequest();
-
-        RequestCompleteServerRpc(requestId);
-
-        ReleaseTarget();
-    }
-
-    [ServerRpc]
-    private void RequestCompleteServerRpc(
-    ulong requestId,
-    ServerRpcParams rpcParams = default)
-    {
-        if (_serverTarget == null || _serverRequestId != requestId)
-            return;
-
-        bool completed = _serverTarget.CompleteInteraction(
-            rpcParams.Receive.SenderClientId,
-            requestId);
-
-        if (!completed)
-            return;
-
-        _serverTarget = null;
-        _serverRequestId = 0;
-    }
-
     [ServerRpc]
     private void RequestCancelServerRpc(ulong requestId, ServerRpcParams rpcParams = default)
     {
@@ -585,7 +488,7 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        // ì´ë¯¸ ì·¨ì†Œí–ˆê±°ë‚˜ ë‹¤ë¥¸ ìš”ì²­ìœ¼ë¡œ ë„˜ì–´ê°„ ê²½ìš°
+        // ÀÌ¹Ì Ãë¼ÒÇß°Å³ª ´Ù¸¥ ¿äÃ»À¸·Î ³Ñ¾î°£ °æ¿ì
         if (!_hasLocalRequest || _activeRequestId != requestId)
         {
             if (approved)
@@ -603,18 +506,55 @@ public class PlayerInteractionController : NetworkBehaviour
             return;
         }
 
-        // ì¤‘ë³µ ìŠ¹ì¸ìœ¼ë¡œ ì§„í–‰ë¥ ì„ ë‹¤ì‹œ ì´ˆê¸°í™”í•˜ì§€ ì•ŠëŠ”ë‹¤.
+        // Áßº¹ ½ÂÀÎÀ¸·Î ÁøÇà·üÀ» ´Ù½Ã ÃÊ±âÈ­ÇÏÁö ¾Ê´Â´Ù.
         if (_localInteractionStarted)
             return;
 
         if (_requestedTarget == null ||
-            LockedTarget != _requestedTarget)
+            LockedTarget != _requestedTarget ||
+            !BeginLockedInteraction())
         {
             CancelRequestedInteraction();
             InteractionStartResolved?.Invoke(false);
             return;
         }
 
-        StartCurrentInteraction(requestId);
+        _localInteractionStarted = true;
+        InteractionStartResolved?.Invoke(true);
+    }
+
+    private void CompleteRequestedInteraction()
+    {
+        if (!IsSpawned || !IsOwner ||
+            !_hasLocalRequest || !_localInteractionStarted)
+            return;
+
+        ulong requestId = _activeRequestId;
+
+        // ¿Ï·á ÈÄ ÀÔ·Â ÇØÁ¦°¡ Ãë¼Ò ¿äÃ»À» º¸³»Áö ¾Êµµ·Ï Á¤¸®
+        ClearLocalRequest();
+
+        RequestCompleteServerRpc(requestId);
+
+        ReleaseTarget();
+    }
+
+    [ServerRpc]
+    private void RequestCompleteServerRpc(
+    ulong requestId,
+    ServerRpcParams rpcParams = default)
+    {
+        if (_serverTarget == null || _serverRequestId != requestId)
+            return;
+
+        bool completed = _serverTarget.CompleteInteraction(
+            rpcParams.Receive.SenderClientId,
+            requestId);
+
+        if (!completed)
+            return;
+
+        _serverTarget = null;
+        _serverRequestId = 0;
     }
 }

@@ -50,16 +50,6 @@ public class CraftingSlotUI : UIBase
 
     private void OnPropertyChanged_View(object sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(CraftingSlotViewModel.ItemDataId))
-        {
-            return;
-        }
-
-        if (_slotVM == null)
-        {
-            return;
-        }
-
         var itemData = DataManager.Inst.GetData<ItemData>(_slotVM.ItemDataId);
 
         if (Text_ItemName != null)
@@ -67,20 +57,7 @@ public class CraftingSlotUI : UIBase
             Text_ItemName.text = itemData != null ? itemData.Name : "";
         }
 
-        if (Image_ItemIcon != null)
-        {
-            Image_ItemIcon.sprite = null;
-        }
-
-        if (itemData == null)
-        {
-            return;
-        }
-
-        if (!string.IsNullOrEmpty(itemData.IconPath))
-        {
-            LoadItemIconAsync(itemData.IconPath).Forget();
-        }
+        LoadItemIconAsync(itemData.IconPath).Forget();
     }
 
     private async UniTaskVoid LoadItemIconAsync(string iconPath)
