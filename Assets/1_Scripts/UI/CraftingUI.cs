@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
 using TMPro;
-using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class CraftingUI : UIBase
 {
@@ -21,10 +21,12 @@ public class CraftingUI : UIBase
     [SerializeField] private Button Button_Close;
     [SerializeField] private Button Button_BackClose;
 
+
     private readonly List<CraftingSlotUI> _recipeSlots = new List<CraftingSlotUI>();
     private readonly List<CraftingRequiredItemSlotUI> _requiredItemSlots = new List<CraftingRequiredItemSlotUI>();
 
     private CraftingViewModel _craftingVM;
+    public event Action CloseRequested;
 
     private void Awake()
     {
@@ -194,7 +196,7 @@ public class CraftingUI : UIBase
 
     public void OnClickClose()
     {
-        //UIManager.Inst.Close();
+        CloseRequested?.Invoke();
     }
 
 
