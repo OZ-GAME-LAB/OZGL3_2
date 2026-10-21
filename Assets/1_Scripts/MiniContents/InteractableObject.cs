@@ -18,7 +18,9 @@ public abstract class InteractableObject : MonoBehaviour
     protected UIBase _openUI;
     private InteractionNetwork _interactionNetwork;
     public abstract InteractionVMBase ViewModel { get; }
-    
+
+    public event Action Completed;
+
     public event Action InteractionEndRequested; //상호작용 종료 이벤트 추가
     public virtual bool RequiresServerReservation => true; //점유가 필요한 상호작용인지 여부를 나타내는 프로퍼티
 
@@ -62,6 +64,8 @@ public abstract class InteractableObject : MonoBehaviour
         HandleAvailabilityChanged(false);
         HideInteractionInfo();
     }
+
+    public abstract UniTask InitObject(string id);
 
     public void PlayerInteract(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/)
     {
@@ -111,6 +115,11 @@ public abstract class InteractableObject : MonoBehaviour
 
         UIManager.Inst.Close(UIType.InteractableInfoUI);
         _infoUI = null;
+    }
+
+    protected void NotifyCompleted()
+    {
+        Completed?.Invoke();
     }
 
     protected virtual void PlayContent(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/) { }
