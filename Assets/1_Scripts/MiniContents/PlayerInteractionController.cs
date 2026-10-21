@@ -1,4 +1,4 @@
-﻿using System;
+癤using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,7 +7,7 @@ public class PlayerInteractionController : NetworkBehaviour
 {
     [SerializeField] private Transform _distanceOrigin;
 
-    // Inspector에서 위 → 아래 → 오른쪽 → 왼쪽 순서로 연결
+    // Inspector     ㅻⅨ履  쇱そ 濡 곌껐
     [SerializeField] private Transform[] _uiAnchors = new Transform[4];
 
     private Camera _playerCamera;
@@ -44,11 +44,11 @@ public class PlayerInteractionController : NetworkBehaviour
 
     public event Action<InteractableObject> SelectionChanged;
 
-    // 입력 담당자가 이 이벤트를 받아 진행 중인 상호작용을 취소한다.
+    // � 대뱀媛  대깽몃� 諛 吏 以 몄⑹ 痍⑥.
     public event Action<InteractableObject> LockedTargetLost;
 
-    // 본인 플레이어 여부와 실제 사용할 카메라를 전달한다.
-    // 플레이어 네트워크 초기화 후 호출 함수
+    // 蹂몄 �댁 щ ㅼ ъ⑺ 移대쇰� �ы.
+    // �댁 ㅽ몄 珥湲고  몄 ⑥
     public void Initialize(bool isLocalPlayer, Camera playerCamera)
     {
         _isLocalPlayer = false;
@@ -62,7 +62,7 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!HasValidUIReferences())
         {
             Debug.LogError(
-                "플레이어 카메라와 상·하·우·좌 Anchor를 연결해 주세요.", this);
+                "�댁 移대쇱 쨌쨌걔룹 Anchor瑜 곌껐 二쇱몄.", this);
             return;
         }
 
@@ -92,7 +92,7 @@ public class PlayerInteractionController : NetworkBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        // 초기화 전에 이미 범위 안에 있던 대상도 등록한다.
+        // 珥湲고 � 대� 踰    깅.
         RegisterContact(other);
     }
 
@@ -135,7 +135,7 @@ public class PlayerInteractionController : NetworkBehaviour
             InteractableObject lostTarget = _lockedTarget;
             _lockedTarget = null;
 
-            // 기존 대상의 취소가 새 안내 표시보다 먼저 이뤄지도록 한다.
+            // 湲곗〈  痍⑥媛   蹂대 癒쇱 대吏濡 .
             LockedTargetLost?.Invoke(lostTarget);
         }
 
@@ -229,8 +229,8 @@ public class PlayerInteractionController : NetworkBehaviour
         }
     }
 
-    // F를 누른 순간 호출한다.
-    // 선택을 고정할 뿐, 서버 선점 승인은 아니다.
+    // F瑜 瑜 媛 몄.
+    //  怨� 肉, 踰 � 뱀몄 .
     public bool TryLockSelectedTarget(out InteractableObject target)
     {
         target = null;
@@ -257,7 +257,7 @@ public class PlayerInteractionController : NetworkBehaviour
         return true;
     }
 
-    // 서버가 시작을 승인한 뒤, 입력 담당자가 호출한다.
+    // 踰媛  뱀명 , � 대뱀媛 몄.
     public bool BeginLockedInteraction()
     {
         if (!_isLocalPlayer ||
@@ -272,11 +272,14 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!_candidates.Contains(_lockedTarget))
             return false;
 
+        _lockedTarget.Completed -= CompleteRequestedInteraction;
+        _lockedTarget.Completed += CompleteRequestedInteraction;
+
         _lockedTarget.BeginInteraction(_uiAnchors, _playerCamera);
         return true;
     }
 
-    // 취소·완료·서버 거절 처리가 끝난 후 호출한다.
+    // 痍⑥쨌猷쨌踰 嫄곗 泥由ш   몄.
     public void ReleaseTarget()
     {
         _lockedTarget = null;
@@ -336,7 +339,7 @@ public class PlayerInteractionController : NetworkBehaviour
 
         _usesServerReservation = target.RequiresServerReservation;
 
-        //상호작용 종료 이벤트 구독
+        //몄 醫猷 대깽 援щ
         target.InteractionEndRequested += OnInteractionEndRequested;
 
         if (!_usesServerReservation)
@@ -349,7 +352,7 @@ public class PlayerInteractionController : NetworkBehaviour
         return true;
     }
 
-    //공통 시작 함수 추가
+    //怨듯  ⑥ 異媛
     private bool StartCurrentInteraction(ulong requestId)
     {
         if ((_hasLocalRequest == false) || (_activeRequestId != requestId))
@@ -357,13 +360,13 @@ public class PlayerInteractionController : NetworkBehaviour
             return false;
         }
 
-        // BeginInteraction 내부에서 즉시 종료 이벤트가 발생하더라도
-        // CancelInteraction까지 실행될 수 있도록 먼저 설정
+        // BeginInteraction 대 利 醫猷 대깽멸 諛쇰
+        // CancelInteraction源吏 ㅽ  濡 癒쇱 ㅼ
         _localInteractionStarted = true;
 
         bool started = BeginLockedInteraction();
 
-        // 실행 도중 실패·취소 이벤트로 요청이 종료된 경우
+        // ㅽ 以 ㅽ㉱룹랬 대깽몃 泥� 醫猷 寃쎌
         if ((_hasLocalRequest == false) || (_activeRequestId != requestId))
         {
             InteractionStartResolved?.Invoke(false);
@@ -381,7 +384,7 @@ public class PlayerInteractionController : NetworkBehaviour
         return true;
     }
 
-    // 상호작용 종료 이벤트가 발생하면 요청을 취소하는 메서드 추가
+    // 몄 醫猷 대깽멸 諛硫 泥� 痍⑥ 硫 異媛
     private void OnInteractionEndRequested()
     {
         CancelRequestedInteraction();
@@ -410,7 +413,7 @@ public class PlayerInteractionController : NetworkBehaviour
         bool wasStarted = _localInteractionStarted;
         bool usesServerReservation = _usesServerReservation;
 
-        // 늦게 오는 승인 응답이 진행을 시작하지 않도록 먼저 정리
+        // � ㅻ 뱀 듭 吏 吏 濡 癒쇱 �由
         ClearLocalRequest();
 
         if (wasStarted && target != null)
@@ -424,7 +427,7 @@ public class PlayerInteractionController : NetworkBehaviour
 
     private void ClearLocalRequest()
     {
-        // 상호작용 종료 이벤트 구독 해제
+        // 몄 醫猷 대깽 援щ 댁
         if (_requestedTarget != null)
         {
             _requestedTarget.InteractionEndRequested -= OnInteractionEndRequested;
@@ -464,7 +467,7 @@ public class PlayerInteractionController : NetworkBehaviour
         _serverTarget = null;
         _serverRequestId = 0;
 
-        // 여기서는 RPC를 보내지 않고 로컬 표시만 정리
+        // ш린 RPC瑜 蹂대댁 怨 濡而 留 �由
         InteractableObject target = _requestedTarget;
         bool wasStarted = _localInteractionStarted;
 
@@ -493,7 +496,7 @@ public class PlayerInteractionController : NetworkBehaviour
             targetObject.IsSpawned &&
             targetObject.TryGetComponent(out InteractionNetwork target))
         {
-            // 이 플레이어에게 이미 진행 중인 다른 요청이 있는지 확인
+            //  �댁댁寃 대� 吏 以 ㅻⅨ 泥� 吏 
             if (_serverTarget == null)
             {
                 approved = target.TryBeginOnServer(senderId, requestId);
@@ -551,7 +554,7 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        // 이미 취소했거나 다른 요청으로 넘어간 경우
+        // 대� 痍⑥嫄곕 ㅻⅨ 泥�쇰 닿 寃쎌
         if (!_hasLocalRequest || _activeRequestId != requestId)
         {
             if (approved)
@@ -569,7 +572,7 @@ public class PlayerInteractionController : NetworkBehaviour
             return;
         }
 
-        // 중복 승인으로 진행률을 다시 초기화하지 않는다.
+        // 以蹂 뱀몄쇰 吏瑜 ㅼ 珥湲고吏 .
         if (_localInteractionStarted)
             return;
 
@@ -582,5 +585,40 @@ public class PlayerInteractionController : NetworkBehaviour
         }
 
         StartCurrentInteraction(requestId);
+    }
+
+    private void CompleteRequestedInteraction()
+    {
+        if (!IsSpawned || !IsOwner ||
+            !_hasLocalRequest || !_localInteractionStarted)
+            return;
+
+        ulong requestId = _activeRequestId;
+
+        // 완료 후 입력 해제가 취소 요청을 보내지 않도록 정리
+        ClearLocalRequest();
+
+        RequestCompleteServerRpc(requestId);
+
+        ReleaseTarget();
+    }
+
+    [ServerRpc]
+    private void RequestCompleteServerRpc(
+    ulong requestId,
+    ServerRpcParams rpcParams = default)
+    {
+        if (_serverTarget == null || _serverRequestId != requestId)
+            return;
+
+        bool completed = _serverTarget.CompleteInteraction(
+            rpcParams.Receive.SenderClientId,
+            requestId);
+
+        if (!completed)
+            return;
+
+        _serverTarget = null;
+        _serverRequestId = 0;
     }
 }

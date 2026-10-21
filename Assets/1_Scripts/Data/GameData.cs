@@ -109,7 +109,28 @@ public class CraftingRecipeData : GameDataBase
 [System.Serializable]
 public class ItemModel
 {
-    public string InstanceId;      
-    public string ItemId;          
-    public int CurrentStackCount;  
+    public string InstanceId;
+    public string ItemId;
+    public int CurrentStackCount;
+}
+
+[Serializable]
+public class FieldObjectData : GameDataBase
+{
+    public string Name;
+    public string Description;
+    public string InteractionType;
+    public string RequiredToolAction;
+    public int Tier;
+    public string DropGroupId;
+    public string PrefabPath;
+}
+
+[Serializable]
+public class DropGroupData : GameDataBase
+{
+    public string[] ItemId;
+    public int MinQuantity;
+    public int MaxQuantity;
+    public float DropChance;
 }

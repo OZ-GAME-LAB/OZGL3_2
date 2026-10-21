@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+癤using Cysharp.Threading.Tasks;
 using System;
 using Unity.Netcode;
 using UnityEngine;
@@ -19,8 +19,10 @@ public abstract class InteractableObject : MonoBehaviour
     private InteractionNetwork _interactionNetwork;
     public abstract InteractionVMBase ViewModel { get; }
     
-    public event Action InteractionEndRequested; //상호작용 종료 이벤트 추가
-    public virtual bool RequiresServerReservation => true; //점유가 필요한 상호작용인지 여부를 나타내는 프로퍼티
+    public event Action InteractionEndRequested; //몄 醫猷 대깽 異媛
+    public virtual bool RequiresServerReservation => true; //�媛  몄⑹몄 щ瑜 대 濡쇳
+
+    public event Action Completed;
 
     protected virtual void Awake()
     {
@@ -28,7 +30,7 @@ public abstract class InteractableObject : MonoBehaviour
 
         if (RequiresServerReservation && _interactionNetwork == null)
         {
-            Debug.LogError($"{name}: InteractionNetwork 컴포넌트가 필요합니다.", this);
+            Debug.LogError($"{name}: InteractionNetwork 而댄щ멸 ⑸.", this);
         }
     }
 
@@ -36,7 +38,7 @@ public abstract class InteractableObject : MonoBehaviour
     {
         if (RequiresServerReservation == false)
         {
-            // 지금 제작대는 활성 상태라면 로컬 UI를 열 수 있음
+            // 吏湲 �  쇰㈃ 濡而 UI瑜   
             HandleAvailabilityChanged(true);
             return;
         }
@@ -63,9 +65,11 @@ public abstract class InteractableObject : MonoBehaviour
         HideInteractionInfo();
     }
 
+    public abstract UniTask InitObject(string id);
+
     public void PlayerInteract(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/)
     {
-        PlayContent(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/);
+        PlayContent(/*λ  寃ы   λ ID(string ) 留ㅺ蹂 異媛*/);
     }
 
     private void HandleAvailabilityChanged(bool isAvailable)
@@ -87,7 +91,7 @@ public abstract class InteractableObject : MonoBehaviour
 
         if (ui is not InteractableInfoUI infoUI)
         {
-            Debug.LogError("프리팹에 InteractableInfoUI 컴포넌트가 필요합니다.");
+            Debug.LogError("由ы뱀 InteractableInfoUI 而댄щ멸 ⑸.");
             return;
         }
 
@@ -100,7 +104,7 @@ public abstract class InteractableObject : MonoBehaviour
         }
         else
         {
-            Debug.LogError("안내 UI에 InteractionUIPositioner가 필요합니다.");
+            Debug.LogError(" UI InteractionUIPositioner媛 ⑸.");
         }
     }
 
@@ -113,14 +117,14 @@ public abstract class InteractableObject : MonoBehaviour
         _infoUI = null;
     }
 
-    protected virtual void PlayContent(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/) { }
+    protected virtual void PlayContent(/*λ  寃ы   λ ID(string ) 留ㅺ蹂 異媛*/) { }
     public virtual void CloseContent() { }
     public virtual void BeginInteraction() { }
     public virtual void UpdateInteraction(float deltaTime) { }
     public virtual void CancelInteraction() { }
     public virtual void BeginInteraction(Transform[] playerUIAnchor, Camera playerCamera) { }
 
-    // 상호작용 종료 요청 이벤트를 호출 메서드 추가
+    // 몄 醫猷 泥 대깽몃� 몄 硫 異媛
     protected void RequestInteractionEnd()
     {
         InteractionEndRequested?.Invoke();
