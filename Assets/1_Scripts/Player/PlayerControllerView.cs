@@ -32,7 +32,9 @@ public class PlayerControllerView : MonoBehaviour
     private bool _isGrounded;
     private bool _lookRight = true;
 
-
+    // 상호작용 컨트롤러 추가
+    [SerializeField]
+    private PlayerInteractionController _interactionController;
 
     void Awake()
     {
@@ -138,6 +140,14 @@ public class PlayerControllerView : MonoBehaviour
     private void OnFieldInteract(InputAction.CallbackContext context)
     {
         Debug.Log($"{nameof(OnFieldInteract)} 실행");
+
+        //상호작용 컨트롤러 호출 함수 추가
+        if (_interactionController == null)
+        {
+            return;
+        }
+
+        _interactionController.TryRequestInteraction();
     }
 
     private void OnAttack(InputAction.CallbackContext context)
