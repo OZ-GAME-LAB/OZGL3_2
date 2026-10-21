@@ -28,10 +28,23 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        Instantiate(_workspacePrefab_1);
+        if (WorldManager.Inst == null)
+        {
+            Debug.LogWarning("게임 시작 전에 활성 WorldManager가 씬에 있어야 합니다.", this);
+            return;
+        }
+
+        if (!WorldManager.Inst.Initialize())
+            return;
+
+        GameObject playerWorkspace = Instantiate(_workspacePrefab_1);
+        PlayerControllerView player = playerWorkspace.GetComponentInChildren<PlayerControllerView>();
         Instantiate(_workspacePrefab_2);
         Instantiate(_workspacePrefab_3);
         Instantiate(_workspacePrefab_4);
+
+        // 맵의 EntryPoint 등록이 끝난 뒤 기존 플레이어를 배치합니다.
+        WorldManager.Inst.PlacePlayerAtStart(player);
 
 
     }

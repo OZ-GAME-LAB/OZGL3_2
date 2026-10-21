@@ -189,6 +189,29 @@ public class PlayerControllerView : MonoBehaviour
 
 
 
+    public bool PlaceAtPosition(Vector3 footPosition, bool faceRight)
+    {
+        if (_rigidbody2D == null || _groundCheck == null)
+        {
+            Debug.LogWarning("플레이어 배치에 Rigidbody2D와 Ground Check가 필요합니다.", this);
+            return false;
+        }
+
+        _lookRight = transform.localScale.x >= 0f;
+        if (_lookRight != faceRight)
+            Flip();
+
+        Vector3 targetPosition = transform.position + footPosition - _groundCheck.position;
+        targetPosition.z = footPosition.z;
+
+        _rigidbody2D.linearVelocity = Vector2.zero;
+        _rigidbody2D.angularVelocity = 0f;
+        _rigidbody2D.position = new Vector2(targetPosition.x, targetPosition.y);
+        transform.position = targetPosition;
+        _isGrounded = false;
+        return true;
+    }
+
     void Flip()
     {
         _lookRight = !_lookRight;
