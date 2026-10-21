@@ -55,9 +55,27 @@ public class CraftingRequiredItemSlotUI : UIBase
 
     private void RefreshItemInfo()
     {
+        if (_slotVM == null)
+        {
+            return;
+        }
+
         var itemData = DataManager.Inst.GetData<ItemData>(_slotVM.ItemDataId);
 
-        LoadItemIconAsync(itemData.IconPath).Forget();
+        if (Image_ItemIcon != null)
+        {
+            Image_ItemIcon.sprite = null;
+        }
+
+        if (itemData == null)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(itemData.IconPath))
+        {
+            LoadItemIconAsync(itemData.IconPath).Forget();
+        }
     }
 
     private async UniTaskVoid LoadItemIconAsync(string iconPath)
