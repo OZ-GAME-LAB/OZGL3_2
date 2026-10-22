@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5970152836181165736}
   - component: {fileID: 1030046886869066953}
   - component: {fileID: 3060230488291063627}
+  - component: {fileID: 348393768622283212}
   m_Layer: 0
   m_Name: MonsterPrefab
   m_TagString: Untagged
@@ -58,6 +59,15 @@ MonoBehaviour:
     m_Bits: 0
   _groundCheckRadius: 0.1
   _jumpForce: 5
+  _monsterSight: {fileID: 348393768622283212}
+  _eyePosition: {fileID: 0}
+  _sightBlockLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  _playerLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  _sightCheckInterval: 0.2
 --- !u!114 &8534273275122144071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -70,7 +80,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 249903823
+  GlobalObjectIdHash: 2744916636
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -206,3 +216,39 @@ MonoBehaviour:
           m_Value1: 0
         Name: Self
         m_Value: {fileID: 8915283594457576700}
+--- !u!58 &348393768622283212
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8915283594457576700}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 2.3068194, y: -0.027904987}
+  m_Radius: 2.555674

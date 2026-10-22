@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Monster : MonoBehaviour
@@ -10,6 +11,15 @@ public class Monster : MonoBehaviour
     [SerializeField] private float _groundCheckRadius = 0.1f;
     [SerializeField] private float _jumpForce = 5f;
 
+    [SerializeField] private Collider2D _monsterSight;
+    [SerializeField] private Transform _eyePosition;
+    [SerializeField] private LayerMask _sightBlockLayer;
+    [SerializeField] private LayerMask _playerLayer;
+    [SerializeField, Min(0.01f)] private float _sightCheckInterval = 0.2f;
+    private readonly HashSet<Collider2D> _playerCandidates = new();
+    private float _sightCheckTimer;
+    public Collider2D VisibleTarget { get; private set; }
+
     private GameObject[] _patricList;
     private int _patricCurIndexNo = 0;
     private int _patricListCount;
@@ -18,6 +28,67 @@ public class Monster : MonoBehaviour
     private float _moveSpeed = 3f;
     /////////////////////////////////////////////////////
 
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if ((_playerLayer.value & (1 << other.gameObject.layer)) == 0)
+            return;
+
+        if (_monsterSight == null || !_monsterSight.IsTouching(other))
+            return;
+
+        _playerCandidates.Add(other);
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (_monsterSight != null && _monsterSight.IsTouching(other))
+            return;
+
+        _playerCandidates.Remove(other);
+
+        if (VisibleTarget == other)
+            VisibleTarget = null;
+    }
+
+    private void Update()
+    {
+        _sightCheckTimer -= Time.deltaTime;
+
+        if (_sightCheckTimer > 0f)
+            return;
+
+        _sightCheckTimer = _sightCheckInterval;
+        RefreshVisibleTarget();
+    }
+
+    private void RefreshVisibleTarget()
+    {
+        VisibleTarget = null;
+
+        if (_monsterSight == null || !_monsterSight.isActiveAndEnabled || _eyePosition == null)
+            return;
+
+        _playerCandidates.RemoveWhere(candidate =>
+            candidate == null || !candidate.isActiveAndEnabled || !_monsterSight.IsTouching(candidate));
+
+        float nearestDistance = float.PositiveInfinity;
+
+        foreach (Collider2D candidate in _playerCandidates)
+        {
+            Vector3 targetPosition = candidate.bounds.center;
+
+            if (!HasClearSight(targetPosition))
+                continue;
+
+            float distance = ((Vector2)targetPosition - (Vector2)_eyePosition.position).sqrMagnitude;
+
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                VisibleTarget = candidate;
+            }
+        }
+    }
 
     public bool MonsterPatricMoveAndCheck(Vector3 targetPosition)
     {
@@ -68,6 +139,37 @@ public class Monster : MonoBehaviour
 
     public void MonsterChaisingTarget()
     {
+        if (VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
+        {
+            MonsterStopMove();
+            return;
+        }
 
+        MonsterPatricMoveAndCheck(VisibleTarget.bounds.center);
+    }
+
+    public void MonsterStopMove()
+    {
+        Vector2 velocity = _rigidbody2D.linearVelocity;
+        velocity.x = 0f;
+        _rigidbody2D.linearVelocity = velocity;
+    }
+
+    public bool HasClearSight(Vector3 targetPosition)
+    {
+        Vector2 origin = _eyePosition.position;
+        Vector2 direction = (Vector2)targetPosition - origin;
+        float distance = direction.magnitude;
+
+        if (distance <= 0.001f)
+            return true;
+
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin,
+            direction.normalized,
+            distance,
+            _sightBlockLayer);
+
+        return hit.collider == null;
     }
 }
