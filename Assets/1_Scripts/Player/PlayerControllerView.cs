@@ -32,6 +32,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private bool _isGrounded;
     private bool _lookRight = true;
+    private readonly Collider2D[] _groundResults = new Collider2D[16];
 
     // 상호작용 컨트롤러 추가
     [SerializeField]
@@ -125,9 +126,35 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        _isGrounded = Physics2D.OverlapCircle(_groundCheck.position, _checkRadius, _groundLayer);
+        _isGrounded = HasGroundBelowFeet();
         if (_isGrounded)
             _rigidbody2D.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+    }
+
+    private bool HasGroundBelowFeet()
+    {
+        if (_groundCheck == null || _rigidbody2D == null)
+        {
+            Debug.LogWarning("바닥 감지에 Ground Check와 Rigidbody2D가 필요합니다.", this);
+            return false;
+        }
+
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(_groundLayer);
+        filter.useTriggers = false;
+
+        int count = Physics2D.OverlapCircle(
+            _groundCheck.position, _checkRadius, filter, _groundResults);
+
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D hit = _groundResults[i];
+            // 발 위치의 감지 원은 자기 몸과도 겹치므로 같은 Rigidbody는 제외합니다.
+            if (hit != null && hit.attachedRigidbody != _rigidbody2D)
+                return true;
+        }
+
+        return false;
     }
 
     private void OnSpecialAbility(InputAction.CallbackContext context)
