@@ -1,0 +1,20 @@
+[
+  {
+    "Id": "monster_test_01",
+    "Name": "테스트 몬스터",
+    "Description": "테스트 몬스터다",
+    "Hp": 10,
+    "Atk": 10,
+    "PhysicalResistance": 10,
+    "FireResistance": 10,
+    "IceResistance": 10,
+    "ElectricalResistance": 10,
+    "PoisonResistance": 10,
+    "BleedAble": true,
+    "HaveSkillIdList": [
+      "skill"
+    ],
+    "MonsterType": 2,
+    "MonsterAddressableId": "Monster/TestMonsterVisualPrefab"
+  }
+]

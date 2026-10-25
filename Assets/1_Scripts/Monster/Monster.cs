@@ -1,0 +1,224 @@
+using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+
+public class Monster : MonoBehaviour
+{
+    [SerializeField] private Rigidbody2D _rigidbody2D;
+    [SerializeField] private Transform _groundCheck;
+    [SerializeField] private Transform _rightWallCheck;
+    [SerializeField] private Transform _leftWallCheck;
+    [SerializeField] private LayerMask _groundLayer;
+    [SerializeField] private float _groundCheckRadius = 0.1f;
+    [SerializeField] private float _jumpForce = 5f;
+
+    [SerializeField] private Collider2D _monsterSight;
+    [SerializeField] private Transform _eyePosition;
+    [SerializeField] private LayerMask _sightBlockLayer;
+    [SerializeField] private LayerMask _playerLayer;
+    [SerializeField, Min(0.01f)] private float _sightCheckInterval = 0.2f;
+    private readonly HashSet<Collider2D> _playerCandidates = new();
+    private float _sightCheckTimer;
+    public Collider2D VisibleTarget { get; private set; }
+
+    private GameObject[] _patricList;
+    private int _patricCurIndexNo = 0;
+    private int _patricListCount;
+
+    // test 속도 추후 데이터 반영 시 해당 변수 삭제
+    private float _moveSpeed = 3f;
+    /////////////////////////////////////////////////////
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if ((_playerLayer.value & (1 << other.gameObject.layer)) == 0)
+            return;
+
+        if (_monsterSight == null || !_monsterSight.IsTouching(other))
+            return;
+
+        _playerCandidates.Add(other);
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (_monsterSight != null && _monsterSight.IsTouching(other))
+            return;
+
+        _playerCandidates.Remove(other);
+
+        if (VisibleTarget == other)
+            VisibleTarget = null;
+    }
+
+    private void Update()
+    {
+        _sightCheckTimer -= Time.deltaTime;
+
+        if (_sightCheckTimer > 0f)
+            return;
+
+        _sightCheckTimer = _sightCheckInterval;
+        RefreshVisibleTarget();
+    }
+
+    public async UniTask<bool> InitMonsterVisual(string id, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            Debug.LogError("몬스터 ID가 없습니다.");
+            return false;
+        }
+
+        MonsterData data = DataManager.Inst.GetData<MonsterData>(id);
+
+        if (data == null || string.IsNullOrWhiteSpace(data.MonsterAddressableId))
+        {
+            Debug.LogError($"몬스터 데이터 또는 외형 주소가 없습니다: {id}");
+            return false;
+        }
+
+        GameObject visualPrefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.MonsterAddressableId);
+
+        if (visualPrefab == null)
+            return false;
+
+        GameObject visualObject = Instantiate(visualPrefab, transform, false);
+
+        visualObject.transform.localPosition = Vector3.zero;
+
+        if (!visualObject.TryGetComponent<MonsterVisual>(out var visual) || !visual.CheckMonsterVisualReady())
+        {
+            Debug.LogError($"MonsterVisual의 참조가 준비되지 않았습니다: {id}");
+            Destroy(visualObject);
+            return false;
+        }
+
+        _groundCheck = visual.GroundCheckReturn();
+        _rightWallCheck = visual.RightCheckReturn();
+        _leftWallCheck = visual.LeftCheckReturn();
+        _eyePosition = visual.EyePositionReturn();
+
+        return true;
+    }
+
+    public void InitPatrolArea(GameObject[] patrolSpots)
+    {
+        _patricList = patrolSpots;
+        _patricListCount = patrolSpots.Length;
+        _patricCurIndexNo = 0;
+    }
+
+    private void RefreshVisibleTarget()
+    {
+        VisibleTarget = null;
+
+        if (_monsterSight == null || !_monsterSight.isActiveAndEnabled || _eyePosition == null)
+            return;
+
+        _playerCandidates.RemoveWhere(candidate =>
+            candidate == null || !candidate.isActiveAndEnabled || !_monsterSight.IsTouching(candidate));
+
+        float nearestDistance = float.PositiveInfinity;
+
+        foreach (Collider2D candidate in _playerCandidates)
+        {
+            Vector3 targetPosition = candidate.bounds.center;
+
+            if (!HasClearSight(targetPosition))
+                continue;
+
+            float distance = ((Vector2)targetPosition - (Vector2)_eyePosition.position).sqrMagnitude;
+
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                VisibleTarget = candidate;
+            }
+        }
+    }
+
+    public bool MonsterPatricMoveAndCheck(Vector3 targetPosition)
+    {
+        // TODO : 몬스터 애니메이션 연결 부분 필요(이동 애니메이션 관련 메서드 호출)
+
+        float distanceX = targetPosition.x - _rigidbody2D.position.x;
+        Vector2 velocity = _rigidbody2D.linearVelocity;
+
+        if (Mathf.Abs(distanceX) <= 0.05f)
+        {
+            velocity.x = 0f;
+            _rigidbody2D.linearVelocity = velocity;
+            return true;
+        }
+
+        velocity.x = Mathf.Clamp(distanceX / Time.fixedDeltaTime, -_moveSpeed, _moveSpeed);
+
+        _rigidbody2D.linearVelocity = velocity;
+        return false;
+    }
+
+    public void MonsterJump()
+    {
+        bool isGrounded = Physics2D.OverlapCircle(
+        _groundCheck.position,
+        _groundCheckRadius,
+        _groundLayer) != null;
+
+        if (!isGrounded || _rigidbody2D.linearVelocity.y > 0f)
+            return;
+
+        _rigidbody2D.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+    }
+
+    public Vector3 MonsterPatricPositionSelect()
+    {
+        if (_patricCurIndexNo >= _patricListCount)
+        {
+            _patricCurIndexNo = 0;
+        }
+
+        Vector3 target = _patricList[_patricCurIndexNo].transform.position;
+
+        _patricCurIndexNo++;
+
+        return target;
+    }
+
+    public void MonsterChaisingTarget()
+    {
+        if (VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
+        {
+            MonsterStopMove();
+            return;
+        }
+
+        MonsterPatricMoveAndCheck(VisibleTarget.bounds.center);
+    }
+
+    public void MonsterStopMove()
+    {
+        Vector2 velocity = _rigidbody2D.linearVelocity;
+        velocity.x = 0f;
+        _rigidbody2D.linearVelocity = velocity;
+    }
+
+    public bool HasClearSight(Vector3 targetPosition)
+    {
+        Vector2 origin = _eyePosition.position;
+        Vector2 direction = (Vector2)targetPosition - origin;
+        float distance = direction.magnitude;
+
+        if (distance <= 0.001f)
+            return true;
+
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin,
+            direction.normalized,
+            distance,
+            _sightBlockLayer);
+
+        return hit.collider == null;
+    }
+}
