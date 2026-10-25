@@ -9,8 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1873626177770047577}
-  - component: {fileID: 6866738638208545897}
   - component: {fileID: 8534273275122144071}
+  - component: {fileID: 6866738638208545897}
+  - component: {fileID: 1328585857165022926}
   - component: {fileID: 4681559543658816531}
   - component: {fileID: 5970152836181165736}
   - component: {fileID: 1030046886869066953}
@@ -38,36 +39,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6866738638208545897
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8915283594457576700}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e69bc87d90c690543ae3842e90d7b753, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Monster
-  _rigidbody2D: {fileID: 0}
-  _groundCheck: {fileID: 0}
-  _rightWallCheck: {fileID: 0}
-  _leftWallCheck: {fileID: 0}
-  _groundLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  _groundCheckRadius: 0.1
-  _jumpForce: 5
-  _monsterSight: {fileID: 348393768622283212}
-  _eyePosition: {fileID: 0}
-  _sightBlockLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  _playerLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  _sightCheckInterval: 0.2
 --- !u!114 &8534273275122144071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -95,6 +66,49 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &6866738638208545897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8915283594457576700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e69bc87d90c690543ae3842e90d7b753, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Monster
+  _rigidbody2D: {fileID: 5970152836181165736}
+  _groundCheck: {fileID: 0}
+  _rightWallCheck: {fileID: 0}
+  _leftWallCheck: {fileID: 0}
+  _groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  _groundCheckRadius: 0.1
+  _jumpForce: 5
+  _monsterSight: {fileID: 348393768622283212}
+  _eyePosition: {fileID: 0}
+  _sightBlockLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  _playerLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  _sightCheckInterval: 0.2
+--- !u!114 &1328585857165022926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8915283594457576700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 273243985194c4745abafbfbf71667c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterNetwork
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &4681559543658816531
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class Monster : MonoBehaviour
@@ -59,6 +61,53 @@ public class Monster : MonoBehaviour
 
         _sightCheckTimer = _sightCheckInterval;
         RefreshVisibleTarget();
+    }
+
+    public async UniTask<bool> InitMonsterVisual(string id, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            Debug.LogError("몬스터 ID가 없습니다.");
+            return false;
+        }
+
+        MonsterData data = DataManager.Inst.GetData<MonsterData>(id);
+
+        if (data == null || string.IsNullOrWhiteSpace(data.MonsterAddressableId))
+        {
+            Debug.LogError($"몬스터 데이터 또는 외형 주소가 없습니다: {id}");
+            return false;
+        }
+
+        GameObject visualPrefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.MonsterAddressableId);
+
+        if (visualPrefab == null)
+            return false;
+
+        GameObject visualObject = Instantiate(visualPrefab, transform, false);
+
+        visualObject.transform.localPosition = Vector3.zero;
+
+        if (!visualObject.TryGetComponent<MonsterVisual>(out var visual) || !visual.CheckMonsterVisualReady())
+        {
+            Debug.LogError($"MonsterVisual의 참조가 준비되지 않았습니다: {id}");
+            Destroy(visualObject);
+            return false;
+        }
+
+        _groundCheck = visual.GroundCheckReturn();
+        _rightWallCheck = visual.RightCheckReturn();
+        _leftWallCheck = visual.LeftCheckReturn();
+        _eyePosition = visual.EyePositionReturn();
+
+        return true;
+    }
+
+    public void InitPatrolArea(GameObject[] patrolSpots)
+    {
+        _patricList = patrolSpots;
+        _patricListCount = patrolSpots.Length;
+        _patricCurIndexNo = 0;
     }
 
     private void RefreshVisibleTarget()

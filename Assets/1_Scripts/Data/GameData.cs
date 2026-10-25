@@ -159,18 +159,3 @@ public class MonsterData : GameDataBase
     public MoveType MonsterType;
     public string MonsterAddressableId;
 }
-
-[Serializable]
-public class MonsterPatrolData : GameDataBase
-{
-    public string[] PatrolSpotIdList;
-}
-
-[Serializable]
-public class MonsterPatrolSpotData : GameDataBase
-{
-    public float PositionX;
-    public float PositionY;
-    public float PositionZ;
-    public Vector3 Position => new Vector3(PositionX, PositionY, PositionZ);
-}

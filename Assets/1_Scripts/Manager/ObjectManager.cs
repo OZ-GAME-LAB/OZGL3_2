@@ -1,4 +1,5 @@
-﻿using Unity.Netcode;
+﻿using Cysharp.Threading.Tasks;
+using Unity.Netcode;
 using UnityEngine;
 
 using NetcodeManager = Unity.Netcode.NetworkManager;
@@ -12,6 +13,13 @@ public class ObjectManager : MonoBehaviour
 
     [Header("플레이어 프리팹")]
     [SerializeField] private NetworkObject Prefab_Player;
+
+    [Header("상호작용 오브젝트 프리팹")]
+    [SerializeField] private InteractableObject Prefab_InteractionObject;
+
+    [Header("몬스터 프리팹")]
+    [SerializeField] private Monster Prefab_Monster;
+
 
     private void Awake()
     {
@@ -111,32 +119,81 @@ public class ObjectManager : MonoBehaviour
         target.Despawn(destroy: true);
     }
 
-    public InteractableObject SpawnInteractionObject(
-    InteractableObject prefab,
+    public void SpawnInteractionObject(
     string id,
     Vector3 position,
     Quaternion rotation)
     {
         if (!CanSpawn())
-            return null;
+            return;
 
-        if (prefab == null || string.IsNullOrWhiteSpace(id))
+        if (Prefab_InteractionObject == null || string.IsNullOrWhiteSpace(id))
         {
-            Debug.LogError("상호작용 프리팹 또는 ID가 유효하지 않습니다.");
-            return null;
+            Debug.LogError("상호작용 본체 프리팹 또는 ID가 없습니다.");
+            return;
         }
 
-        if (!prefab.TryGetComponent<NetworkObject>(out _) || !prefab.TryGetComponent<InteractionNetwork>(out _))
+        if (!Prefab_InteractionObject.TryGetComponent<NetworkObject>(out _) || !Prefab_InteractionObject.TryGetComponent<InteractionNetwork>(out _))
         {
-            Debug.LogError("프리팹에 NetworkObject와 InteractionNetwork가 필요합니다.");
-            return null;
+            Debug.LogError( "상호작용 본체에 NetworkObject와 InteractionNetwork가 필요합니다.");
+            return;
         }
 
-        InteractableObject instance = Instantiate(prefab, position, rotation);
+        InteractableObject instance = Instantiate(Prefab_InteractionObject, position, rotation);
 
         instance.GetComponent<InteractionNetwork>().SetObjectId(id);
         instance.GetComponent<NetworkObject>().Spawn();
 
-        return instance;
+        return;
+    }
+
+    public void SpawnMonster(
+    string id,
+    PatrolArea patrolObject,
+    Vector3 spawnPosition)
+    {
+        if (!CanSpawn())
+            return;
+
+        if(Prefab_Monster == null)
+        {
+            Debug.LogError("ObjectManager의 몬스터 프리팹이 할당되지 않음");
+            return;
+        }
+
+
+        if (patrolObject == null || string.IsNullOrWhiteSpace(id) || ResourceManager.Inst == null)
+        {
+            Debug.LogError("몬스터 스폰에 필요한 값이 준비되지 않았습니다.");
+            return;
+        }
+
+        GameObject[] patrolSpots = patrolObject.PatrolSpotList;
+
+        if (patrolSpots == null)
+            return;
+
+        if (!Prefab_Monster.TryGetComponent<NetworkObject>(out _) ||
+        !Prefab_Monster.TryGetComponent<MonsterNetwork>(out _) ||
+        !Prefab_Monster.TryGetComponent<Unity.Behavior.BehaviorGraphAgent>(out _))
+        {
+            Debug.LogError("몬스터 본체에 NetworkObject, MonsterNetwork, BehaviorGraphAgent가 필요합니다.");
+            return;
+        }
+
+        Monster instance = Instantiate(Prefab_Monster, spawnPosition, Quaternion.identity);
+
+        instance.InitPatrolArea(patrolSpots);
+
+        MonsterNetwork monsterNetwork = instance.GetComponent<MonsterNetwork>();
+
+        if (!monsterNetwork.SetMonsterId(id))
+        {
+            Debug.LogError($"몬스터 ID 설정 실패: {id}");
+            Destroy(instance.gameObject);
+            return;
+        }
+
+        instance.GetComponent<NetworkObject>().Spawn();
     }
 }
