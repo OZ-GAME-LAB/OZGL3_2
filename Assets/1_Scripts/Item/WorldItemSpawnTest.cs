@@ -12,7 +12,7 @@ public class WorldItemSpawnTest : MonoBehaviour
     [ContextMenu("테스트/아이템 생성")]
     private void SpawnItem()
     {
-        if (!Application.isPlaying || ObjectManager.Inst == null)
+        if (Application.isPlaying == false || ObjectManager.Inst == null)
         {
             return;
         }
@@ -33,7 +33,7 @@ public class WorldItemSpawnTest : MonoBehaviour
     [ContextMenu("테스트/아이템 제거")]
     private void DespawnItem()
     {
-        if (!Application.isPlaying || ObjectManager.Inst == null)
+        if (Application.isPlaying == false || ObjectManager.Inst == null)
         {
             return;
         }
