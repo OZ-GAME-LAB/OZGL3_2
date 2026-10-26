@@ -19,6 +19,14 @@ public class StageEntryPoint : MonoBehaviour
     public EntryFacingDirection FacingDirection => _facingDirection;
     public bool IsStartSpawnPoint => _isStartSpawnPoint;
 
+    private void Awake()
+    {
+        foreach (SpriteRenderer spriteRenderer in GetComponentsInChildren<SpriteRenderer>(true))
+        {
+            spriteRenderer.enabled = false;
+        }
+    }
+
     private void OnEnable()
     {
         if (WorldManager.Inst == null)
