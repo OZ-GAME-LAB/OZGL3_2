@@ -13,6 +13,7 @@ public class Monster : MonoBehaviour
     [SerializeField] private float _groundCheckRadius = 0.1f;
     [SerializeField] private float _jumpForce = 5f;
 
+    [SerializeField] private Collider2D _monsterCollider;
     [SerializeField] private Collider2D _monsterSight;
     [SerializeField] private Transform _eyePosition;
     [SerializeField] private LayerMask _sightBlockLayer;
@@ -25,6 +26,8 @@ public class Monster : MonoBehaviour
     private GameObject[] _patricList;
     private int _patricCurIndexNo = 0;
     private int _patricListCount;
+
+    public MonsterVM ViewModel { get; } = new MonsterVM();
 
     // test 속도 추후 데이터 반영 시 해당 변수 삭제
     private float _moveSpeed = 3f;
@@ -99,6 +102,7 @@ public class Monster : MonoBehaviour
         _rightWallCheck = visual.RightCheckReturn();
         _leftWallCheck = visual.LeftCheckReturn();
         _eyePosition = visual.EyePositionReturn();
+        _monsterCollider = visual.MonsterColliderReturn();
 
         return true;
     }
