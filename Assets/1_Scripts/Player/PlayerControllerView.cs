@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 
@@ -11,6 +11,20 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField] private PlayerInput _playerInput;
     [SerializeField] private Rigidbody2D _rigidbody2D;
     private float _moveInput;
+
+    [Header("플레이어 애니메이션")]
+    [SerializeField] private Animator _animator;
+    [SerializeField, Min(0f)] private float _idleJumpInputTime = 0.12f;
+    private float _moveInputStartedTime = -1f;
+    private bool _jumpInProgress;
+    private bool _wasGroundedForAnimation = true;
+    private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
+    private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
+    private static readonly int VerticalSpeedHash = Animator.StringToHash("VerticalSpeed");
+    private static readonly int IsIdleJumpHash = Animator.StringToHash("IsIdleJump");
+    private static readonly int RunningJumpHash = Animator.StringToHash("RunningJump");
+    private static readonly int IdleJumpHash = Animator.StringToHash("IdleJump");
+    private readonly ContactPoint2D[] _animationGroundContacts = new ContactPoint2D[16];
     private InputAction _moveAction;
     private InputAction _jumpAction;
     private InputAction _upAction;
@@ -24,6 +38,12 @@ public class PlayerControllerView : MonoBehaviour
     private InputAction _inventoryAction;
     private InputAction _journalAction;
     private InputAction _settingsAction;
+
+    [Header("임시 관전자 모드")]
+    [SerializeField, Min(0f)] private float _spectatorMoveSpeed = 15f;
+    private bool _isSpectatorMode;
+    private bool _wasSimulated;
+    private Unity.Netcode.NetworkObject _networkObject;
 
     [Header("지면 체크 설정")]
     [SerializeField] private Transform _groundCheck;    // 발 밑에 배치할 빈 오브젝트
@@ -40,6 +60,8 @@ public class PlayerControllerView : MonoBehaviour
 
     void Awake()
     {
+        TryGetComponent(out _networkObject);
+
         if (_playerInput == null && !TryGetComponent(out _playerInput))
         {
             Debug.LogError($"{nameof(_playerInput)}이 없습니다.");
@@ -84,7 +106,12 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnDisable()
     {
-        _moveInput = 0f;
+        if (_isSpectatorMode)
+            SetSpectatorMode(false);
+
+        SetMoveInput(0f);
+        ResetJumpAnimation();
+        UpdateMovementAnimation();
 
         _moveAction.performed -= OnMove;
         _moveAction.canceled -= OnMoveCanceled;
@@ -101,8 +128,70 @@ public class PlayerControllerView : MonoBehaviour
     }
 
 
+    private void Update()
+    {
+        // 원격 플레이어까지 같은 키보드 입력으로 움직이지 않도록 제한합니다.
+        if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
+            return;
+
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null || !_playerInput.isActiveAndEnabled || !_playerInput.inputIsActive)
+            return;
+
+        if (keyboard.digit0Key.wasPressedThisFrame || keyboard.numpad0Key.wasPressedThisFrame)
+            SetSpectatorMode(!_isSpectatorMode);
+
+        if (!_isSpectatorMode)
+            return;
+
+        Vector2 direction = Vector2.zero;
+        if (keyboard.wKey.isPressed) direction.y += 1f;
+        if (keyboard.sKey.isPressed) direction.y -= 1f;
+        if (keyboard.aKey.isPressed) direction.x -= 1f;
+        if (keyboard.dKey.isPressed) direction.x += 1f;
+
+        // 물리 시뮬레이션이 꺼져 있으므로 위치를 직접 옮깁니다.
+        transform.position += (Vector3)(direction.normalized * _spectatorMoveSpeed * Time.deltaTime);
+    }
+
+    private void SetSpectatorMode(bool enabled)
+    {
+        if (_isSpectatorMode == enabled)
+            return;
+
+        _isSpectatorMode = enabled;
+        SetMoveInput(0f);
+        ResetJumpAnimation();
+        _isGrounded = false;
+
+        if (_rigidbody2D == null)
+            return;
+
+        _rigidbody2D.linearVelocity = Vector2.zero;
+        _rigidbody2D.angularVelocity = 0f;
+
+        if (enabled)
+        {
+            _wasSimulated = _rigidbody2D.simulated;
+            _rigidbody2D.simulated = false;
+        }
+        else
+        {
+            _rigidbody2D.position = transform.position;
+            _rigidbody2D.simulated = _wasSimulated;
+            SetMoveInput(_moveAction.ReadValue<Vector2>().x);
+        }
+
+        UpdateMovementAnimation();
+    }
+
     private void FixedUpdate()
     {
+        UpdateFallAnimation();
+
+        if (_isSpectatorMode)
+            return;
+
         _rigidbody2D.linearVelocity = new Vector2(
             _moveInput * _moveSpeed,
             _rigidbody2D.linearVelocity.y
@@ -111,7 +200,11 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnMove(InputAction.CallbackContext context)
     {
-        _moveInput = context.ReadValue<Vector2>().x;
+        if (_isSpectatorMode)
+            return;
+
+        SetMoveInput(context.ReadValue<Vector2>().x);
+        UpdateMovementAnimation();
 
         if (_moveInput > 0 && !_lookRight)
             Flip();
@@ -121,14 +214,116 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnMoveCanceled(InputAction.CallbackContext context)
     {
-        _moveInput = 0f;
+        SetMoveInput(0f);
+        UpdateMovementAnimation();
+    }
+
+    private void SetMoveInput(float input)
+    {
+        bool wasMoving = Mathf.Abs(_moveInput) > 0.01f;
+        bool isMoving = Mathf.Abs(input) > 0.01f;
+        if (!isMoving)
+            _moveInputStartedTime = -1f;
+        else if (!wasMoving)
+            _moveInputStartedTime = Time.time;
+        _moveInput = input;
+    }
+
+    private void ResetJumpAnimation()
+    {
+        _jumpInProgress = false;
+        _wasGroundedForAnimation = true;
+        if (_animator == null)
+            return;
+        _animator.ResetTrigger(RunningJumpHash);
+        _animator.ResetTrigger(IdleJumpHash);
+        _animator.SetBool(IsIdleJumpHash, false);
+        _animator.SetBool(IsGroundedHash, true);
+        _animator.SetFloat(VerticalSpeedHash, 0f);
+    }
+
+    private void UpdateMovementAnimation()
+    {
+        if (_animator == null)
+            return;
+
+        // 이동은 기존 물리 처리에 맡기고, 그림의 상태만 전달합니다.
+        _animator.SetBool(IsMovingHash, !_isSpectatorMode && Mathf.Abs(_moveInput) > 0.01f);
+    }
+
+    private void UpdateFallAnimation()
+    {
+        if (_rigidbody2D == null)
+            return;
+        if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
+            return;
+
+        // 관전자 모드에는 물리적인 낙하가 없으므로 지상 상태로 표시합니다.
+        float verticalSpeed = _rigidbody2D.linearVelocity.y;
+        bool grounded = _isSpectatorMode ||
+            (verticalSpeed <= 0.1f && HasGroundContactForAnimation());
+        // 점프 종류는 공중 입력으로 바꾸지 않습니다. 걸어서 떨어질 때만 해제합니다.
+        if (!grounded && _wasGroundedForAnimation && !_jumpInProgress && _animator != null)
+            _animator.SetBool(IsIdleJumpHash, false);
+        if (grounded && !_wasGroundedForAnimation)
+            _jumpInProgress = false;
+        _wasGroundedForAnimation = grounded;
+        if (_animator == null)
+            return;
+        _animator.SetBool(IsGroundedHash, grounded);
+        _animator.SetFloat(VerticalSpeedHash, _isSpectatorMode ? 0f : verticalSpeed);
+    }
+
+    private bool HasGroundContactForAnimation()
+    {
+        if (_groundCheck == null)
+            return false;
+
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(_groundLayer);
+        filter.useTriggers = false;
+        int count = _rigidbody2D.GetContacts(filter, _animationGroundContacts);
+        for (int i = 0; i < count; i++)
+        {
+            ContactPoint2D contact = _animationGroundContacts[i];
+            // 벽이나 발판 옆면은 착지로 보지 않습니다.
+            if (contact.normal.y >= 0.5f &&
+                Mathf.Abs(contact.point.y - _groundCheck.position.y) <= _checkRadius)
+                return true;
+        }
+        return false;
     }
 
     private void OnJump(InputAction.CallbackContext context)
     {
+        if (_isSpectatorMode || _jumpInProgress)
+            return;
+        if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
+            return;
+
         _isGrounded = HasGroundBelowFeet();
-        if (_isGrounded)
-            _rigidbody2D.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+        if (!_isGrounded)
+            return;
+
+        // 같은 프레임에 이동과 점프가 들어와도 현재 입력을 기준으로 판정합니다.
+        SetMoveInput(_moveAction.ReadValue<Vector2>().x);
+        float inputTime = _moveInputStartedTime < 0f ? 0f : Time.time - _moveInputStartedTime;
+        bool idleJump = Mathf.Abs(_moveInput) <= 0.01f || inputTime < _idleJumpInputTime;
+        _jumpInProgress = true;
+        _wasGroundedForAnimation = true;
+        _rigidbody2D.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+        if (_animator != null)
+        {
+            UpdateMovementAnimation();
+            _animator.SetBool(IsIdleJumpHash, idleJump);
+            _animator.SetBool(IsGroundedHash, false);
+            _animator.ResetTrigger(RunningJumpHash);
+            _animator.ResetTrigger(IdleJumpHash);
+            if (idleJump)
+                _animator.SetTrigger(IdleJumpHash);
+            else
+                _animator.SetTrigger(RunningJumpHash);
+        }
     }
 
     private bool HasGroundBelowFeet()
@@ -239,6 +434,7 @@ public class PlayerControllerView : MonoBehaviour
         _rigidbody2D.position = new Vector2(targetPosition.x, targetPosition.y);
         transform.position = targetPosition;
         _isGrounded = false;
+        ResetJumpAnimation();
         return true;
     }
 
