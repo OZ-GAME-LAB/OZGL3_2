@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using NUnit.Framework.Internal.Execution;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -20,6 +21,8 @@ public class ObjectManager : MonoBehaviour
     [Header("몬스터 프리팹")]
     [SerializeField] private Monster Prefab_Monster;
 
+    [Header("필드 드롭 아이템 프리팹")]
+    [SerializeField] private FieldItemObject Prefab_FieldDropItem;
 
     private void Awake()
     {
@@ -195,5 +198,52 @@ public class ObjectManager : MonoBehaviour
         }
 
         instance.GetComponent<NetworkObject>().Spawn();
+    }
+
+    public FieldItemObject SpawnItem(string itemDataId, int count, Vector3 position)
+    {
+        if (CanSpawn() == false)
+        {
+            return null;
+        }
+
+        if (Prefab_FieldDropItem == null)
+        {
+            Debug.LogError("필드 아이템 프리팹이 연결되지 않았습니다.");
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(itemDataId) || count <= 0)
+        {
+            Debug.LogWarning("아이템 ID 또는 수량이 올바르지 않습니다.");
+            return null;
+        }
+
+        if (DataManager.Inst == null)
+        {
+            Debug.LogError("DataManager가 null입니다.");
+            return null;
+        }
+
+        ItemData itemData = DataManager.Inst.GetData<ItemData>(itemDataId);
+
+        if (itemData == null)
+        {
+            return null;
+        }
+
+        if (itemData.MaxStack <= 0 || count > itemData.MaxStack)
+        {
+            Debug.LogWarning(
+                $"드롭 수량이 올바르지 않습니다. " + $"아이템: {itemDataId}, 수량: {count}, " + $"최대 스택: {itemData.MaxStack}");
+
+            return null;
+        }
+
+        FieldItemObject item = Instantiate(Prefab_FieldDropItem, position, Quaternion.identity);
+
+        item.Init(itemDataId, count);
+        item.NetworkObject.Spawn(destroyWithScene: true);
+        return item;
     }
 }
