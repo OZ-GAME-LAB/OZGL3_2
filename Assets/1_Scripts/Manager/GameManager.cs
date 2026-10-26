@@ -41,11 +41,37 @@ public class GameManager : MonoBehaviour
         PlayerControllerView player = playerWorkspace.GetComponentInChildren<PlayerControllerView>();
         Instantiate(_workspacePrefab_2);
         Instantiate(_workspacePrefab_3);
-        Instantiate(_workspacePrefab_4);
+        GameObject mapWorkspace = Instantiate(_workspacePrefab_4);
 
         // 맵의 EntryPoint 등록이 끝난 뒤 기존 플레이어를 배치합니다.
         WorldManager.Inst.PlacePlayerAtStart(player);
 
+        InitializeBackground(mapWorkspace);
+    }
 
+    private void InitializeBackground(GameObject mapWorkspace)
+    {
+        if (mapWorkspace == null)
+            return;
+
+        ParallaxBackground background =
+            mapWorkspace.GetComponentInChildren<ParallaxBackground>(true);
+
+        if (background == null)
+        {
+            Debug.LogWarning("SungjunWork 안에 ParallaxBackground가 없습니다.", mapWorkspace);
+            return;
+        }
+
+        // 기존 씬의 출력 카메라를 게임 시작 시 한 번만 가져온다.
+        Camera outputCamera = Camera.main;
+        if (outputCamera == null)
+        {
+            Debug.LogWarning("MainCamera 태그가 지정된 활성 Camera가 필요합니다.", this);
+            return;
+        }
+
+        if (!background.Initialize(outputCamera))
+            Debug.LogWarning("배경 초기화에 실패했습니다. Inspector 연결을 확인해 주세요.", background);
     }
 }

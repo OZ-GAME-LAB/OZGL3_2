@@ -89,7 +89,7 @@ Transform:
   m_GameObject: {fileID: 1634263186729913187}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.84375, y: 0, z: 0}
+  m_LocalPosition: {x: 0.84375, y: 1.51875, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -151,7 +151,7 @@ Transform:
   m_GameObject: {fileID: 3661402990156178631}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.6875, z: 0}
+  m_LocalPosition: {x: 0, y: 4.725, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -217,7 +217,7 @@ Transform:
   m_GameObject: {fileID: 7268555143492286259}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.84375, y: 0, z: 0}
+  m_LocalPosition: {x: -0.84375, y: 1.51875, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -328,6 +328,7 @@ GameObject:
   m_Component:
   - component: {fileID: 500809378185764574}
   - component: {fileID: 832719578181905493}
+  - component: {fileID: 3295492623179303960}
   m_Layer: 0
   m_Name: Player Sprite
   m_TagString: Untagged
@@ -344,7 +345,7 @@ Transform:
   m_GameObject: {fileID: 7511426987375726578}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -1.6875, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -399,7 +400,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 76164fdceaf647928a62d282acfd7203, type: 3}
+  m_Sprite: {fileID: -192363827, guid: 5ff3aa85583a39749b8decf7666edabf, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -409,6 +410,28 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!95 &3295492623179303960
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7511426987375726578}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d6fcb9d54764bb04ab765f7dacad74a5, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &8986747531729670890
 GameObject:
   m_ObjectHideFlags: 0
@@ -462,10 +485,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cf4d04d6eaa9394b9c0aed304b4846c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControllerView
-  _moveSpeed: 8
-  _jumpForce: 5
+  _moveSpeed: 12
+  _jumpForce: 12
   _playerInput: {fileID: 1324203865793123246}
   _rigidbody2D: {fileID: 1137287975517687477}
+  _animator: {fileID: 3295492623179303960}
+  _idleJumpInputTime: 0.12
+  _spectatorMoveSpeed: 15
   _groundCheck: {fileID: 5693509755398399740}
   _checkRadius: 0.1
   _groundLayer:
@@ -590,7 +616,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 2.5
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -617,7 +643,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkRigidbodyBaseExpanded: 0
   UseRigidBodyForMotion: 0
-  AutoUpdateKinematicState: 1
+  AutoUpdateKinematicState: 0
   AutoSetKinematicOnDespawn: 1
 --- !u!61 &2881205316195545830
 BoxCollider2D:
@@ -653,7 +679,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0, y: 1.51875}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -663,5 +689,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.6875, y: 3.375}
+  m_Size: {x: 1.6875, y: 6.4125}
   m_EdgeRadius: 0
