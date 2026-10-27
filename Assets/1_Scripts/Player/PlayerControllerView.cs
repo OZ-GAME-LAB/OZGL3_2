@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+﻿using System.ComponentModel;
+using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEditor.Profiling.HierarchyFrameDataView;
 
 
 
@@ -58,6 +60,8 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField]
     private PlayerInteractionController _interactionController;
 
+    private PlayerStatViewModel _playerStatViewModel;
+
     void Awake()
     {
         TryGetComponent(out _networkObject);
@@ -102,6 +106,8 @@ public class PlayerControllerView : MonoBehaviour
         _inventoryAction.performed += OnOpenInventory;
         _journalAction.performed += OnOpenJournal;
         _settingsAction.performed += OnOpenSettings;
+
+        NetworkManager.Inst.PlayerService.BindPlayerControllerView(this);
     }
 
     private void OnDisable()
@@ -125,6 +131,8 @@ public class PlayerControllerView : MonoBehaviour
         _inventoryAction.performed -= OnOpenInventory;
         _journalAction.performed -= OnOpenJournal;
         _settingsAction.performed -= OnOpenSettings;
+
+        Unbind();
     }
 
 
@@ -153,6 +161,27 @@ public class PlayerControllerView : MonoBehaviour
         // 물리 시뮬레이션이 꺼져 있으므로 위치를 직접 옮깁니다.
         transform.position += (Vector3)(direction.normalized * _spectatorMoveSpeed * Time.deltaTime);
     }
+
+    public void Bind (PlayerStatViewModel playerStatViewModel)
+    {
+        Unbind();
+
+        _playerStatViewModel = playerStatViewModel;
+
+        if (_playerStatViewModel != null)
+            _playerStatViewModel.PropertyChanged += OnPropertyChanged;
+        _playerStatViewModel.InvokeOnceOnInit();
+    }
+    private void Unbind()
+    {
+        if (_playerStatViewModel != null)
+            _playerStatViewModel.PropertyChanged -= OnPropertyChanged;
+
+        _playerStatViewModel = null;
+    }
+    
+
+    
 
     private void SetSpectatorMode(bool enabled)
     {
@@ -456,6 +485,23 @@ public class PlayerControllerView : MonoBehaviour
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(_groundCheck.position, _checkRadius);
+        }
+    }
+    private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(_playerStatViewModel.MoveSpeed):
+                {
+                    _moveSpeed = _playerStatViewModel.MoveSpeed;
+                    break;
+                }
+            case nameof(_playerStatViewModel.JumpForce):
+                {
+                    _jumpForce = _playerStatViewModel.JumpForce;
+
+                    break;
+                }
         }
     }
 
