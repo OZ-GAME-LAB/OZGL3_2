@@ -83,8 +83,7 @@ public class MonsterNetwork : NetworkBehaviour
                 return;
             }
 
-            MonsterData data = DataManager.Inst.GetData<MonsterData>(
-                _monsterId.Value.ToString());
+            MonsterData data = DataManager.Inst.GetData<MonsterData>(_monsterId.Value.ToString());
 
             if (data == null)
             {
