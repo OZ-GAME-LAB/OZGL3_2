@@ -403,6 +403,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUIView
   _useButton: {fileID: 0}
+  _itemName: {fileID: 1437356382786906648}
 --- !u!222 &3380528979164438447
 CanvasRenderer:
   m_ObjectHideFlags: 0
