@@ -1,39 +1,39 @@
 public class PlayerService
 {
-    private PlayerStatViewModel _platerStatViewModel;
-
-
+    private PlayerStatViewModel _playerStatViewModel;
 
 
     public void AddHp(int value)
     {
-            _platerStatViewModel.Hp += value;
+            _playerStatViewModel.Hp += value;
     }
 
     public void AddMoveSpeed(int value)
     {
-        _platerStatViewModel.MoveSpeed += value;
+        _playerStatViewModel.MoveSpeed += value;
     }
 
     public void AddJumpForce(int value)
     {
-        _platerStatViewModel.JumpForce += value;
+        _playerStatViewModel.JumpForce += value;
     }
 
 
     public void BindPlayerControllerView(PlayerControllerView playerControllerView)
     {
         GetPlayerControllerView();
-        playerControllerView.Bind(_platerStatViewModel);
+        playerControllerView.Bind(_playerStatViewModel);
     }
 
 
-    private void GetPlayerControllerView()
+    private PlayerStatViewModel GetPlayerControllerView()
     {
-        if (_platerStatViewModel == null)
+        if (_playerStatViewModel == null)
         {
-            _platerStatViewModel = CreatePlayerControllerView();
+            _playerStatViewModel = CreatePlayerControllerView();
         }
+
+        return _playerStatViewModel;
        
     }
     private PlayerStatViewModel CreatePlayerControllerView()
