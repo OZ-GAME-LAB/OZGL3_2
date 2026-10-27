@@ -122,24 +122,24 @@ public class ObjectManager : MonoBehaviour
         target.Despawn(destroy: true);
     }
 
-    public void SpawnInteractionObject(
+    public InteractableObject SpawnInteractionObject(
     string id,
     Vector3 position,
     Quaternion rotation)
     {
         if (!CanSpawn())
-            return;
+            return null;
 
         if (Prefab_InteractionObject == null || string.IsNullOrWhiteSpace(id))
         {
             Debug.LogError("상호작용 본체 프리팹 또는 ID가 없습니다.");
-            return;
+            return null;
         }
 
         if (!Prefab_InteractionObject.TryGetComponent<NetworkObject>(out _) || !Prefab_InteractionObject.TryGetComponent<InteractionNetwork>(out _))
         {
             Debug.LogError( "상호작용 본체에 NetworkObject와 InteractionNetwork가 필요합니다.");
-            return;
+            return null;
         }
 
         InteractableObject instance = Instantiate(Prefab_InteractionObject, position, rotation);
@@ -147,7 +147,7 @@ public class ObjectManager : MonoBehaviour
         instance.GetComponent<InteractionNetwork>().SetObjectId(id);
         instance.GetComponent<NetworkObject>().Spawn();
 
-        return;
+        return instance;
     }
 
     public void SpawnMonster(

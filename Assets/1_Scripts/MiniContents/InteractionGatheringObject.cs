@@ -31,7 +31,10 @@ public class InteractionGatheringObject : InteractableObject
         if(meshPrefab == null)
         {
             Debug.Log($"{id} ID 값을 가진 MeshPrefab이 생성되지 않았습니다.");
+            return;
         }
+
+        RegisterVisual(meshPrefab);
     }
 
     protected override void PlayContent()

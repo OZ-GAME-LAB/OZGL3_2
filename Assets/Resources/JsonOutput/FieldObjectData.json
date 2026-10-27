@@ -7,6 +7,6 @@
     ],
     "MinDropCount": 2,
     "MaxDropCount": 4,
-    "MeshAddress": "Prefab/Mesh/TestPrefab"
+    "PrefabPath": "Prefab/Mesh/TestPrefab"
   }
 ]
