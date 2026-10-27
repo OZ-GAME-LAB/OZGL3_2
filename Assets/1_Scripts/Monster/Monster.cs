@@ -12,6 +12,7 @@ public class Monster : MonoBehaviour
     [SerializeField] private LayerMask _groundLayer;
     [SerializeField] private float _groundCheckRadius = 0.1f;
     [SerializeField] private float _jumpForce = 5f;
+    private float _attackRange;
 
     [SerializeField] private Collider2D _monsterCollider;
     [SerializeField] private Collider2D _monsterSight;
@@ -103,6 +104,7 @@ public class Monster : MonoBehaviour
         _leftWallCheck = visual.LeftCheckReturn();
         _eyePosition = visual.EyePositionReturn();
         _monsterCollider = visual.MonsterColliderReturn();
+        _attackRange = data.AtkDistance;
 
         return true;
     }
@@ -199,6 +201,19 @@ public class Monster : MonoBehaviour
         }
 
         MonsterPatricMoveAndCheck(VisibleTarget.bounds.center);
+    }
+
+    public bool IsTargetInAttackRange()
+    {
+        if (VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
+            return false;
+
+        Vector2 monsterPosition = transform.position;
+        Vector2 targetPosition = VisibleTarget.bounds.center;
+
+        float distance = Vector2.Distance(monsterPosition, targetPosition);
+
+        return distance <= _attackRange;
     }
 
     public void MonsterStopMove()
