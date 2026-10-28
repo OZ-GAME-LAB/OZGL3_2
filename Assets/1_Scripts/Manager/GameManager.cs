@@ -47,6 +47,20 @@ public class GameManager : MonoBehaviour
         WorldManager.Inst.PlacePlayerAtStart(player);
 
         InitializeBackground(mapWorkspace);
+        InitializeEnvironmentPresentation(mapWorkspace, player);
+    }
+
+    private void InitializeEnvironmentPresentation(GameObject mapWorkspace, PlayerControllerView player)
+    {
+        if (mapWorkspace == null || player == null)
+            return;
+
+        EnvironmentPresentationController controller =
+            mapWorkspace.GetComponentInChildren<EnvironmentPresentationController>(true);
+        if (controller == null)
+            return; // 컨트롤러를 배치하지 않은 기존 맵은 그대로 실행합니다.
+
+        controller.Initialize(player.transform, Camera.main, mapWorkspace.transform);
     }
 
     private void InitializeBackground(GameObject mapWorkspace)
