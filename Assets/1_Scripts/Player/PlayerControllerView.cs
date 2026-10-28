@@ -424,7 +424,7 @@ public class PlayerControllerView : MonoBehaviour
     private async void OnOpenInventory(InputAction.CallbackContext context)
     {
         var view = await UIManager.Inst.OpenInventoryUIAsync();
-        NetworkManager.Inst.InventoryService.BindInventoryView(view);
+        ServiceManager.Inst.InventoryService.BindInventoryView(view);
 
     }
 

@@ -17,8 +17,8 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        NetworkManager.Inst.InitInventory();
-        StartGame();
+        ServiceManager.Inst.InitInventory();
+        //StartGame(); // 로비, 네트워크 선택 UI를 만들었기 때문에 바로 시작하지 않도록 주석처리했습니다.
     }
 
     public void StartGame()
