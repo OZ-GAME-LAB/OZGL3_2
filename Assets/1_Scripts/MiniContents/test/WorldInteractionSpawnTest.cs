@@ -90,4 +90,10 @@ public class WorldInteractionSpawnTest : MonoBehaviour
             spawnPoint.SpawnMonster(_monsterTestId);
         }
     }
+
+    public void SpawnInitialTestObjects()
+    {
+        RequestSpawn();        
+        RequestMonsterSpawn(); 
+    }
 }
