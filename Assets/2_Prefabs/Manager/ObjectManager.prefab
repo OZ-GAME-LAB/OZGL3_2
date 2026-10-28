@@ -46,4 +46,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ObjectManager
   _netcodeManager: {fileID: 0}
   Prefab_Player: {fileID: 0}
+  Prefab_InteractionObject: {fileID: 3104601390591045697, guid: 8d303c8bc84c2a74992c378bf9030ecf, type: 3}
+  Prefab_Monster: {fileID: 6866738638208545897, guid: db53d1154b78e514198c78ecc6e8445c, type: 3}
   Prefab_FieldDropItem: {fileID: 5588425799300892576, guid: c33317cefec91664e8e4084534a745f7, type: 3}

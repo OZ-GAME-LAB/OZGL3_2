@@ -54,6 +54,7 @@ MonoBehaviour:
   _rightWallCheck: {fileID: 1331068478819384991}
   _leftWallCheck: {fileID: 4992819022154636034}
   _eyePosition: {fileID: 5296459278695028880}
+  _monsterCollider: {fileID: 4256810525925440851}
 --- !u!212 &3325728129922915663
 SpriteRenderer:
   serializedVersion: 2
