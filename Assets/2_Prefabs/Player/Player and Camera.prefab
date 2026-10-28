@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &719400020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 719400021}
+  m_Layer: 6
+  m_Name: WallSensorRight
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &719400021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 719400020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.57, y: 2.4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1309381279393954828}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1157152037334656558
 GameObject:
   m_ObjectHideFlags: 0
@@ -398,7 +429,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 10
+  m_SortingOrder: 100
   m_MaskInteraction: 0
   m_Sprite: {fileID: -192363827, guid: 5ff3aa85583a39749b8decf7666edabf, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -448,6 +479,7 @@ GameObject:
   - component: {fileID: 1137287975517687477}
   - component: {fileID: 351316461052370865}
   - component: {fileID: 2881205316195545830}
+  - component: {fileID: 719400001}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -471,6 +503,7 @@ Transform:
   - {fileID: 500809378185764574}
   - {fileID: 5693509755398399740}
   - {fileID: 4158244087923616787}
+  - {fileID: 719400021}
   m_Father: {fileID: 3918273443373828957}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &783354060381315163
@@ -486,17 +519,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControllerView
   _moveSpeed: 12
-  _jumpForce: 12
+  _jumpForce: 17.5
   _playerInput: {fileID: 1324203865793123246}
   _rigidbody2D: {fileID: 1137287975517687477}
   _animator: {fileID: 3295492623179303960}
   _idleJumpInputTime: 0.12
+  _animationGroundGraceTime: 0.05
+  _blockedRunSpeedThreshold: 0.05
+  _logAnimationDiagnostics: 0
   _spectatorMoveSpeed: 15
   _groundCheck: {fileID: 5693509755398399740}
   _checkRadius: 0.1
   _groundLayer:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 2304
+  _bodyCollider: {fileID: 2881205316195545830}
+  _thinPlatformLayer:
+    serializedVersion: 2
+    m_Bits: 2048
+  _crouchHeight: 4.199
+  _crouchMoveSpeed: 4
+  _wallCling: {fileID: 719400001}
+  _wallHandLocalX: 1.5
   _interactionController: {fileID: 0}
 --- !u!114 &1324203865793123246
 MonoBehaviour:
@@ -616,7 +660,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 2.5
+  m_GravityScale: 3.5
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -679,7 +723,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 1.51875}
+  m_Offset: {x: 0.2254749, y: 1.3960731}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -689,5 +733,31 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.6875, y: 6.4125}
+  m_Size: {x: 0.9509196, y: 6.14053}
   m_EdgeRadius: 0
+--- !u!114 &719400001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8986747531729670890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed7fa44708812014196da7c9e0eb3a18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWallCling
+  _wallProbeOrigin: {fileID: 719400021}
+  _wallLayers:
+    serializedVersion: 2
+    m_Bits: 2304
+  _wallCheckDistance: 0.2
+  _rayStartInset: 0.25
+  _upperCheckHeight: 0.9
+  _ledgeSurfaceInset: 0.05
+  _ledgeHandLocalPosition: {x: 1.45, y: 2.31}
+  _maxLedgeSnapDistance: 1.5
+  _releaseJumpGrace: 0.1
+  _regrabDelay: 0.2
+  _jumpHorizontalSpeed: 12
+  _jumpControlTime: 0.12
