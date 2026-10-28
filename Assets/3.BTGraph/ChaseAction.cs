@@ -32,6 +32,9 @@ public partial class ChaseAction : Action
         if (_monster.VisibleTarget == null || !_monster.VisibleTarget.isActiveAndEnabled)
             return Status.Failure;
 
+        if (_monster.IsTargetInAttackRange())
+            return Status.Success;
+
         _monster.MonsterChaisingTarget();
         return Status.Running;
     }

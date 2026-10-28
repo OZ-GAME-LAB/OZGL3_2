@@ -737,6 +737,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4965453899744507755, guid: 6b0f9ea58f391284db23f462b657f9a0, type: 3}
+      propertyPath: Prefab_Monster
+      value: 
+      objectReference: {fileID: 6866738638208545897, guid: db53d1154b78e514198c78ecc6e8445c, type: 3}
+    - target: {fileID: 4965453899744507755, guid: 6b0f9ea58f391284db23f462b657f9a0, type: 3}
       propertyPath: _netcodeManager
       value: 
       objectReference: {fileID: 1528941881}

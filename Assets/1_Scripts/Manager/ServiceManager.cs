@@ -8,6 +8,7 @@ public class ServiceManager : MonoBehaviour
     //인벤토리 서비스는 프로퍼티라서 대문자로 시작하게 수정했습니다.
     public InventoryService InventoryService { get; private set; }
     public NetworkCraftingService CraftingService { get; private set; }
+    public PlayerService PlayerService { get; private set; }
 
     private void Awake()
     {
@@ -20,6 +21,7 @@ public class ServiceManager : MonoBehaviour
     {
         CraftingService = new NetworkCraftingService();
         InventoryService = new InventoryService();
+        PlayerService = new PlayerService();
     }
 
     public void InitInventory()

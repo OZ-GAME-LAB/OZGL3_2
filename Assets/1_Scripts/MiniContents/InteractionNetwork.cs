@@ -15,6 +15,11 @@ public class InteractionNetwork : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
 
+    private NetworkVariable<bool> _isDormant = new(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server);
+
     public bool IsAvailable => IsSpawned && _isAvailable.Value;
 
     public event Action<bool> AvailabilityChanged;
@@ -173,6 +178,29 @@ public class InteractionNetwork : NetworkBehaviour
         // TODO : ObjectManager를 통해 아이템 스폰 부분 추가 필요
 
         NetworkObject.Despawn();
+        return true;
+    }
+
+    private void OnDormantChanged(bool previous, bool current)
+    {
+        ApplyDormantState();
+    }
+
+    private void ApplyDormantState()
+    {
+        if (TryGetComponent<InteractableObject>(out var target))
+            target.ApplyDormantState(_isDormant.Value);
+    }
+
+    public bool TryReactivateOnServer()
+    {
+        if (!IsServer || !IsSpawned || !_isDormant.Value)
+            return false;
+
+        _isDormant.Value = false;
+        _serverAllowsInteraction = true;
+        RefreshAvailabilityOnServer();
+
         return true;
     }
 

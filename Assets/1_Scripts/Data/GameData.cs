@@ -147,12 +147,14 @@ public class DropGroupData : GameDataBase
     public float DropChance;
 }
 
+[Serializable]
 public class MonsterData : GameDataBase
 {
     public string Name;
     public string Description;
     public float Hp;
     public float Atk;
+    public float AtkDistance;
     public float PhysicalResistance;
     public float FireResistance;
     public float IceResistance;
