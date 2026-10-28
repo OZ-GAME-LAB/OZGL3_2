@@ -43,6 +43,17 @@ public class MonsterVisual : MonoBehaviour
     {
         return _monsterCollider;
     }
+
+    public float MonsterHeightReturn()
+    {
+        if (_monsterCollider == null)
+        {
+            Debug.LogError("몬스터 몸 Collider가 연결되지 않았습니다.", this);
+            return 0f;
+        }
+
+        return _monsterCollider.bounds.size.y;
+    }
 }
 
 
