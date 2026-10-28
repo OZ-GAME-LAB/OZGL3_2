@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -16,19 +17,19 @@ public enum UIRootType
 
 public enum UIType
 {
-    //DNSimplePopup,
+    SimplePopup,
     MainUI,
     GatheringUI,
     InteractableInfoUI,
     InventoryUI,
     InventorySlotUI,
     CraftingUI,
+    NetworkSelectUI,
 }
 
 
 public static class UIManagerExtension
 {
-
     public static async UniTask OpenMainUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
     {
         await uiManager.OpenMainRootAsync(UIType.MainUI, cancellationToken);
@@ -37,6 +38,21 @@ public static class UIManagerExtension
     public static void CloseMainUI(this UIManager uiManager)
     {
         uiManager.Close(UIType.MainUI);
+    }
+
+    public static async UniTask OpenSimplePopup(this UIManager uiManager, string msg)
+    {
+        var uiBase = await uiManager.OpenPopupRootAsync(UIType.SimplePopup);
+        if (uiBase == null)
+        {
+            Debug.LogWarning($"UI가 생성되지 않았습니다");
+            return;
+        }
+
+        if (uiBase is SimplePopupUI simplePopup)
+        {
+            simplePopup.SetUI(msg);
+        }
     }
 
     public static async UniTask<InventoryUIView> OpenInventoryUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
@@ -59,6 +75,16 @@ public static class UIManagerExtension
     public static void CloseCraftingUI(this UIManager uiManager)
     {
         uiManager.Close(UIType.CraftingUI);
+    }
+
+    public static async UniTask OpenNetworkUI(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        await uiManager.OpenVeryFrontRootAsync(UIType.NetworkSelectUI, cancellationToken);
+    }
+
+    public static void CloseNetworkUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.NetworkSelectUI);
     }
 
     //UI를 생성하고 View를 가져오고 싶을 때 사용

@@ -1,6 +1,4 @@
-using Cysharp.Threading.Tasks;
-using System.Threading.Tasks;
-using UnityEditor.Compilation;
+﻿using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class InteractionGatheringObject : InteractableObject
