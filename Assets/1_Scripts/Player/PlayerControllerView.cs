@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using static UnityEditor.Profiling.HierarchyFrameDataView;
 
 
 
@@ -106,8 +105,8 @@ public class PlayerControllerView : MonoBehaviour
         _inventoryAction.performed += OnOpenInventory;
         _journalAction.performed += OnOpenJournal;
         _settingsAction.performed += OnOpenSettings;
-
-        NetworkManager.Inst.PlayerService.BindPlayerControllerView(this);
+        
+        ServiceManager.Inst.PlayerService.BindPlayerControllerView(this);
     }
 
     private void OnDisable()

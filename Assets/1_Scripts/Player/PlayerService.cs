@@ -3,17 +3,22 @@ public class PlayerService
     private PlayerStatViewModel _playerStatViewModel;
 
 
-    public void AddHp(int value)
+    public void AddHp(float value)
     {
             _playerStatViewModel.Hp += value;
     }
 
-    public void AddMoveSpeed(int value)
+    public void DecreaseHp(float value)
+    {
+        _playerStatViewModel.Hp -= value;
+    }
+
+    public void AddMoveSpeed(float value)
     {
         _playerStatViewModel.MoveSpeed += value;
     }
 
-    public void AddJumpForce(int value)
+    public void AddJumpForce(float value)
     {
         _playerStatViewModel.JumpForce += value;
     }
