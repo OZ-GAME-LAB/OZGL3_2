@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6986301477840556821}
+  - component: {fileID: 2528185426083661194}
   - component: {fileID: 3216449121980172412}
   - component: {fileID: 1993311613802312577}
   m_Layer: 0
@@ -33,6 +34,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2528185426083661194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8241826788821254829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b17f675ba481b394885779e88683bf81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetCodeNetworkManager
+  _netCodeNetworkManager: {fileID: 3216449121980172412}
 --- !u!114 &3216449121980172412
 MonoBehaviour:
   m_ObjectHideFlags: 0

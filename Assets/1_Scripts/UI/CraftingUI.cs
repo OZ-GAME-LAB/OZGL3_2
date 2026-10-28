@@ -86,9 +86,9 @@ public class CraftingUI : UIBase
             _craftingVM.PropertyChanged -= OnPropertyChanged_View;
         }
 
-        _craftingVM = NetworkManager.Inst.CraftingService.GetCraftingViewModel();
+        _craftingVM = ServiceManager.Inst.CraftingService.GetCraftingViewModel();
 
-        NetworkManager.Inst.CraftingService.RefreshInventoryState();
+        ServiceManager.Inst.CraftingService.RefreshInventoryState();
 
         _craftingVM.PropertyChanged += OnPropertyChanged_View;
         _craftingVM.InvokeOnceOnInit();
@@ -184,12 +184,12 @@ public class CraftingUI : UIBase
 
     private void OnSelectRecipe(string recipeId)
     {
-        NetworkManager.Inst.CraftingService.RequestSelectRecipe(recipeId);
+        ServiceManager.Inst.CraftingService.RequestSelectRecipe(recipeId);
     }
 
     public void OnClickCraft()
     {
-        bool success = NetworkManager.Inst.CraftingService.RequestCraftSelectedItem();
+        bool success = ServiceManager.Inst.CraftingService.RequestCraftSelectedItem();
 
         Debug.Log(success ? "제작 완료!" : "제작할 수 없습니다.");
     }
