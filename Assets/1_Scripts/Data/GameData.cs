@@ -154,6 +154,7 @@ public class MonsterData : GameDataBase
     public string Description;
     public float Hp;
     public float Atk;
+    public float[] AtkCollTime;
     public float AtkDistance;
     public float PhysicalResistance;
     public float FireResistance;
