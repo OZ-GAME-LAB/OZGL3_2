@@ -255,6 +255,12 @@ public class Monster : MonoBehaviour
         if (data.HaveSkillIdList == null || data.HaveSkillIdList.Length == 0)
             return true;
 
+        if (data.AtkCollTime == null || data.AtkCollTime.Length != data.HaveSkillIdList.Length)
+        {
+            Debug.LogError($"스킬과 쿨타임 배열의 개수가 다릅니다: {id}", this);
+            return false;
+        }
+
         if (MonsterSkillManager.Inst == null)
         {
             Debug.LogError("MonsterSkillManager가 준비되지 않았습니다.", this);
@@ -274,11 +280,18 @@ public class Monster : MonoBehaviour
             return false;
         }
 
-        foreach (string address in data.HaveSkillIdList)
+        for (int i = 0; i < data.HaveSkillIdList.Length; i++)
         {
-            MonsterSkillBase skill =
-                await MonsterSkillManager.Inst.CreateSkillAsync(
-                    address,
+            float cooldown = data.AtkCollTime[i];
+
+            if (float.IsNaN(cooldown) || float.IsInfinity(cooldown) || cooldown < 0f)
+            {
+                Debug.LogError($"잘못된 쿨타임입니다: {id}, 인덱스 {i}", this);
+                return false;
+            }
+
+            MonsterSkillBase skill = await MonsterSkillManager.Inst.CreateSkillAsync(
+                    data.HaveSkillIdList[i],
                     transform,
                     bodyHeight,
                     data.Atk);
@@ -286,6 +299,7 @@ public class Monster : MonoBehaviour
             if (this == null || skill == null)
                 return false;
 
+            skill.InitCooldown(cooldown);
             _skills.Add(skill);
         }
 

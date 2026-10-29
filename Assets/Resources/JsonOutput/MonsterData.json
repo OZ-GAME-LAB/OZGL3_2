@@ -5,6 +5,9 @@
     "Description": "테스트 몬스터다",
     "Hp": 10,
     "Atk": 10,
+    "AtkCollTime": [
+      5
+    ],
     "AtkDistance": 5,
     "PhysicalResistance": 10,
     "FireResistance": 10,

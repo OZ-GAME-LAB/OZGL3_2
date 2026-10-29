@@ -130,6 +130,9 @@ public class MonsterMeleeAtk : MonsterSkillBase
         }
 
         IsAttacking = false;
+
+        IsAttacking = false;
+        StartCooldown();
     }
 
     private void OnDisable()
