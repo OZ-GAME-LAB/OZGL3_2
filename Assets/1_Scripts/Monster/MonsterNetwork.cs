@@ -126,6 +126,18 @@ public class MonsterNetwork : NetworkBehaviour
 
         if (IsServer)
         {
+            bool skillsInitialized = await _monster.InitMonsterSkills(_monsterId.Value.ToString());
+
+            if (this == null || !IsSpawned)
+                return;
+
+            if (!skillsInitialized)
+            {
+                Debug.LogError($"몬스터 스킬 준비 실패: {_monsterId.Value}");
+                NetworkObject.Despawn();
+                return;
+            }
+
             _monster.enabled = true;
             _bt.enabled = true;
         }

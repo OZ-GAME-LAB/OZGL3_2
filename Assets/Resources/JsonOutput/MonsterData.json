@@ -13,7 +13,7 @@
     "PoisonResistance": 10,
     "BleedAble": true,
     "HaveSkillIdList": [
-      "skill"
+      "MonsterMeleeAtk/MonsterMeleeAtkSkill"
     ],
     "MonsterType": 2,
     "MonsterAddressableId": "Monster/TestMonsterVisualPrefab"

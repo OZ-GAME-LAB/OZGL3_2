@@ -13,6 +13,8 @@ public class Monster : MonoBehaviour
     [SerializeField] private float _groundCheckRadius = 0.1f;
     [SerializeField] private float _jumpForce = 5f;
     private float _attackRange;
+    private readonly List<MonsterSkillBase> _skills = new();
+    public IReadOnlyList<MonsterSkillBase> Skills => _skills;
 
     [SerializeField] private Collider2D _monsterCollider;
     [SerializeField] private Collider2D _monsterSight;
@@ -239,5 +241,52 @@ public class Monster : MonoBehaviour
             _sightBlockLayer);
 
         return hit.collider == null;
+    }
+
+    public async UniTask<bool> InitMonsterSkills(string id)
+    {
+        MonsterData data = DataManager.Inst.GetData<MonsterData>(id);
+
+        if (data == null)
+            return false;
+
+        if (data.HaveSkillIdList == null || data.HaveSkillIdList.Length == 0)
+            return true;
+
+        if (MonsterSkillManager.Inst == null)
+        {
+            Debug.LogError("MonsterSkillManager가 준비되지 않았습니다.", this);
+            return false;
+        }
+
+        if (_monsterCollider == null)
+            return false;
+
+        Physics2D.SyncTransforms();
+
+        float bodyHeight = _monsterCollider.bounds.size.y;
+
+        if (bodyHeight <= 0f)
+        {
+            Debug.LogError("몬스터 몸 Collider의 높이를 확인하세요.", this);
+            return false;
+        }
+
+        foreach (string address in data.HaveSkillIdList)
+        {
+            MonsterSkillBase skill =
+                await MonsterSkillManager.Inst.CreateSkillAsync(
+                    address,
+                    transform,
+                    bodyHeight,
+                    data.Atk);
+
+            if (this == null || skill == null)
+                return false;
+
+            _skills.Add(skill);
+        }
+
+        return true;
     }
 }
