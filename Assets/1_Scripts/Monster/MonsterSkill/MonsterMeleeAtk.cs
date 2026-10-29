@@ -17,32 +17,67 @@ public class MonsterMeleeAtk : MonsterSkillBase
     private Rigidbody2D _ownerBody;
 
 
-    public override void InitSkill(Transform owner, float bodyHeight) 
+    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab) 
     {
-        if (owner == null || bodyHeight <= 0f)
+        if (owner == null || attackPrefab == null || bodyHeight <= 0f)
         {
-            Debug.LogError("몬스터 본체와 유효한 몸 높이가 필요합니다.", this);
+            Debug.LogError("몬스터 본체, 공격 프리팹, 몸 높이를 확인하세요.", this);
             return;
         }
 
         float ownerScaleY = Mathf.Abs(owner.lossyScale.y);
 
         if (ownerScaleY <= 0f)
+            return;
+
+        if (!owner.TryGetComponent(out _ownerBody))
         {
-            Debug.LogError("몬스터 본체의 Y 스케일이 0입니다.", this);
+            Debug.LogError("몬스터 본체에 Rigidbody2D가 필요합니다.", this);
             return;
         }
 
-        _ownerBody = owner.GetComponent<Rigidbody2D>();
+        if (!attackPrefab.TryGetComponent<BoxCollider2D>(out _) || !attackPrefab.TryGetComponent<MonsterMeleeAtkObj>(out _))
+        {
+            Debug.LogError("공격 프리팹 루트에 BoxCollider2D와 MonsterMeleeAtkObj가 필요합니다.", this);
+            return;
+        }
 
-        _attackObject = new GameObject("MeleeAttackHitbox");
+        _attackObject = Instantiate(attackPrefab, owner, false);
         _attackObject.SetActive(false);
-        _attackObject.transform.SetParent(owner, false);
 
-        BoxCollider2D attackCollider = _attackObject.AddComponent<BoxCollider2D>();
+        _attackObject.transform.localPosition = Vector3.zero;
+        _attackObject.transform.localRotation = Quaternion.identity;
+        _attackObject.transform.localScale = Vector3.one;
+
+        BoxCollider2D attackCollider = _attackObject.GetComponent<BoxCollider2D>();
 
         attackCollider.isTrigger = true;
-        attackCollider.size = new Vector2(_attackWidth, bodyHeight / ownerScaleY); ;
+        attackCollider.offset = Vector2.zero;
+        attackCollider.size = new Vector2(_attackWidth, bodyHeight / ownerScaleY);
+
+        MonsterMeleeAtkObj hitbox = _attackObject.GetComponent<MonsterMeleeAtkObj>();
+
+        SpriteRenderer visual = _attackObject.GetComponentInChildren<SpriteRenderer>(true);
+
+        if (visual != null && visual.sprite != null)
+        {
+            Vector2 spriteSize = visual.sprite.bounds.size;
+            Vector2 hitboxSize = attackCollider.size;
+
+            if (spriteSize.x > 0f && spriteSize.y > 0f)
+            {
+                visual.transform.localScale = new Vector3(
+                    hitboxSize.x / spriteSize.x,
+                    hitboxSize.y / spriteSize.y,
+                    1f);
+
+                Vector3 spriteCenter = visual.sprite.bounds.center;
+
+                visual.transform.localPosition = (Vector3)attackCollider.offset - Vector3.Scale(spriteCenter, visual.transform.localScale);
+            }
+        }
+
+        hitbox.Init(atk);
     }
 
     public override void UseSkill(Transform target, Vector3 attackPosition) 
