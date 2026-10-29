@@ -163,6 +163,8 @@ public class Monster : MonoBehaviour
 
         velocity.x = Mathf.Clamp(distanceX / Time.fixedDeltaTime, -_moveSpeed, _moveSpeed);
 
+        UpdateSightDirection(velocity.x);
+
         _rigidbody2D.linearVelocity = velocity;
         return false;
     }
@@ -296,5 +298,17 @@ public class Monster : MonoBehaviour
             return null;
 
         return target.position.x >= transform.position.x ? _rightWallCheck : _leftWallCheck;
+    }
+
+    private void UpdateSightDirection(float directionX)
+    {
+        if (_monsterSight == null || Mathf.Approximately(directionX, 0f))
+            return;
+
+        Vector2 offset = _monsterSight.offset;
+
+        offset.x = Mathf.Abs(offset.x) * (directionX > 0f ? 1f : -1f);
+
+        _monsterSight.offset = offset;
     }
 }
