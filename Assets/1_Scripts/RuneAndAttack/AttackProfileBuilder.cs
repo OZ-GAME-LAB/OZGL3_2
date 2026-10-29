@@ -101,20 +101,19 @@ public static class AttackProfileBuilder
                                 break;
 
                             case "ApplyStatus":
-                                if (rune.Trigger != "OnHit" ||
-                                    string.IsNullOrEmpty(rune.StatusProfileId))
+                                if (rune.Trigger != "OnHit" || string.IsNullOrEmpty(rune.StatusProfileId))
                                 {
                                     error = $"상태이상 룬 설정을 확인하세요: {rune.Id}";
                                     return false;
                                 }
 
-                                if (!result._onHitStatusProfileIdList.Contains(rune.StatusProfileId))
+                                if (result._onHitStatusProfileIdList.Contains(rune.StatusProfileId) == false)
                                 {
                                     result._onHitStatusProfileIdList.Add(rune.StatusProfileId);
                                 }
                                 break;
 
-                            case "HealOnHit":
+                            case "HealOnAttack":
                                 if (rune.Trigger != "OnHit" || IsPositiveFinite(rune.HealAttackRatio) == false || rune.HealAttackRatio > 1f)
                                 {
                                     error = $"회복 룬 설정을 확인하세요: {rune.Id}";
@@ -146,10 +145,7 @@ public static class AttackProfileBuilder
             result._preventAttackInterrupt = result._preventAttackInterrupt | rune.PreventAttackInterrupt; //하나라도 공격 중단 방지 있으면 결과가 true로 함.
         }
 
-        if (!IsPositiveFinite(result._damageMultiple) ||
-            !IsPositiveFinite(result._attackSpeedMultiple) ||
-            !IsPositiveFinite(result._rangeMultiple) ||
-            !IsPositiveFinite(result._projectileSizeMultiple))
+        if (IsPositiveFinite(result._damageMultiple) == false || IsPositiveFinite(result._attackSpeedMultiple) == false || IsPositiveFinite(result._rangeMultiple) == false || IsPositiveFinite(result._projectileSizeMultiple) == false)
         {
             error = "최종 공격 배율이 유효 범위를 벗어났습니다.";
             return false;
