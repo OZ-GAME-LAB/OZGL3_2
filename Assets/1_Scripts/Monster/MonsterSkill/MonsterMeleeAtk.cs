@@ -11,7 +11,6 @@ public class MonsterMeleeAtk : MonsterSkillBase
     private float _attackDuration = 0.3f;
     [SerializeField, Min(0f)]
     private float _dashPower = 5f;
-    public bool IsAttacking { get; private set; }
 
     private GameObject _attackObject;
     private Rigidbody2D _ownerBody;

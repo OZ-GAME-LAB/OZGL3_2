@@ -289,4 +289,12 @@ public class Monster : MonoBehaviour
 
         return true;
     }
+
+    public Transform GetAttackPoint(Transform target)
+    {
+        if (target == null)
+            return null;
+
+        return target.position.x >= transform.position.x ? _rightWallCheck : _leftWallCheck;
+    }
 }
