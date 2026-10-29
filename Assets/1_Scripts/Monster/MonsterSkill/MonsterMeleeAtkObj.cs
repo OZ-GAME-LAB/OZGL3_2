@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
+[UnityEngine.Scripting.Preserve]
 public class MonsterMeleeAtkObj : MonoBehaviour
 {
     private float _damage;
