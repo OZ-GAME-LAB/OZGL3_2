@@ -163,6 +163,8 @@ public class Monster : MonoBehaviour
 
         velocity.x = Mathf.Clamp(distanceX / Time.fixedDeltaTime, -_moveSpeed, _moveSpeed);
 
+        UpdateSightDirection(velocity.x);
+
         _rigidbody2D.linearVelocity = velocity;
         return false;
     }
@@ -253,6 +255,12 @@ public class Monster : MonoBehaviour
         if (data.HaveSkillIdList == null || data.HaveSkillIdList.Length == 0)
             return true;
 
+        if (data.AtkCollTime == null || data.AtkCollTime.Length != data.HaveSkillIdList.Length)
+        {
+            Debug.LogError($"스킬과 쿨타임 배열의 개수가 다릅니다: {id}", this);
+            return false;
+        }
+
         if (MonsterSkillManager.Inst == null)
         {
             Debug.LogError("MonsterSkillManager가 준비되지 않았습니다.", this);
@@ -272,11 +280,18 @@ public class Monster : MonoBehaviour
             return false;
         }
 
-        foreach (string address in data.HaveSkillIdList)
+        for (int i = 0; i < data.HaveSkillIdList.Length; i++)
         {
-            MonsterSkillBase skill =
-                await MonsterSkillManager.Inst.CreateSkillAsync(
-                    address,
+            float cooldown = data.AtkCollTime[i];
+
+            if (float.IsNaN(cooldown) || float.IsInfinity(cooldown) || cooldown < 0f)
+            {
+                Debug.LogError($"잘못된 쿨타임입니다: {id}, 인덱스 {i}", this);
+                return false;
+            }
+
+            MonsterSkillBase skill = await MonsterSkillManager.Inst.CreateSkillAsync(
+                    data.HaveSkillIdList[i],
                     transform,
                     bodyHeight,
                     data.Atk);
@@ -284,9 +299,30 @@ public class Monster : MonoBehaviour
             if (this == null || skill == null)
                 return false;
 
+            skill.InitCooldown(cooldown);
             _skills.Add(skill);
         }
 
         return true;
+    }
+
+    public Transform GetAttackPoint(Transform target)
+    {
+        if (target == null)
+            return null;
+
+        return target.position.x >= transform.position.x ? _rightWallCheck : _leftWallCheck;
+    }
+
+    private void UpdateSightDirection(float directionX)
+    {
+        if (_monsterSight == null || Mathf.Approximately(directionX, 0f))
+            return;
+
+        Vector2 offset = _monsterSight.offset;
+
+        offset.x = Mathf.Abs(offset.x) * (directionX > 0f ? 1f : -1f);
+
+        _monsterSight.offset = offset;
     }
 }

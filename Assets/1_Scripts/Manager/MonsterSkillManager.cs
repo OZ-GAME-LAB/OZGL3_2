@@ -108,7 +108,6 @@ public class MonsterSkillManager : MonoBehaviour
             return null;
         }
 
-        // 공격 오브젝트 생성·크기 설정·공격력 전달
         skill.InitSkill(owner, bodyHeight, atk, attackPrefab);
 
         return skill;
