@@ -818,11 +818,18 @@ public class PlayerControllerView : MonoBehaviour
     {
         Debug.Log($"{nameof(OnFieldInteract)} 실행");
 
-        //상호작용 컨트롤러 호출 함수 추가
         if (_interactionController == null)
         {
             return;
         }
+
+        bool requested = _interactionController.TryRequestInteraction();
+
+        Debug.Log(
+            $"상호작용 요청: {requested}, " +
+            $"Spawn: {_interactionController.IsSpawned}, " +
+            $"Owner: {_interactionController.IsOwner}, " +
+            $"대상: {_interactionController.SelectedTarget}");
 
         _interactionController.TryRequestInteraction();
     }
