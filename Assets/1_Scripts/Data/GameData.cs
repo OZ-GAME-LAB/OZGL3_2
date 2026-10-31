@@ -132,6 +132,7 @@ public class FieldObjectData : GameDataBase
     public string Name;
     public string Description;
     public string InteractionType;
+    public bool DestroyAfterUse;
     public string RequiredToolAction;
     public int Tier;
     public string DropGroupId;
@@ -144,7 +145,7 @@ public class DropGroupData : GameDataBase
     public string[] ItemId;
     public int MinQuantity;
     public int MaxQuantity;
-    public float DropChance;
+    public float[] DropChance;
 }
 
 [Serializable]

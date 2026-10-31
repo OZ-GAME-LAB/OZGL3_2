@@ -27,6 +27,8 @@ public class NetCodeServerSideService
     private void OnServerStarted()
     {
         Debug.Log("서버 시작!");
+
+        GameManager.Inst.StartGame();
     }
 
     private void OnServerStopped(bool isHost)
@@ -43,10 +45,28 @@ public class NetCodeServerSideService
 
     private void OnServerClientConnected(ulong clientId)
     {
-        if (NetworkManager.Singleton.IsServer)
+        NetworkManager network = NetworkManager.Singleton;
+
+        if (network == null || !network.IsServer)
+            return;
+
+        if (ObjectManager.Inst == null || WorldManager.Inst == null)
         {
-            Debug.Log($"[서버] 플레이어 접속 감지! Client ID: {clientId}");
-            // TODO: 스폰 처리, 플레이어 데이터 초기화 등
+            Debug.LogError("ObjectManager와 WorldManager를 확인해 주세요.");
+            return;
+        }
+
+        if (!WorldManager.Inst.TryGetStartSpawnPoint(out var entryPoint))
+            return;
+
+        NetworkObject playerObject = ObjectManager.Inst.SpawnPlayer(clientId, entryPoint.transform.position);
+
+        if (playerObject == null)
+            return;
+
+        if (playerObject.TryGetComponent(out PlayerControllerView player))
+        {
+            WorldManager.Inst.PlacePlayerAtStart(player);
         }
     }
 }
