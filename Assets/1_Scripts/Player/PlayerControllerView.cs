@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -82,6 +82,10 @@ public class PlayerControllerView : MonoBehaviour
     // 상호작용 컨트롤러 추가
     [SerializeField]
     private PlayerInteractionController _interactionController;
+
+    //룬 적용한 공격을 위한 컨트롤러 추가
+    [SerializeField]
+    private PlayerRuneAttackController _runeAttackController;
 
     private PlayerStatViewModel _playerStatViewModel;
 
@@ -820,7 +824,15 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnAttack(InputAction.CallbackContext context)
     {
+        if (_runeAttackController == null)
+        {
+            return;
+        }
+
+        _runeAttackController.RequestAttack(_lookRight);
+
         Debug.Log($"{nameof(OnAttack)} 실행");
+
     }
 
     private void OnSpecialAttack(InputAction.CallbackContext context)
