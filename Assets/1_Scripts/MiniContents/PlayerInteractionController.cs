@@ -442,7 +442,10 @@ public class PlayerInteractionController : NetworkBehaviour
         base.OnNetworkSpawn();
 
         if (IsOwner)
+        {
             LockedTargetLost += OnLockedTargetLost;
+            Initialize(true, Camera.main);
+        }
     }
 
     private void OnLockedTargetLost(InteractableObject target)

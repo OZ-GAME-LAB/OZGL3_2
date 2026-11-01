@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using Unity.Cinemachine;
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
@@ -15,6 +19,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject _workspacePrefab_3;
     [SerializeField] private GameObject _workspacePrefab_4;
 
+    private bool _worldInitialized;
+    private GameObject _mapWorkspace;
+
     private void Start()
     {
         ServiceManager.Inst.InitInventory();
@@ -23,31 +30,33 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        if (_worldInitialized)
+            return;
+
         if (_workspacePrefab_1 == null || _workspacePrefab_2 == null || _workspacePrefab_3 == null || _workspacePrefab_4 == null)
         {
+            Debug.LogError("GameManager의 작업 공간 프리팹이 비어 있습니다.");
             return;
         }
 
-        if (WorldManager.Inst == null)
+        if (WorldManager.Inst == null || !WorldManager.Inst.Initialize())
         {
-            Debug.LogWarning("게임 시작 전에 활성 WorldManager가 씬에 있어야 합니다.", this);
+            Debug.LogError("활성 WorldManager를 확인해 주세요.");
             return;
         }
 
-        if (!WorldManager.Inst.Initialize())
-            return;
-
-        GameObject playerWorkspace = Instantiate(_workspacePrefab_1);
-        PlayerControllerView player = playerWorkspace.GetComponentInChildren<PlayerControllerView>();
+        Instantiate(_workspacePrefab_1);
         Instantiate(_workspacePrefab_2);
         Instantiate(_workspacePrefab_3);
-        GameObject mapWorkspace = Instantiate(_workspacePrefab_4);
+        _mapWorkspace = Instantiate(_workspacePrefab_4);
 
-        // 맵의 EntryPoint 등록이 끝난 뒤 기존 플레이어를 배치합니다.
-        WorldManager.Inst.PlacePlayerAtStart(player);
+        _worldInitialized = true;
 
-        InitializeBackground(mapWorkspace);
-        InitializeEnvironmentPresentation(mapWorkspace, player);
+        if (NetworkManager.Singleton.IsClient)
+        {
+            InitializeBackground(_mapWorkspace);
+            StartCoroutine(ConnectLocalPlayer());
+        }
     }
 
     private void InitializeEnvironmentPresentation(GameObject mapWorkspace, PlayerControllerView player)
@@ -87,5 +96,54 @@ public class GameManager : MonoBehaviour
 
         if (!background.Initialize(outputCamera))
             Debug.LogWarning("배경 초기화에 실패했습니다. Inspector 연결을 확인해 주세요.", background);
+    }
+
+    private IEnumerator ConnectLocalPlayer()
+    {
+        NetworkManager network = NetworkManager.Singleton;
+        NetworkObject playerObject = null;
+
+        while (network != null && network.IsListening)
+        {
+            if (network.LocalClient != null)
+            {
+                playerObject = network.LocalClient.PlayerObject;
+            }
+
+            if (playerObject != null && playerObject.IsSpawned)
+                break;
+
+            yield return null;
+        }
+
+        if (network == null || !network.IsListening ||
+            playerObject == null)
+        {
+            yield break;
+        }
+
+        if (!playerObject.TryGetComponent(out PlayerControllerView player) ||
+            !playerObject.TryGetComponent(out PlayerInput input) ||
+            !playerObject.TryGetComponent(out Rigidbody2D body))
+        {
+            Debug.LogError("플레이어 프리팹의 필수 컴포넌트를 확인해 주세요.");
+            yield break;
+        }
+
+        // LocalClient.PlayerObject이므로 본인 플레이어만 활성화
+        body.bodyType = RigidbodyType2D.Dynamic;
+        player.enabled = true;
+        input.enabled = true;
+
+        CinemachineCamera followCamera =
+            playerObject.GetComponentInChildren<CinemachineCamera>(true);
+
+        if (followCamera != null)
+        {
+            followCamera.Follow = player.transform;
+            followCamera.gameObject.SetActive(true);
+        }
+
+        InitializeEnvironmentPresentation(_mapWorkspace, player);
     }
 }

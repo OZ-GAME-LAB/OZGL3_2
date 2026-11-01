@@ -143,6 +143,7 @@ public class PlayerControllerView : MonoBehaviour
         _inventoryAction.performed += OnOpenInventory;
         _journalAction.performed += OnOpenJournal;
         _settingsAction.performed += OnOpenSettings;
+        _fieldInteractAction.canceled += OnFieldInteractCanceled;
 
         ServiceManager.Inst.PlayerService.BindPlayerControllerView(this);
     }
@@ -173,6 +174,9 @@ public class PlayerControllerView : MonoBehaviour
         _inventoryAction.performed -= OnOpenInventory;
         _journalAction.performed -= OnOpenJournal;
         _settingsAction.performed -= OnOpenSettings;
+        _fieldInteractAction.canceled -= OnFieldInteractCanceled;
+        _interactionController?.CancelRequestedInteraction();
+
 
         Unbind();
     }
@@ -182,6 +186,11 @@ public class PlayerControllerView : MonoBehaviour
         // 원격 플레이어까지 같은 키보드 입력으로 움직이지 않도록 제한합니다.
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
+
+        if (_fieldInteractAction.IsPressed())
+        {
+            _interactionController?.TickInteraction(Time.deltaTime);
+        }
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null || !_playerInput.isActiveAndEnabled || !_playerInput.inputIsActive)
@@ -813,11 +822,18 @@ public class PlayerControllerView : MonoBehaviour
     {
         Debug.Log($"{nameof(OnFieldInteract)} 실행");
 
-        //상호작용 컨트롤러 호출 함수 추가
         if (_interactionController == null)
         {
             return;
         }
+
+        bool requested = _interactionController.TryRequestInteraction();
+
+        Debug.Log(
+            $"상호작용 요청: {requested}, " +
+            $"Spawn: {_interactionController.IsSpawned}, " +
+            $"Owner: {_interactionController.IsOwner}, " +
+            $"대상: {_interactionController.SelectedTarget}");
 
         _interactionController.TryRequestInteraction();
     }
@@ -925,4 +941,8 @@ public class PlayerControllerView : MonoBehaviour
         }
     }
 
+    private void OnFieldInteractCanceled(InputAction.CallbackContext context)
+    {
+        _interactionController?.CancelRequestedInteraction();
+    }
 }

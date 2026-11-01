@@ -23,6 +23,7 @@ public class NetCodeNetworkManager : MonoBehaviour
     private void OnDestroy()
     {
         _clientSideService.EndClientService();
+        _serverSideService.EndServerService();
         // _serverSideService.End
     }
 
@@ -34,6 +35,7 @@ public class NetCodeNetworkManager : MonoBehaviour
             return;
         }
 
+        _serverSideService.InitServerService();
         _clientSideService.InitClientService();
         _netCodeNetworkManager.StartHost();
     }

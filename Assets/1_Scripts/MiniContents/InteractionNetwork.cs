@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using Unity.Collections;
 using Unity.Netcode;
+using UnityEngine;
 
 public class InteractionNetwork : NetworkBehaviour
 {
@@ -175,7 +176,7 @@ public class InteractionNetwork : NetworkBehaviour
         _serverAllowsInteraction = false;
         ReleaseInteractorOnServer();
 
-        // TODO : ObjectManager를 통해 아이템 스폰 부분 추가 필요
+        SpawnRewardsOnServer();
 
         NetworkObject.Despawn();
         return true;
@@ -202,6 +203,93 @@ public class InteractionNetwork : NetworkBehaviour
         RefreshAvailabilityOnServer();
 
         return true;
+    }
+
+    private void SpawnRewardsOnServer()
+    {
+        if (!IsServer)
+            return;
+
+        FieldObjectData objectData = DataManager.Inst.GetData<FieldObjectData>(_objectId.Value.ToString());
+
+        if (objectData == null || string.IsNullOrWhiteSpace(objectData.DropGroupId))
+        {
+            Debug.LogError("상호작용 오브젝트의 보상 그룹을 확인해 주세요.", this);
+            return;
+        }
+
+        DropGroupData dropData = DataManager.Inst.GetData<DropGroupData>(objectData.DropGroupId);
+
+        if (dropData == null)
+            return;
+
+        if (dropData.ItemId == null || dropData.DropChance == null || dropData.ItemId.Length == 0 || dropData.ItemId.Length != dropData.DropChance.Length)
+        {
+            Debug.LogError("아이템 목록과 확률 배열의 길이를 확인해 주세요.", this);
+            return;
+        }
+
+        if (dropData.MinQuantity < 0 || dropData.MaxQuantity < dropData.MinQuantity || dropData.MaxQuantity == int.MaxValue)
+        {
+            Debug.LogError("보상 최소·최대 수량을 확인해 주세요.", this);
+            return;
+        }
+
+        float totalChance = 0f;
+
+        foreach (float chance in dropData.DropChance)
+        {
+            if (float.IsNaN(chance) || float.IsInfinity(chance) || chance < 0f)
+            {
+                Debug.LogError("드롭 확률은 0 이상의 유효한 숫자여야 합니다.", this);
+                return;
+            }
+
+            totalChance += chance;
+        }
+
+        if (!Mathf.Approximately(totalChance, 1f))
+        {
+            Debug.LogError($"드롭 확률의 합이 1이 아닙니다: {totalChance}", this);
+            return;
+        }
+
+        int quantity = UnityEngine.Random.Range(dropData.MinQuantity, dropData.MaxQuantity + 1);
+
+        for (int i = 0; i < quantity; i++)
+        {
+            string itemId = SelectRewardItem(dropData, totalChance);
+
+            var item = ObjectManager.Inst.SpawnItem(itemId, 1, transform.position);
+
+            if (item == null)
+            {
+                Debug.LogError($"보상 아이템 생성 실패: {itemId}", this);
+            }
+        }
+    }
+
+    private string SelectRewardItem(DropGroupData dropData, float totalChance)
+    {
+        float roll = UnityEngine.Random.value * totalChance;
+        float accumulatedChance = 0f;
+        int lastPositiveIndex = -1;
+
+        for (int i = 0; i < dropData.ItemId.Length; i++)
+        {
+            float chance = dropData.DropChance[i];
+
+            if (chance <= 0f)
+                continue;
+
+            lastPositiveIndex = i;
+            accumulatedChance += chance;
+
+            if (roll < accumulatedChance)
+                return dropData.ItemId[i];
+        }
+
+        return dropData.ItemId[lastPositiveIndex];
     }
 
     //-------------------------------------------------------------------------------
