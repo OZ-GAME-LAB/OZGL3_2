@@ -90,8 +90,12 @@ public class PlayerRuneAttackController : NetworkBehaviour
     // 로컬 플레이어 입력에서 호출.
     public void RequestAttack(bool faceRight)
     {
-        if (!IsSpawned || !IsOwner || !isActiveAndEnabled)
+        Debug.Log($"[공격 요청] 대상: {name}, " + $"Spawned: {IsSpawned}, " + $"Owner: {IsOwner}, " + $"Active: {isActiveAndEnabled}", this);
+
+        if (IsSpawned == false || IsOwner == false || isActiveAndEnabled == false)
         {
+            Debug.LogWarning("[공격 중단] 스폰·소유권·활성 상태를 확인하세요.", this);
+
             return;
         }
 
@@ -101,13 +105,31 @@ public class PlayerRuneAttackController : NetworkBehaviour
     [ServerRpc]
     private void RequestAttackServerRpc(bool faceRight, ServerRpcParams rpcParams = default)
     {
+        Debug.Log($"[서버 공격 수신] {name}", this);
+
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
         {
+            Debug.LogWarning("[공격 중단] 요청자와 소유자가 다릅니다.", this);
             return;
         }
 
-        if (isActiveAndEnabled == false || _actor == null || _actor.IsSpawned == false || _actor.IsAlive == false || _actor.CanAttack == false)
+        if (isActiveAndEnabled == false)
         {
+            Debug.LogWarning("[공격 중단] 공격 컴포넌트가 비활성입니다.", this);
+            return;
+        }
+
+        if (_actor == null)
+        {
+            Debug.LogError("[공격 중단] Actor가 없습니다. " + "같은 플레이어의 PlayerRuneCombatActor를 연결하세요.", this);
+            return;
+        }
+
+        Debug.Log($"[서버 Actor] 종류: {_actor.GetType().Name}, " + $"Spawned: {_actor.IsSpawned}, " + $"Alive: {_actor.IsAlive}, " + $"CanAttack: {_actor.CanAttack}, " + $"공격력: {_actor.AttackPower}", this);
+
+        if (_actor.IsSpawned == false || _actor.IsAlive == false || _actor.CanAttack == false)
+        {
+            Debug.LogWarning("[공격 중단] Actor가 공격 가능한 상태가 아닙니다.", this);
             return;
         }
 
@@ -115,13 +137,17 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
         if (_activeProfile != null || now < _nextAttackTime)
         {
+            Debug.Log($"[공격 대기] 진행 중: {_activeProfile != null}, " + $"남은 대기시간: {System.Math.Max(0, _nextAttackTime - now):F2}", this);
             return;
         }
 
-        if (!TryBuildProfile(out AttackProfile profile))
+        if (TryBuildProfile(out AttackProfile profile) == false)
         {
+            Debug.LogError("[공격 중단] 룬 조합 계산에 실패했습니다.", this);
             return;
         }
+
+        Debug.Log($"[실제 공격 설정] " + $"룬: {(_testRuneIds == null ? "(없음)" : string.Join(", ", _testRuneIds))}, " + $"투사체: {profile._useProjectile}, " + $"타격 수: {profile._hitCount}", this);
 
         if (profile._useProjectile && _projectilePrefab == null)
         {
@@ -252,24 +278,46 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(center, radius, _targetLayer);
 
+        Debug.Log($"[근접 판정] 위치: {center}, 반경: {radius}, " + $"감지된 콜라이더: {hits.Length}개", this);
+
         _hitTargets.Clear();
 
         foreach (Collider2D hit in hits)
         {
-            RuneCombatActor target = hit.GetComponentInParent<RuneCombatActor>();
+            RuneCombatActor target =
+                hit.GetComponentInParent<RuneCombatActor>();
 
-            // 한 몬스터에 콜라이더가 여러 개 있어도 타격당 한 번만 처리.
-            if (target == null || !_hitTargets.Add(target))
+            if (target == null)
             {
+                Debug.LogWarning(
+                    $"[근접 판정] {hit.name}의 부모에서 " +
+                    "RuneCombatActor를 찾지 못했습니다.",
+                    hit);
+
                 continue;
             }
 
-            RuneHitResolver.TryHitOnServer(_actor, target, profile, _attackPowerSnapshot);
+            if (_hitTargets.Add(target) == false)
+                continue;
+
+            bool accepted = RuneHitResolver.TryHitOnServer(
+                _actor,
+                target,
+                profile,
+                _attackPowerSnapshot);
+
+            Debug.Log(
+                $"[근접 적중 결과] 대상: {target.name}, " +
+                $"생존 여부(처리 후): {target.IsAlive}, " +
+                $"적중 승인: {accepted}",
+                this);
         }
     }
 
     private void FireProjectile(AttackProfile profile)
     {
+        Debug.Log($"[투사체 발사] 플레이어: {name}, 위치: {GetAttackPosition()}", this);
+
         PlayerAttackProjectile projectile = Instantiate(
             _projectilePrefab,
             GetAttackPosition(),
