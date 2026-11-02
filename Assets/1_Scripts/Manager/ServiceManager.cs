@@ -26,7 +26,6 @@ public class ServiceManager : MonoBehaviour
 
     public void InitInventory()
     {
-        InventoryService.InitInventoryList();
     }
 
 

@@ -74,22 +74,27 @@ public class PlayerService
 
     public void BindPlayerControllerView(PlayerControllerView playerControllerView)
     {
-        GetPlayerControllerView();
+        if (playerControllerView == null)
+        {
+            return;
+        }
+
+        GetPlayerStatViewModel();
         playerControllerView.Bind(_playerStatViewModel);
     }
 
 
-    private PlayerStatViewModel GetPlayerControllerView()
+    private PlayerStatViewModel GetPlayerStatViewModel()
     {
         if (_playerStatViewModel == null)
         {
-            _playerStatViewModel = CreatePlayerControllerView();
+            _playerStatViewModel = CreatePlayerStatViewModel();
         }
 
         return _playerStatViewModel;
        
     }
-    private PlayerStatViewModel CreatePlayerControllerView()
+    private PlayerStatViewModel CreatePlayerStatViewModel()
     {
         
         var playerStatViewModel = new PlayerStatViewModel
