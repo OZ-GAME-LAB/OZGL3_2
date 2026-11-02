@@ -54,29 +54,41 @@ public class InventoryService
     }
     public bool RemoveItem(InventoryItemViewModel item)
     {
-        if (item == null || _inventoryViewModel?.InventoryItemViewModelDictionary == null)
+        var items = _inventoryViewModel?.InventoryItemViewModelDictionary;
+        if (item == null || items == null)
             return false;
 
-        foreach (var pair in _inventoryViewModel.InventoryItemViewModelDictionary)
+        string key = null;
+
+        foreach (var pair in items)
         {
-            // 전달된 객체와 딕셔너리에 저장된 객체가 같은 인스턴스인지 확인
-            if (!ReferenceEquals(pair.Value, item))
-                continue;
-
-            if (pair.Value.Count > 1)
+            if (ReferenceEquals(pair.Value, item))
             {
-                pair.Value.Count--;
+                key = pair.Key;
+                break;
             }
-            else
-            {
-                _inventoryViewModel.InventoryItemViewModelDictionary.Remove(pair.Key);
-            }
-
-            return true;
         }
 
-        // 이 서비스의 인벤토리에 없는 아이템
-        return false;
+        if (key == null)
+            return false;
+
+        if (item.Count > 1)
+        {
+            item.Count--;
+
+        }
+        else
+        {
+            items.Remove(key);
+            Debug.Log($"{item.Name}아이템 제거함");
+        }
+
+        return true;
+    }
+
+    public void UseItem(InventoryItemViewModel item)
+    {
+        Debug.Log($"{item.Name}아이템 사용됨");
     }
 
     public void BindInventoryView(InventoryUIView inventoryView)
@@ -103,9 +115,9 @@ public class InventoryService
             AddItem(pair.Value.Id);
         }
     }
-    public bool TryGetItem(string itemDataId, out InventoryItemViewModel itemViewModel)
+    public bool TryGetItem(string itemId, out InventoryItemViewModel itemViewModel)
     {
-        return _inventoryViewModel.InventoryItemViewModelDictionary.TryGetValue(itemDataId, out itemViewModel);
+        return _inventoryViewModel.InventoryItemViewModelDictionary.TryGetValue(itemId, out itemViewModel);
     }
 
     private InventoryUIViewModel GetInvantoryViewModel()
