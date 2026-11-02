@@ -10,6 +10,7 @@ public class InventorySlotUIView : MonoBehaviour
 {
     [SerializeField] private Button _useButton;
     [SerializeField] private TMP_Text _itemName;
+    [SerializeField] private TMP_Text _itemCount;
     [SerializeField] private Image Image_ItemIcon;
 
     private InventoryItemViewModel _viewModel;
@@ -34,6 +35,12 @@ public class InventorySlotUIView : MonoBehaviour
             case nameof(_viewModel.Name):
                 {
                     _itemName.text = _viewModel.Name;
+
+                    break;
+                }
+            case nameof(_viewModel.Count):
+                {
+                    _itemCount.text = _viewModel.Count.ToString();
 
                     break;
                 }

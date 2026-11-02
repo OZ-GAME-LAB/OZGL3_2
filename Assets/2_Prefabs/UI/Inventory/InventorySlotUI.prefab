@@ -92,8 +92,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 25
-  m_fontSizeBase: 25
+  m_fontSize: 20
+  m_fontSizeBase: 20
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -447,8 +447,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eca3b22e5d7d00b45ac678b3f20aaaa5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUIView
-  _useButton: {fileID: 0}
+  _useButton: {fileID: 973415104695005948}
   _itemName: {fileID: 1437356382786906648}
+  _itemCount: {fileID: 6370714775273162969}
   Image_ItemIcon: {fileID: 4033339391393687370}
 --- !u!222 &3380528979164438447
 CanvasRenderer:
