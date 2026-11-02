@@ -3,16 +3,36 @@ using UnityEngine;
 
 public class InventoryService
 {
-    private readonly Dictionary<string, InventoryUIViewModel> _inventoryList = new();
+    private InventoryUIViewModel _inventoryViewModel;
 
-    public IReadOnlyDictionary<string, InventoryUIViewModel> InventoryList => _inventoryList;
+    private int _nextSlotNumber = 1;
 
+   
     public bool AddItem(string itemDataId)
     {
         if (!DataManager.Inst.ReadData<ItemData>().TryGetValue(itemDataId, out var data))
+        {
             return false;
+        }
 
-        var itemViewModel = new InventoryUIViewModel
+
+        if(_inventoryViewModel.InventoryItemViewModelDictionary != null)
+        {
+            foreach (var pair in _inventoryViewModel.InventoryItemViewModelDictionary)
+            {
+                var existingItem = pair.Value;
+
+                if (existingItem.Id != data.Id)
+                    continue;
+
+                if (existingItem.Count >= existingItem.MaxStack)
+                    return false;
+
+                existingItem.Count++;
+                return true;
+            }
+        }
+        var itemViewModel = new InventoryItemViewModel
         {
             Id = data.Id,
             Name = data.Name,
@@ -22,11 +42,41 @@ public class InventoryService
             Price = data.Price,
             SellingPrice = data.SellingPrice,
             IconPath = data.IconPath,
-            PrefabPath = data.PrefabPath
+            PrefabPath = data.PrefabPath,
+            Count = 1
         };
 
-        _inventoryList[itemDataId] = itemViewModel;
+        string slotKey = _nextSlotNumber.ToString();
+        _inventoryViewModel.InventoryItemViewModelDictionary.Add(slotKey, itemViewModel);
+        _nextSlotNumber++;
+        
         return true;
+    }
+    public bool RemoveItem(InventoryItemViewModel item)
+    {
+        if (item == null || _inventoryViewModel?.InventoryItemViewModelDictionary == null)
+            return false;
+
+        foreach (var pair in _inventoryViewModel.InventoryItemViewModelDictionary)
+        {
+            // 전달된 객체와 딕셔너리에 저장된 객체가 같은 인스턴스인지 확인
+            if (!ReferenceEquals(pair.Value, item))
+                continue;
+
+            if (pair.Value.Count > 1)
+            {
+                pair.Value.Count--;
+            }
+            else
+            {
+                _inventoryViewModel.InventoryItemViewModelDictionary.Remove(pair.Key);
+            }
+
+            return true;
+        }
+
+        // 이 서비스의 인벤토리에 없는 아이템
+        return false;
     }
 
     public void BindInventoryView(InventoryUIView inventoryView)
@@ -36,58 +86,44 @@ public class InventoryService
             Debug.LogError("InventoryUIView가 null입니다.");
             return;
         }
-        var inventoryViewModels = new List<InventoryUIViewModel>(_inventoryList.Values);
-        inventoryView.Bind(inventoryViewModels);
+        GetInvantoryViewModel();
+        InitTestInventoryItem();
+        inventoryView.Bind(_inventoryViewModel);
     }
 
     //서비스를 가지고 있는 곳에서 실행시켜주기
-    public void InitInventoryList()
+    public void InitTestInventoryItem()
     {
-        _inventoryList.Clear();
 
         Dictionary<string, ItemData> dataTable = DataManager.Inst.ReadData<ItemData>();
         Debug.Log($"DataManager 아이템 수: {dataTable.Count}");
 
-
         foreach (var pair in dataTable)
         {
-            ItemData data = pair.Value;
-
-            var itemViewModel = new InventoryUIViewModel
-            {
-                Id = data.Id,
-                Name = data.Name,
-                ItemType = data.ItemType,
-                Description = data.Description,
-                MaxStack = data.MaxStack,
-                Price = data.Price,
-                SellingPrice = data.SellingPrice,
-                IconPath = data.IconPath,
-                PrefabPath = data.PrefabPath
-            };
-
-            _inventoryList.Add(itemViewModel.Id, itemViewModel);
+            AddItem(pair.Value.Id);
         }
     }
-
-    public void SetInventoryList(IEnumerable<InventoryUIViewModel> inventory)
+    public bool TryGetItem(string itemDataId, out InventoryItemViewModel itemViewModel)
     {
-        _inventoryList.Clear();
+        return _inventoryViewModel.InventoryItemViewModelDictionary.TryGetValue(itemDataId, out itemViewModel);
+    }
 
-        if (inventory == null)
-            return;
-
-        foreach (var itemViewModel in inventory)
+    private InventoryUIViewModel GetInvantoryViewModel()
+    {
+        if( _inventoryViewModel == null)
         {
-            if (itemViewModel == null)
-                continue;
-
-            _inventoryList[itemViewModel.Id] = itemViewModel;
+            _inventoryViewModel = CreateInvantoryViewModel();
         }
+
+        return _inventoryViewModel;
     }
 
-    public bool TryGetItem(string itemDataId, out InventoryUIViewModel itemViewModel)
+    private InventoryUIViewModel CreateInvantoryViewModel()
     {
-        return _inventoryList.TryGetValue(itemDataId, out itemViewModel);
+        var inventoryViewModel = new InventoryUIViewModel
+        {
+            InventoryItemViewModelDictionary = new()
+        };
+        return inventoryViewModel;
     }
 }

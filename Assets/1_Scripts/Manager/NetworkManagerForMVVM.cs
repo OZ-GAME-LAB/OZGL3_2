@@ -26,7 +26,6 @@ public class NetworkManager : MonoBehaviour
 
     public void InitInventory()
     {
-        InventoryService.InitInventoryList();
     }
 
 
