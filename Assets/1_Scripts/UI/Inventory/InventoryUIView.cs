@@ -1,3 +1,4 @@
+using ObservableCollections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,7 +9,9 @@ public class InventoryUIView : UIBase
     [SerializeField] private Button _closeButton;
     [SerializeField] private GameObject _inventorySlotPrefab;
 
-    private readonly Dictionary<InventorySlotUIView, InventoryUIViewModel> _inventorySlots = new();
+
+    InventoryUIViewModel _InventoryUIViewModel;
+    private readonly Dictionary<InventorySlotUIView, InventoryItemViewModel> _inventorySlots = new();
 
     private void OnEnable()
     {
@@ -22,31 +25,41 @@ public class InventoryUIView : UIBase
             _closeButton.onClick.RemoveListener(OnClickCloseButton);
     }
 
-    public void Bind(List<InventoryUIViewModel> inventory)
+    public void Bind(InventoryUIViewModel inventory)
+    {
+        if (_InventoryUIViewModel?.InventoryItemViewModelDictionary != null)
+        {
+            _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged -= OnInventoryChanged;
+        }
+
+        ClearInventorySlots();
+        _InventoryUIViewModel = inventory;
+
+        if (_InventoryUIViewModel?.InventoryItemViewModelDictionary == null)
+            return;
+
+        _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged += OnInventoryChanged;
+
+        RebuildSlots();
+    }
+
+    private void OnInventoryChanged(in NotifyCollectionChangedEventArgs<KeyValuePair<string, InventoryItemViewModel>> e)
+    {
+        RebuildSlots();
+    }
+
+    private void RebuildSlots()
     {
         ClearInventorySlots();
 
-        if (inventory == null)
-            return;
-
-        foreach (var item in inventory)
+        foreach (var pair in _InventoryUIViewModel.InventoryItemViewModelDictionary)
         {
-            if (item == null)
-                continue;
-
-            MakeItemSlot(item);
+            if (pair.Value != null)
+                MakeItemSlot(pair.Value);
         }
     }
 
-    public void AddItembyInventory(InventoryUIViewModel item)
-    {
-        if (item == null)
-            return;
-
-        MakeItemSlot(item);
-    }
-
-    private void MakeItemSlot(InventoryUIViewModel item)
+    private void MakeItemSlot(InventoryItemViewModel item)
     {
         var slotObject = Instantiate(_inventorySlotPrefab, _inventorySlotRoot);
         var slotView = slotObject.GetComponent<InventorySlotUIView>();
@@ -63,7 +76,7 @@ public class InventoryUIView : UIBase
         _inventorySlots.Add(slotView, item);
     }
 
-    private void OnItemUsed(InventorySlotUIView slot, InventoryUIViewModel item)
+    private void OnItemUsed(InventorySlotUIView slot, InventoryItemViewModel item)
     {
         if (!_inventorySlots.Remove(slot))
             return;
