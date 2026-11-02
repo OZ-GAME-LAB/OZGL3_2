@@ -78,11 +78,16 @@ public class InventoryUIView : UIBase
 
     private void OnItemUsed(InventorySlotUIView slot, InventoryItemViewModel item)
     {
-        if (!_inventorySlots.Remove(slot))
+        if (slot == null || item == null)
             return;
 
-        slot.ItemUsed -= OnItemUsed;
-        Destroy(slot.gameObject);
+        ServiceManager.Inst.InventoryService.UseItem(item);
+        RemoveItem(item);
+    }
+
+    private void RemoveItem(InventoryItemViewModel item)
+    {
+        ServiceManager.Inst.InventoryService.RemoveItem(item);
     }
 
     private void ClearInventorySlots()
