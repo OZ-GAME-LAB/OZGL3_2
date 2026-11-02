@@ -12,7 +12,11 @@ public class Monster : MonoBehaviour
     [SerializeField] private LayerMask _groundLayer;
     [SerializeField] private float _groundCheckRadius = 0.1f;
     [SerializeField] private float _jumpForce = 5f;
+    private float _attackRange;
+    private readonly List<MonsterSkillBase> _skills = new();
+    public IReadOnlyList<MonsterSkillBase> Skills => _skills;
 
+    [SerializeField] private Collider2D _monsterCollider;
     [SerializeField] private Collider2D _monsterSight;
     [SerializeField] private Transform _eyePosition;
     [SerializeField] private LayerMask _sightBlockLayer;
@@ -25,6 +29,8 @@ public class Monster : MonoBehaviour
     private GameObject[] _patricList;
     private int _patricCurIndexNo = 0;
     private int _patricListCount;
+
+    public MonsterVM ViewModel { get; } = new MonsterVM();
 
     // test 속도 추후 데이터 반영 시 해당 변수 삭제
     private float _moveSpeed = 3f;
@@ -99,6 +105,8 @@ public class Monster : MonoBehaviour
         _rightWallCheck = visual.RightCheckReturn();
         _leftWallCheck = visual.LeftCheckReturn();
         _eyePosition = visual.EyePositionReturn();
+        _monsterCollider = visual.MonsterColliderReturn();
+        _attackRange = data.AtkDistance;
 
         return true;
     }
@@ -155,6 +163,8 @@ public class Monster : MonoBehaviour
 
         velocity.x = Mathf.Clamp(distanceX / Time.fixedDeltaTime, -_moveSpeed, _moveSpeed);
 
+        UpdateSightDirection(velocity.x);
+
         _rigidbody2D.linearVelocity = velocity;
         return false;
     }
@@ -197,6 +207,19 @@ public class Monster : MonoBehaviour
         MonsterPatricMoveAndCheck(VisibleTarget.bounds.center);
     }
 
+    public bool IsTargetInAttackRange()
+    {
+        if (VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
+            return false;
+
+        Vector2 monsterPosition = transform.position;
+        Vector2 targetPosition = VisibleTarget.bounds.center;
+
+        float distance = Vector2.Distance(monsterPosition, targetPosition);
+
+        return distance <= _attackRange;
+    }
+
     public void MonsterStopMove()
     {
         Vector2 velocity = _rigidbody2D.linearVelocity;
@@ -220,5 +243,86 @@ public class Monster : MonoBehaviour
             _sightBlockLayer);
 
         return hit.collider == null;
+    }
+
+    public async UniTask<bool> InitMonsterSkills(string id)
+    {
+        MonsterData data = DataManager.Inst.GetData<MonsterData>(id);
+
+        if (data == null)
+            return false;
+
+        if (data.HaveSkillIdList == null || data.HaveSkillIdList.Length == 0)
+            return true;
+
+        if (data.AtkCollTime == null || data.AtkCollTime.Length != data.HaveSkillIdList.Length)
+        {
+            Debug.LogError($"스킬과 쿨타임 배열의 개수가 다릅니다: {id}", this);
+            return false;
+        }
+
+        if (MonsterSkillManager.Inst == null)
+        {
+            Debug.LogError("MonsterSkillManager가 준비되지 않았습니다.", this);
+            return false;
+        }
+
+        if (_monsterCollider == null)
+            return false;
+
+        Physics2D.SyncTransforms();
+
+        float bodyHeight = _monsterCollider.bounds.size.y;
+
+        if (bodyHeight <= 0f)
+        {
+            Debug.LogError("몬스터 몸 Collider의 높이를 확인하세요.", this);
+            return false;
+        }
+
+        for (int i = 0; i < data.HaveSkillIdList.Length; i++)
+        {
+            float cooldown = data.AtkCollTime[i];
+
+            if (float.IsNaN(cooldown) || float.IsInfinity(cooldown) || cooldown < 0f)
+            {
+                Debug.LogError($"잘못된 쿨타임입니다: {id}, 인덱스 {i}", this);
+                return false;
+            }
+
+            MonsterSkillBase skill = await MonsterSkillManager.Inst.CreateSkillAsync(
+                    data.HaveSkillIdList[i],
+                    transform,
+                    bodyHeight,
+                    data.Atk);
+
+            if (this == null || skill == null)
+                return false;
+
+            skill.InitCooldown(cooldown);
+            _skills.Add(skill);
+        }
+
+        return true;
+    }
+
+    public Transform GetAttackPoint(Transform target)
+    {
+        if (target == null)
+            return null;
+
+        return target.position.x >= transform.position.x ? _rightWallCheck : _leftWallCheck;
+    }
+
+    private void UpdateSightDirection(float directionX)
+    {
+        if (_monsterSight == null || Mathf.Approximately(directionX, 0f))
+            return;
+
+        Vector2 offset = _monsterSight.offset;
+
+        offset.x = Mathf.Abs(offset.x) * (directionX > 0f ? 1f : -1f);
+
+        _monsterSight.offset = offset;
     }
 }

@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SpringWater_Test
+  m_Shader: {fileID: 4800000, guid: 42431ac9fa1d4571b55715e193dbcdf4, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 82b9e50cef664fce9edfd3fd8594610e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TerrainTex:
+        m_Texture: {fileID: 2800000, guid: 4f3c7c0a7cf4484883ce036faa4e33eb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BackgroundBlock: 1
+    - _BreezeSpeed: 0.25
+    - _BreezeStrength: 0.55
+    - _DeepOpacity: 0.35
+    - _DepthRange: 0.48
+    - _GlintStrength: 0.035
+    - _Opacity: 0.2
+    - _ReflectionDepth: 0.045
+    - _ReflectionStrength: 0.3
+    - _Refraction: 0.0015
+    - _SurfaceRippleDepth: 0.035
+    - _SurfaceRippleSpeed: 0.4
+    - _SurfaceRippleStrength: 0.208
+    - _SurfaceStrength: 0.585
+    - _SurfaceWidth: 0.002
+    - _SurfaceY: 0.6
+    - _TerrainAmount: 1
+    - _TextureScale: 24
+    - _TextureSpeed: 0.1
+    - _WaveAmplitude: 0.0055
+    - _WaveFrequency: 24
+    - _WaveSpeed: 0.5
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DeepColor: {r: 0, g: 0.14150941, b: 0.102674745, a: 1}
+    - _InteriorColor: {r: 0.08908863, g: 0.24528301, b: 0.17643726, a: 1}
+    - _ReflectionColor: {r: 0.78, g: 0.9, b: 0.83, a: 1}
+    - _ShallowColor: {r: 0.2, g: 0.53, b: 0.49, a: 1}
+    - _SurfaceColor: {r: 0.53, g: 0.78, b: 0.71, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

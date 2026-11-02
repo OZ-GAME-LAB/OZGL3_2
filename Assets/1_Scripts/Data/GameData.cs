@@ -47,12 +47,6 @@ public enum ValueUnit
     HPPerSec = 2
 }
 
-public enum Trigger
-{
-    None = 0,
-    OnHit = 1
-}
-
 public enum MoveType
 {
     None = 0,
@@ -90,11 +84,21 @@ public class EquipmentData : GameDataBase
 [Serializable]
 public class RuneData : GameDataBase
 {
-    public string EffectId;
-    public Trigger Trigger;
-    public int EffectValue;
-    public int DurationSec;
-    public float ProcChance;
+    public string RuneType; // 룬 종류
+    public string EffectType; // 효과 종류
+    public string DamageType; // 변경 피해 속성
+
+    public float DamageMultiplier = 1f;
+    public float AttackSpeedMultiplier = 1f;
+    public float RangeMultiplier = 1f;
+    public float ProjectileSizeMultiplier = 1f;
+
+    public int HitCount; //변경 타격 수. 0이면 변화없고 1이상일 때 변합니다.
+    public bool PreventAttackInterrupt; // 공격 중단 방지
+    public string StatusProfileId; // 상태이상 설정 ID
+    public float HealAttackRatio; // 공격시 회복 비율
+    public string Trigger; // 발동 시점
+    public string AttackPrefabPath;
 }
 
 [Serializable]
@@ -128,6 +132,7 @@ public class FieldObjectData : GameDataBase
     public string Name;
     public string Description;
     public string InteractionType;
+    public bool DestroyAfterUse;
     public string RequiredToolAction;
     public int Tier;
     public string DropGroupId;
@@ -140,15 +145,18 @@ public class DropGroupData : GameDataBase
     public string[] ItemId;
     public int MinQuantity;
     public int MaxQuantity;
-    public float DropChance;
+    public float[] DropChance;
 }
 
+[Serializable]
 public class MonsterData : GameDataBase
 {
     public string Name;
     public string Description;
     public float Hp;
     public float Atk;
+    public float[] AtkCollTime;
+    public float AtkDistance;
     public float PhysicalResistance;
     public float FireResistance;
     public float IceResistance;

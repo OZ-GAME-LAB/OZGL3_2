@@ -207,7 +207,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 11.1975, z: -10}
+  m_LocalPosition: {x: 0, y: 10.125, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -560,14 +560,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 3216449121980172412, guid: af0cc51154a55044dbae6ee2d95536fb, type: 3}
-      propertyPath: NetworkConfig.Prefabs.NetworkPrefabsLists.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3216449121980172412, guid: af0cc51154a55044dbae6ee2d95536fb, type: 3}
-      propertyPath: 'NetworkConfig.Prefabs.NetworkPrefabsLists.Array.data[1]'
-      value: 
-      objectReference: {fileID: 11400000, guid: c9684cbb484e26c46b63d16a8bc44e40, type: 2}
     - target: {fileID: 6986301477840556821, guid: af0cc51154a55044dbae6ee2d95536fb, type: 3}
       propertyPath: m_LocalPosition.x
       value: -393.14285
@@ -744,6 +736,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4965453899744507755, guid: 6b0f9ea58f391284db23f462b657f9a0, type: 3}
+      propertyPath: Prefab_Player
+      value: 
+      objectReference: {fileID: 6623172072296654929, guid: 17c85af24ed1c5f499cc64350f959fb6, type: 3}
+    - target: {fileID: 4965453899744507755, guid: 6b0f9ea58f391284db23f462b657f9a0, type: 3}
+      propertyPath: Prefab_Monster
+      value: 
+      objectReference: {fileID: 6866738638208545897, guid: db53d1154b78e514198c78ecc6e8445c, type: 3}
     - target: {fileID: 4965453899744507755, guid: 6b0f9ea58f391284db23f462b657f9a0, type: 3}
       propertyPath: _netcodeManager
       value: 

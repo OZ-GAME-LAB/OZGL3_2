@@ -14,9 +14,9 @@ TagManager:
   - Player
   - FieldItem
   - Ground
-  - 
-  - 
-  - 
+  - InteractionObject
+  - Monster
+  - ThinPlatform
   - 
   - 
   - 

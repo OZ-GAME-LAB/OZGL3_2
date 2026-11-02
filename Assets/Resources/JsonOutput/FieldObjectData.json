@@ -1,0 +1,13 @@
+[
+  {
+    "Id": "GatherObj_01",
+    "Name": "베리 나무",
+    "Description": "베리나무 이다",
+    "InteractionType": "Gathering",
+    "DestroyAfterUse": true,
+    "RequiredToolAction": null,
+    "Tier": 1,
+    "DropGroupId": "Drop_Gather_01",
+    "PrefabPath": "Prefab/Mesh/TestPrefab"
+  }
+]

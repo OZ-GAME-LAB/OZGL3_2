@@ -17,7 +17,8 @@ GameObject:
   - component: {fileID: 1030046886869066953}
   - component: {fileID: 3060230488291063627}
   - component: {fileID: 348393768622283212}
-  m_Layer: 0
+  - component: {fileID: 7060569409603838230}
+  m_Layer: 10
   m_Name: MonsterPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -51,7 +52,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2744916636
+  GlobalObjectIdHash: 249903823
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -84,17 +85,18 @@ MonoBehaviour:
   _leftWallCheck: {fileID: 0}
   _groundLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   _groundCheckRadius: 0.1
   _jumpForce: 5
+  _monsterCollider: {fileID: 0}
   _monsterSight: {fileID: 348393768622283212}
   _eyePosition: {fileID: 0}
   _sightBlockLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   _playerLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   _sightCheckInterval: 0.2
 --- !u!114 &1328585857165022926
 MonoBehaviour:
@@ -181,7 +183,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!114 &1030046886869066953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -264,5 +266,18 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 2.3068194, y: -0.027904987}
-  m_Radius: 2.555674
+  m_Offset: {x: 10, y: 0}
+  m_Radius: 10
+--- !u!114 &7060569409603838230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8915283594457576700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40d22d3e6b121de41bcd15296143bb5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterRuneCombatActor
+  ShowTopMostFoldoutHeaderGroup: 1

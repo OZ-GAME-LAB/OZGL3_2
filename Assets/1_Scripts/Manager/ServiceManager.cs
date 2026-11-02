@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-public class NetworkManager : MonoBehaviour
+public class ServiceManager : MonoBehaviour
 {
-    public static NetworkManager Inst { get; private set; }
+    public static ServiceManager Inst { get; private set; }
 
     //인벤토리 서비스는 프로퍼티라서 대문자로 시작하게 수정했습니다.
     public InventoryService InventoryService { get; private set; }

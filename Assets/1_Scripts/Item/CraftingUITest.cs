@@ -35,8 +35,8 @@ public class CraftingUITest : MonoBehaviour
 
         if (UIManager.Inst == null ||
             DataManager.Inst == null ||
-            NetworkManager.Inst == null ||
-            NetworkManager.Inst.CraftingService == null ||
+            ServiceManager.Inst == null ||
+            ServiceManager.Inst.CraftingService == null ||
             ResourceManager.Inst == null)
         {
             Debug.LogError(

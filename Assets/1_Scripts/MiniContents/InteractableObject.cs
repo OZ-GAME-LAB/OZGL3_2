@@ -3,15 +3,6 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-public enum MiniContentsType
-{
-    None = 0,
-    Gathering,
-    Fisihing,
-    Minining,
-    Felling
-}
-
 public abstract class InteractableObject : MonoBehaviour
 {
     private InteractableInfoUI _infoUI;
@@ -22,6 +13,13 @@ public abstract class InteractableObject : MonoBehaviour
     public event Action Completed;
 
     public event Action InteractionEndRequested; //상호작용 종료 이벤트 추가
+
+    private bool _destroyAfterUse = true;
+    public bool DestroyAfterUse => _destroyAfterUse;
+    public event Action RespawnRequested;
+    private GameObject _visualObject;
+    private bool _isDormant;
+
     public virtual bool RequiresServerReservation => true; //점유가 필요한 상호작용인지 여부를 나타내는 프로퍼티
 
     protected virtual void Awake()
@@ -122,9 +120,34 @@ public abstract class InteractableObject : MonoBehaviour
         Completed?.Invoke();
     }
 
+    protected void RegisterVisual(GameObject visualObject)
+    {
+        _visualObject = visualObject;
+
+        if (_visualObject != null)
+            _visualObject.SetActive(!_isDormant);
+    }
+
+    public void ApplyDormantState(bool isDormant)
+    {
+        _isDormant = isDormant;
+
+        if (_visualObject != null)
+            _visualObject.SetActive(!isDormant);
+    }
+
+    public void NotifyRespawnRequested()
+    {
+        RespawnRequested?.Invoke();
+    }
+    public bool ReactivateOnServer()
+    {
+        return _interactionNetwork != null &&
+               _interactionNetwork.TryReactivateOnServer();
+    }
+
     protected virtual void PlayContent(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/) { }
     public virtual void CloseContent() { }
-    public virtual void BeginInteraction() { }
     public virtual void UpdateInteraction(float deltaTime) { }
     public virtual void CancelInteraction() { }
     public virtual void BeginInteraction(Transform[] playerUIAnchor, Camera playerCamera) { }
