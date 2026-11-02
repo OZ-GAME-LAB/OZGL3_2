@@ -32,6 +32,7 @@ public class InteractionNetwork : NetworkBehaviour
         base.OnNetworkSpawn();
 
         _isAvailable.OnValueChanged += OnAvailabilityChanged;
+        _isDormant.OnValueChanged += OnDormantChanged;
 
         if (IsServer)
         {
@@ -46,6 +47,7 @@ public class InteractionNetwork : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         _isAvailable.OnValueChanged -= OnAvailabilityChanged;
+        _isDormant.OnValueChanged -= OnDormantChanged;
 
         if (IsServer)
         {
@@ -157,11 +159,19 @@ public class InteractionNetwork : NetworkBehaviour
 
         string id = _objectId.Value.ToString();
 
+        FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(id);
+
+        if (data == null)
+            return;
+
+        interactableObject.SetDestroyAfterUse(data.DestroyAfterUse);
+
         await interactableObject.InitObject(id);
 
         if (!IsSpawned)
             return;
 
+        ApplyDormantState();
         AvailabilityChanged?.Invoke(IsAvailable);
     }
 
@@ -173,12 +183,25 @@ public class InteractionNetwork : NetworkBehaviour
         if (_interactorClientId != clientId || _interactionRequestId != requestId)
             return false;
 
+        if (!TryGetComponent<InteractableObject>(out var target))
+            return false;
+
         _serverAllowsInteraction = false;
         ReleaseInteractorOnServer();
 
         SpawnRewardsOnServer();
 
-        NetworkObject.Despawn();
+        if (target.DestroyAfterUse)
+        {
+            target.NotifyRespawnRequested();
+            NetworkObject.Despawn();
+        }
+        else
+        {
+            _isDormant.Value = true;
+            target.NotifyRespawnRequested();
+        }
+
         return true;
     }
 
