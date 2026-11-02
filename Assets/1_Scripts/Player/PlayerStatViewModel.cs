@@ -1,10 +1,12 @@
-public class PlayerStatViewModel : ViewModelBase
+﻿public class PlayerStatViewModel : ViewModelBase
 {
     public void InvokeOnceOnInit()
     {
         OnPropertyChanged(nameof(Hp));
+        OnPropertyChanged(nameof(MaxHp));
         OnPropertyChanged(nameof(MoveSpeed));
         OnPropertyChanged(nameof(JumpForce));
+        OnPropertyChanged(nameof(AttackPower));
     }
 
     private float _hp;
@@ -18,6 +20,20 @@ public class PlayerStatViewModel : ViewModelBase
                 _hp = value;
                 OnPropertyChanged(nameof(Hp));
             }
+        }
+    }
+
+    private float _maxHp;
+    public float MaxHp
+    {
+        get => _maxHp;
+        set
+        {
+            if (_maxHp == value)
+                return;
+
+            _maxHp = value;
+            OnPropertyChanged(nameof(MaxHp));
         }
     }
 
@@ -46,6 +62,20 @@ public class PlayerStatViewModel : ViewModelBase
                 _jumpForce = value;
                 OnPropertyChanged(nameof(JumpForce));
             }
+        }
+    }
+
+    private float _attackPower;
+    public float AttackPower
+    {
+        get => _attackPower;
+        set
+        {
+            if (_attackPower == value)
+                return;
+
+            _attackPower = value;
+            OnPropertyChanged(nameof(AttackPower));
         }
     }
 }

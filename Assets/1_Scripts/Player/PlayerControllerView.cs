@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -83,11 +83,20 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField]
     private PlayerInteractionController _interactionController;
 
+    //룬 적용한 공격을 위한 컨트롤러 추가
+    [SerializeField]
+    private PlayerRuneAttackController _runeAttackController;
+
     private PlayerStatViewModel _playerStatViewModel;
 
     void Awake()
     {
         TryGetComponent(out _networkObject);
+
+        if (_runeAttackController == null)
+        {
+            _runeAttackController = GetComponent<PlayerRuneAttackController>();
+        }
 
         if (_playerInput == null && !TryGetComponent(out _playerInput))
         {
@@ -102,9 +111,14 @@ public class PlayerControllerView : MonoBehaviour
             enabled = false;
             return;
         }
+
         _moveAction = _playerInput.actions["Move"];
+
         if (_bodyCollider == null)
+        {
             TryGetComponent(out _bodyCollider);
+        }
+
         InitializeCrouchCollider();
         _animationPresenter = new PlayerAnimationPresenter(_animator);
         if (_wallCling == null) TryGetComponent(out _wallCling);
@@ -141,7 +155,18 @@ public class PlayerControllerView : MonoBehaviour
         _settingsAction.performed += OnOpenSettings;
         _fieldInteractAction.canceled += OnFieldInteractCanceled;
 
-        ServiceManager.Inst.PlayerService.BindPlayerControllerView(this);
+        //ServiceManager.Inst.PlayerService.BindPlayerControllerView(this);
+
+        PlayerNetworkStats stats = GetComponent<PlayerNetworkStats>();
+
+        if (stats != null)
+        {
+            Bind(stats.ViewModel);
+        }
+        else
+        {
+            Debug.LogError("PlayerNetworkStats가 없습니다.", this);
+        }
     }
 
     private void OnDisable()
@@ -179,9 +204,16 @@ public class PlayerControllerView : MonoBehaviour
 
     private void Update()
     {
+        /*
         // 원격 플레이어까지 같은 키보드 입력으로 움직이지 않도록 제한합니다.
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
+        */
+
+        if (_networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false)
+        {
+            return;
+        }
 
         if (_fieldInteractAction.IsPressed())
         {
@@ -214,10 +246,15 @@ public class PlayerControllerView : MonoBehaviour
 
         _playerStatViewModel = playerStatViewModel;
 
-        if (_playerStatViewModel != null)
-            _playerStatViewModel.PropertyChanged += OnPropertyChanged;
+        if (_playerStatViewModel == null)
+        {
+            return;
+        }
+        
+        _playerStatViewModel.PropertyChanged += OnPropertyChanged;
         _playerStatViewModel.InvokeOnceOnInit();
     }
+
     private void Unbind()
     {
         if (_playerStatViewModel != null)
@@ -830,13 +867,19 @@ public class PlayerControllerView : MonoBehaviour
             $"Spawn: {_interactionController.IsSpawned}, " +
             $"Owner: {_interactionController.IsOwner}, " +
             $"대상: {_interactionController.SelectedTarget}");
-
-        _interactionController.TryRequestInteraction();
     }
 
     private void OnAttack(InputAction.CallbackContext context)
     {
+        if (_isSpectatorMode || _networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false || _runeAttackController == null)
+        {
+            return;
+        }
+
+        _runeAttackController.RequestAttack(_lookRight);
+
         Debug.Log($"{nameof(OnAttack)} 실행");
+
     }
 
     private void OnSpecialAttack(InputAction.CallbackContext context)

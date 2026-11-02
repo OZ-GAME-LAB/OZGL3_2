@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+ï»¿using Cysharp.Threading.Tasks;
 using System.Threading;
 using Unity.Behavior;
 using Unity.Collections;
@@ -40,6 +40,12 @@ public class MonsterNetwork : NetworkBehaviour
         _monster.ViewModel.CurHp = _curHp.Value;
     }
 
+    // í¼ë¸”ë¦­ìœ¼ë¡œ ì‚¬ìš©í•  í”„ë¡œí¼í‹° ì¶”ê°€
+    public float CurrentHp => _curHp.Value;
+    public float MaxHp => _maxHp.Value;
+    public bool IsAlive => IsSpawned && _curHp.Value > 0f;
+    public float AttackPower { get; private set; }
+
     private void Awake()
     {
         _monster = GetComponent<Monster>();
@@ -78,7 +84,7 @@ public class MonsterNetwork : NetworkBehaviour
         {
             if (DataManager.Inst == null)
             {
-                Debug.LogError("DataManager°¡ ÁØºñµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+                Debug.LogError("DataManagerê°€ ì¤€ë¹„ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
                 NetworkObject.Despawn();
                 return;
             }
@@ -87,13 +93,14 @@ public class MonsterNetwork : NetworkBehaviour
 
             if (data == null)
             {
-                Debug.LogError("¸ó½ºÅÍ µ¥ÀÌÅÍ¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogError("ëª¬ìŠ¤í„° ë°ì´í„°ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 NetworkObject.Despawn();
                 return;
             }
 
             _maxHp.Value = Mathf.Max(0f, data.Hp);
             _curHp.Value = _maxHp.Value;
+            AttackPower = Mathf.Max(0f, data.Atk);
         }
 
         _maxHp.OnValueChanged += OnMaxHpChanged;
@@ -113,7 +120,7 @@ public class MonsterNetwork : NetworkBehaviour
 
         if (!initialized)
         {
-            Debug.LogError($"¸ó½ºÅÍ ÃÊ±âÈ­ ½ÇÆĞ: {_monsterId.Value}");
+            Debug.LogError($"ëª¬ìŠ¤í„° ì´ˆê¸°í™” ì‹¤íŒ¨: {_monsterId.Value}");
 
             if (IsServer)
                 NetworkObject.Despawn();
@@ -133,7 +140,7 @@ public class MonsterNetwork : NetworkBehaviour
 
             if (!skillsInitialized)
             {
-                Debug.LogError($"¸ó½ºÅÍ ½ºÅ³ ÁØºñ ½ÇÆĞ: {_monsterId.Value}");
+                Debug.LogError($"ëª¬ìŠ¤í„° ìŠ¤í‚¬ ì¤€ë¹„ ì‹¤íŒ¨: {_monsterId.Value}");
                 NetworkObject.Despawn();
                 return;
             }
@@ -159,6 +166,7 @@ public class MonsterNetwork : NetworkBehaviour
 
     public void TakeDamageOnServer(float damage)
     {
+        /*
         if (!IsServer || !IsSpawned)
             return;
 
@@ -166,5 +174,47 @@ public class MonsterNetwork : NetworkBehaviour
             return;
 
         _curHp.Value = Mathf.Max(0f, _curHp.Value - damage);
+        */
+
+        TryTakeDamageOnServer(damage, out _);
+    }
+
+    public bool TryTakeDamageOnServer(float damage, out float actualDamage)
+    {
+        actualDamage = 0f;
+        if (IsServer == false || IsSpawned == false)
+        {
+            return false;
+        }
+
+        if (float.IsNaN(damage) || float.IsInfinity(damage) || damage <= 0f)
+        {
+            return false;
+        }
+
+        float previousHp = _curHp.Value;
+
+        _curHp.Value = Mathf.Max(0f, _curHp.Value - damage);
+
+        actualDamage = previousHp - _curHp.Value;
+
+        return true;
+    }
+
+    public void HealOnServer(float amount)
+    {
+        if (IsServer == false || IsAlive == false)
+        {
+            return;
+        }
+
+        if (float.IsNaN(amount) || float.IsInfinity(amount) || amount <= 0f)
+        {
+            return;
+        }
+
+        float recoverable = Mathf.Max(0f, _maxHp.Value - _curHp.Value);
+
+        _curHp.Value = _curHp.Value + Mathf.Min(amount, recoverable);
     }
 }

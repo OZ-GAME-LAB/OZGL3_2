@@ -53,6 +53,9 @@ GameObject:
   - component: {fileID: 9006554137249396468}
   - component: {fileID: 6557713557796907091}
   - component: {fileID: 8985937508784721812}
+  - component: {fileID: -2624902584304914743}
+  - component: {fileID: 5351946392484908784}
+  - component: {fileID: 5325140983784346215}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -116,6 +119,7 @@ MonoBehaviour:
   _wallCling: {fileID: 6557713557796907091}
   _wallHandLocalX: 1.5
   _interactionController: {fileID: 8985937508784721812}
+  _runeAttackController: {fileID: -2624902584304914743}
 --- !u!114 &5287553457062025148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -158,7 +162,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3793167364
+  GlobalObjectIdHash: 1822431701
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -354,6 +358,67 @@ MonoBehaviour:
   - {fileID: 3715523650954437514}
   - {fileID: 2233211356022855574}
   - {fileID: 6818489664537175061}
+--- !u!114 &-2624902584304914743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2861750558698755832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 663103f6817c36b47a6c27ce8287a094, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerRuneAttackController
+  ShowTopMostFoldoutHeaderGroup: 1
+  _actor: {fileID: 5325140983784346215}
+  _testRuneIds: []
+  _baseAttackInterval: 0.6
+  _windupSeconds: 0.1
+  _tripleHitInterval: 0.12
+  _recoverySeconds: 0.15
+  _targetLayer:
+    serializedVersion: 2
+    m_Bits: 1024
+  _attackOffset: {x: 0.8, y: 0.3}
+  _meleeRadius: 0.7
+  _projectilePrefab: {fileID: 2484191719308344588, guid: d08301b451f249e48875ca0f3816ef32, type: 3}
+  _wallLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  _projectileSpeed: 10
+  _projectileDistance: 8
+  _projectileRadius: 0.15
+--- !u!114 &5351946392484908784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2861750558698755832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 603f1de51875bcb4a943dda8c1d14ca8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkStats
+  ShowTopMostFoldoutHeaderGroup: 1
+  _initialMaxHp: 100
+  _initialAttackPower: 100
+  _initialMoveSpeed: 12
+  _initialJumpForce: 17.5
+--- !u!114 &5325140983784346215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2861750558698755832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8baa093ce908fa44bef91ed557a5cab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerRuneCombatActor
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &3691929907212733408
 GameObject:
   m_ObjectHideFlags: 0
