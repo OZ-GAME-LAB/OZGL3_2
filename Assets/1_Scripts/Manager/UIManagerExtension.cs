@@ -25,6 +25,7 @@ public enum UIType
     InventorySlotUI,
     CraftingUI,
     NetworkSelectUI,
+    RuneInventoryUI,
 }
 
 
@@ -85,6 +86,18 @@ public static class UIManagerExtension
     public static void CloseNetworkUI(this UIManager uiManager)
     {
         uiManager.Close(UIType.NetworkSelectUI);
+    }
+
+    public static async UniTask<RuneInventoryUI> OpenRuneInventoryUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        UIBase uiBase = await uiManager.OpenPopupRootAsync(UIType.RuneInventoryUI, cancellationToken);
+
+        return GetView<RuneInventoryUI>(uiBase, UIType.RuneInventoryUI);
+    }
+
+    public static void CloseRuneInventoryUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.RuneInventoryUI);
     }
 
     //UI를 생성하고 View를 가져오고 싶을 때 사용

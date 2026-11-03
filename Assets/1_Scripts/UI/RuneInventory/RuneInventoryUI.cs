@@ -20,7 +20,7 @@ public class RuneInventoryUI : UIBase
 
     private readonly List<RuneSlotUI> _inventorySlots = new();
 
-    private RuneEquipmentService _service;
+    private NetworkRuneService _service;
     private RuneInventoryViewModel _viewModel;
 
     private void Awake()
@@ -29,18 +29,17 @@ public class RuneInventoryUI : UIBase
         Button_Close.onClick.AddListener(OnClose);
     }
 
-    // UI를 열 때 자신의 플레이어 Service를 전달.
-    public void Bind(RuneEquipmentService service, InventoryService inventory)
+    public void Bind(NetworkRuneService service)
     {
         Unbind();
 
-        if (service == null || service.IsSpawned == false || service.IsOwner == false)
+        if (service == null)
         {
-            Debug.LogError("자신의 RuneEquipmentService가 필요합니다.", this);
+            Debug.LogError("NetworkRuneService가 없습니다.", this);
             return;
         }
 
-        if (_equipmentSlots == null || _equipmentSlots.Length != RuneEquipmentService.SlotCount)
+        if (_equipmentSlots == null || _equipmentSlots.Length != PlayerRuneEquipmentController.SlotCount)
         {
             Debug.LogError("장착 슬롯 3개를 순서대로 연결하세요.", this);
             return;
@@ -56,9 +55,8 @@ public class RuneInventoryUI : UIBase
         }
 
         _service = service;
+        _viewModel = service.GetRuneInventoryViewModel();
 
-        _service.RefreshInventory(inventory);
-        _viewModel = _service.ViewModel;
         _viewModel.PropertyChanged += OnPropertyChanged;
 
         for (int i = 0; i < _equipmentSlots.Length; i++)
@@ -79,7 +77,9 @@ public class RuneInventoryUI : UIBase
 
             case nameof(RuneInventoryViewModel.Message):
                 if (Text_Message != null)
+                {
                     Text_Message.text = _viewModel.Message;
+                }
                 break;
         }
     }
@@ -123,7 +123,10 @@ public class RuneInventoryUI : UIBase
 
     private void OnClose()
     {
-        gameObject.SetActive(false);
+        if (UIManager.Inst != null)
+        {
+            UIManager.Inst.CloseRuneInventoryUI();
+        }
     }
 
     private void ClearInventorySlots()

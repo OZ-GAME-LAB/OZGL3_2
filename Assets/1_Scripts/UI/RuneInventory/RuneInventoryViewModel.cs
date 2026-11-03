@@ -60,5 +60,4 @@ public class RuneInventoryViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedRuneId));
         OnPropertyChanged(nameof(Message));
     }
-
 }
