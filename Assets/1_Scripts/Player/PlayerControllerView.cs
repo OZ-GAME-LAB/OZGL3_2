@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -44,6 +45,8 @@ public class PlayerControllerView : MonoBehaviour
     private InputAction _inventoryAction;
     private InputAction _journalAction;
     private InputAction _settingsAction;
+    private InputAction _runeInventoryAction;
+    private bool _openingRuneInventory;
 
     [Header("임시 관전자 모드")]
     [SerializeField, Min(0f)] private float _spectatorMoveSpeed = 15f;
@@ -133,6 +136,7 @@ public class PlayerControllerView : MonoBehaviour
         _inventoryAction = _playerInput.actions["OpenInventory"];
         _journalAction = _playerInput.actions["OpenJournal"];
         _settingsAction = _playerInput.actions["OpenSettings"];
+        _runeInventoryAction = _playerInput.actions["OpenRuneInventory"];
         _inputActionsInitialized = true;
     }
 
@@ -154,6 +158,7 @@ public class PlayerControllerView : MonoBehaviour
         _journalAction.performed += OnOpenJournal;
         _settingsAction.performed += OnOpenSettings;
         _fieldInteractAction.canceled += OnFieldInteractCanceled;
+        _runeInventoryAction.performed += OnOpenRuneInventory;
 
         //ServiceManager.Inst.PlayerService.BindPlayerControllerView(this);
 
@@ -197,6 +202,7 @@ public class PlayerControllerView : MonoBehaviour
         _settingsAction.performed -= OnOpenSettings;
         _fieldInteractAction.canceled -= OnFieldInteractCanceled;
         _interactionController?.CancelRequestedInteraction();
+        _runeInventoryAction.performed -= OnOpenRuneInventory;
 
 
         Unbind();
@@ -898,7 +904,6 @@ public class PlayerControllerView : MonoBehaviour
     {
         var view = await UIManager.Inst.OpenInventoryUIAsync();
         ServiceManager.Inst.InventoryService.BindInventoryView(view);
-
     }
 
     private void OnOpenJournal(InputAction.CallbackContext context)
@@ -911,6 +916,62 @@ public class PlayerControllerView : MonoBehaviour
     {
         Debug.Log($"{nameof(OnOpenSettings)} 실행");
 
+    }
+
+    private void OnOpenRuneInventory(InputAction.CallbackContext context)
+    {
+        if (_networkObject == null ||
+            !_networkObject.IsSpawned ||
+            !_networkObject.IsOwner)
+        {
+            return;
+        }
+
+        OpenRuneInventoryAsync().Forget();
+    }
+
+    private async UniTask OpenRuneInventoryAsync()
+    {
+        if (_openingRuneInventory)
+        {
+            return;
+        }
+
+        UIManager uiManager = UIManager.Inst;
+        ServiceManager services = ServiceManager.Inst;
+
+        if (uiManager == null || services == null)
+        {
+            return;
+        }
+
+        _openingRuneInventory = true;
+
+        try
+        {
+            RuneInventoryUI view = await uiManager.OpenRuneInventoryUIAsync();
+
+            if (uiManager == null || view == null)
+            { 
+                return;
+            }
+
+            // UI 로딩 중 플레이어가 사라지거나 연결이 종료된 경우.
+            if (this == null || isActiveAndEnabled == false || _networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false || services == null)
+            {
+                uiManager.CloseRuneInventoryUI();
+                return;
+            }
+
+            if (services.NetworkRuneService.BindRuneInventoryView(view) == false)
+            {
+                uiManager.CloseRuneInventoryUI();
+            }
+        }
+        finally
+        {
+            _openingRuneInventory = false;
+        }
     }
 
     public bool PlaceAtPosition(Vector3 footPosition, bool faceRight)
