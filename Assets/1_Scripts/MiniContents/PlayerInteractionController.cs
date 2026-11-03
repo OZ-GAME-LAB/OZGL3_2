@@ -428,6 +428,7 @@ public class PlayerInteractionController : NetworkBehaviour
         if (_requestedTarget != null)
         {
             _requestedTarget.InteractionEndRequested -= OnInteractionEndRequested;
+            _requestedTarget.Completed -= CompleteRequestedInteraction;
         }
 
         _usesServerReservation = false;
@@ -528,32 +529,27 @@ public class PlayerInteractionController : NetworkBehaviour
             clientRpcParams);
     }
 
-    private void CompleteRequestedInteraction()
+    private void CompleteRequestedInteraction(float accuracy)
     {
-        if (!IsSpawned || !IsOwner ||
-            !_hasLocalRequest || !_localInteractionStarted)
+        if (!IsSpawned || !IsOwner || !_hasLocalRequest || !_localInteractionStarted)
             return;
 
         ulong requestId = _activeRequestId;
 
         ClearLocalRequest();
 
-        RequestCompleteServerRpc(requestId);
+        RequestCompleteServerRpc(requestId, accuracy);
 
         ReleaseTarget();
     }
 
     [ServerRpc]
-    private void RequestCompleteServerRpc(
-    ulong requestId,
-    ServerRpcParams rpcParams = default)
+    private void RequestCompleteServerRpc(ulong requestId, float accuracy, ServerRpcParams rpcParams = default)
     {
         if (_serverTarget == null || _serverRequestId != requestId)
             return;
 
-        bool completed = _serverTarget.CompleteInteraction(
-            rpcParams.Receive.SenderClientId,
-            requestId);
+        bool completed = _serverTarget.CompleteInteraction(rpcParams.Receive.SenderClientId, requestId, accuracy);
 
         if (!completed)
             return;

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -184,7 +185,7 @@ public class InteractionNetwork : NetworkBehaviour
         AvailabilityChanged?.Invoke(IsAvailable);
     }
 
-    public virtual bool CompleteInteraction(ulong clientId, ulong requestId)
+    public virtual bool CompleteInteraction(ulong clientId, ulong requestId, float accuracy)
     {
         if (!IsServer || !IsSpawned || !_hasInteractor)
             return false;
@@ -195,10 +196,35 @@ public class InteractionNetwork : NetworkBehaviour
         if (!TryGetComponent<InteractableObject>(out var target))
             return false;
 
+        FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(_objectId.Value.ToString());
+
+        if (data == null)
+            return false;
+
+        bool usesAccuracy = data.InteractionType == "Logging" || data.InteractionType == "Mining";
+
+        float rewardMultiplier = 1f;
+
+        if (usesAccuracy)
+        {
+            if (float.IsNaN(accuracy) || float.IsInfinity(accuracy) || accuracy < 0f || accuracy > 1f)
+                return false;
+
+            if (accuracy == 0f)
+            {
+                ReleaseInteractorOnServer();
+                return true;
+            }
+
+            rewardMultiplier = 0.5f + accuracy;
+        }
+
+        int playerCount = NetworkManager.ConnectedClientsList.Count;
+
         _serverAllowsInteraction = false;
         ReleaseInteractorOnServer();
 
-        SpawnRewardsOnServer();
+        SpawnRewardsOnServer(rewardMultiplier, playerCount);
 
         if (target.DestroyAfterUse)
         {
@@ -237,7 +263,7 @@ public class InteractionNetwork : NetworkBehaviour
         return true;
     }
 
-    private void SpawnRewardsOnServer()
+    private void SpawnRewardsOnServer(float rewardMultiplier, int playerCount)
     {
         if (!IsServer)
             return;
@@ -286,17 +312,27 @@ public class InteractionNetwork : NetworkBehaviour
             return;
         }
 
-        int quantity = UnityEngine.Random.Range(dropData.MinQuantity, dropData.MaxQuantity + 1);
+        int baseQuantity = UnityEngine.Random.Range(dropData.MinQuantity, dropData.MaxQuantity + 1);
+
+        int quantity = Mathf.FloorToInt(baseQuantity * rewardMultiplier);
+
+        List<string> selectedItems = new List<string>(quantity);
 
         for (int i = 0; i < quantity; i++)
         {
-            string itemId = SelectRewardItem(dropData, totalChance);
+            selectedItems.Add(SelectRewardItem(dropData, totalChance));
+        }
 
-            var item = ObjectManager.Inst.SpawnItem(itemId, 1, transform.position);
-
-            if (item == null)
+        foreach (string itemId in selectedItems)
+        {
+            for (int i = 0; i < playerCount; i++)
             {
-                Debug.LogError($"보상 아이템 생성 실패: {itemId}", this);
+                var item = ObjectManager.Inst.SpawnItem(itemId, 1, transform.position);
+
+                if (item == null)
+                {
+                    Debug.LogError($"보상 아이템 생성 실패: {itemId}", this);
+                }
             }
         }
     }
