@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Numerics;
 
 public enum ItemType
 {
@@ -12,7 +11,7 @@ public enum ItemType
 
 public enum EquipmentSlot
 {
-    None =0,
+    None = 0,
     Axe = 1,
     FishingRod = 2,
     PickAxe = 3

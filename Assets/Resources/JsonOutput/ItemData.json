@@ -1,14 +1,120 @@
 [
   {
+    "Id": "weapon_basic_sword",
+    "Name": "기본 검",
+    "ItemType": "Equipment",
+    "Description": "베기 공격을 사용하는 고정 기본 무기.",
+    "MaxStack": null,
+    "IconPath": "weapon_basic_sword",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_triple",
+    "Name": "연격의 룬",
+    "ItemType": "Rune",
+    "Description": "공격을 타격당 25% 피해의 빠른 삼연타로 바꾼다.",
+    "MaxStack": null,
+    "IconPath": "rune_triple",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_projectile",
+    "Name": "방출의 룬",
+    "ItemType": "Rune",
+    "Description": "공격력 70%의 검기를 발사하는 원거리 공격으로 바꾼다.",
+    "MaxStack": null,
+    "IconPath": "rune_projectile",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_heavy",
+    "Name": "강타의 룬",
+    "ItemType": "Rune",
+    "Description": "공격력 300%, 공격 속도 50%. 공격 중 피격되어도 공격을 유지한다.",
+    "MaxStack": null,
+    "IconPath": "rune_heavy",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_fire",
+    "Name": "불의 룬",
+    "ItemType": "Rune",
+    "Description": "공격 피해 속성을 화염으로 바꾼다.",
+    "MaxStack": null,
+    "IconPath": "rune_fire",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_ice",
+    "Name": "얼음의 룬",
+    "ItemType": "Rune",
+    "Description": "공격 피해 속성을 냉기로 바꾼다.",
+    "MaxStack": null,
+    "IconPath": "rune_ice",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_lightning",
+    "Name": "번개의 룬",
+    "ItemType": "Rune",
+    "Description": "공격 피해 속성을 번개로 바꾼다.",
+    "MaxStack": null,
+    "IconPath": "rune_lightning",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_bear",
+    "Name": "곰의 룬",
+    "ItemType": "Rune",
+    "Description": "공격 범위와 투사체 크기를 50% 늘리고 피해를 20% 줄인다.",
+    "MaxStack": null,
+    "IconPath": "rune_bear",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_snake",
+    "Name": "뱀의 룬",
+    "ItemType": "Rune",
+    "Description": "공격에 독 상태이상을 부여한다.",
+    "MaxStack": null,
+    "IconPath": "rune_snake",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_mosquito",
+    "Name": "모기의 룬",
+    "ItemType": "Rune",
+    "Description": "공격에 출혈 상태이상을 부여한다.",
+    "MaxStack": null,
+    "IconPath": "rune_mosquito",
+    "PrefabPath": null
+  },
+  {
+    "Id": "rune_bat",
+    "Name": "박쥐의 룬",
+    "ItemType": "Rune",
+    "Description": "공격 시 공격력의 2%만큼 체력을 회복한다.",
+    "MaxStack": null,
+    "IconPath": "rune_bat",
+    "PrefabPath": null
+  },
+  {
+    "Id": "equipment_poison_charm",
+    "Name": "독 보호 부적",
+    "ItemType": "Equipment",
+    "Description": "스토리 진행으로 제작한다. 일반 독과 보스 독의 지속 피해를 각각 80% 감소시킨다.",
+    "MaxStack": null,
+    "IconPath": null,
+    "PrefabPath": null
+  },
+  {
     "Id": "mat_slime_lump",
     "Name": "슬라임 핵",
     "ItemType": "Material",
     "Description": "오염에 침식된 슬라임의 핵이다. 오염을 정화하는 힘이 있지만 지금은 거의 바랬다.",
     "MaxStack": 999,
-    "Price": -1,
-    "SellingPrice": 3,
-	"IconPath": "mat_slime_lump",
-	"PrefabPath": ""
+    "IconPath": "mat_slime_lump",
+    "PrefabPath": null
   },
   {
     "Id": "con_red_berry",
@@ -16,21 +122,8 @@
     "ItemType": "Consumable",
     "Description": "아직 오염되지 않은 붉은 베리다. 시큼하면서도 은은한 단맛이 난다.",
     "MaxStack": 999,
-    "Price": -1,
-    "SellingPrice": 2,
-	"IconPath": "con_red_berry",
-	"PrefabPath": ""
-  },
-  {
-    "Id": "rune_ember",
-    "Name": "화염 룬",
-    "ItemType": "Rune",
-    "Description": "무기 룬 슬롯에 장착하면 공격 적중 시 확률적으로 화상을 부여한다.",
-    "MaxStack": 99,
-    "Price": -1,
-    "SellingPrice": 50,
-	"IconPath": "rune_ember",
-	"PrefabPath": ""
+    "IconPath": "con_red_berry",
+    "PrefabPath": null
   },
   {
     "Id": "eq_worn_axe",
@@ -38,10 +131,8 @@
     "ItemType": "EquipmentItem",
     "Description": "벌목용 기본 도끼. 도끼 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
-    "Price": -1,
-    "SellingPrice": 10,
-	"IconPath": "eq_worn_axe",
-	"PrefabPath": ""
+    "IconPath": "eq_worn_axe",
+    "PrefabPath": null
   },
   {
     "Id": "eq_worn_fishingrod",
@@ -49,10 +140,8 @@
     "ItemType": "EquipmentItem",
     "Description": "기본 낚시대. 낚시 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
-    "Price": -1,
-    "SellingPrice": 10,
-	"IconPath": "eq_worn_fishingrod",
-	"PrefabPath": ""
+    "IconPath": null,
+    "PrefabPath": null
   },
   {
     "Id": "eq_worn_pickaxe",
@@ -60,20 +149,16 @@
     "ItemType": "EquipmentItem",
     "Description": "기본 곡괭이. 곡괭이 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
-    "Price": -1,
-    "SellingPrice": 10,
-	"IconPath": "eq_worn_pickaxe",
-	"PrefabPath": ""
+    "IconPath": null,
+    "PrefabPath": null
   },
   {
     "Id": "eq_normal_axe",
     "Name": "일반 도끼",
     "ItemType": "EquipmentItem",
-    "Description": "손을 본 도끼.",
+    "Description": "손을 본 도끼. 도끼 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
-    "Price": -1,
-    "SellingPrice": 10,
-	"IconPath": "eq_normal_axe",
-	"PrefabPath": ""
+    "IconPath": "eq_normal_axe",
+    "PrefabPath": null
   }
 ]
