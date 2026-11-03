@@ -25,7 +25,9 @@ public class InteractionNetwork : NetworkBehaviour
 
     public event Action<bool> AvailabilityChanged;
 
-    
+    private FixedString128Bytes _pendingObjectId;
+
+
 
     public override void OnNetworkSpawn()
     {
@@ -36,8 +38,9 @@ public class InteractionNetwork : NetworkBehaviour
 
         if (IsServer)
         {
-            NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
+            _objectId.Value = _pendingObjectId;
 
+            NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
             RefreshAvailabilityOnServer();
         }
 
@@ -146,10 +149,16 @@ public class InteractionNetwork : NetworkBehaviour
         if (manager == null || !manager.IsServer)
             return;
 
+        if (IsSpawned)
+        {
+            Debug.LogWarning("오브젝트 ID는 Spawn 전에 설정해 주세요.", this);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(id))
             return;
 
-        _objectId.Value = new FixedString128Bytes(id);
+        _pendingObjectId = new FixedString128Bytes(id);
     }
 
     private async UniTask InitializeObject()

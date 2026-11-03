@@ -17,6 +17,8 @@ public class ObjectManager : MonoBehaviour
 
     [Header("상호작용 오브젝트 프리팹")]
     [SerializeField] private InteractableObject Prefab_InteractionObject;
+    [SerializeField] private InteractableObject Prefab_LoggingMiningObject;
+    // [SerializeField] private InteractableObject Prefab_FishingObject;
 
     [Header("몬스터 프리팹")]
     [SerializeField] private Monster Prefab_Monster;
@@ -122,27 +124,57 @@ public class ObjectManager : MonoBehaviour
         target.Despawn(destroy: true);
     }
 
-    public InteractableObject SpawnInteractionObject(
-    string id,
-    Vector3 position,
-    Quaternion rotation)
+    public InteractableObject SpawnInteractionObject(string id, Vector3 position, Quaternion rotation)
     {
         if (!CanSpawn())
             return null;
 
-        if (Prefab_InteractionObject == null || string.IsNullOrWhiteSpace(id))
+        if (string.IsNullOrWhiteSpace(id) || DataManager.Inst == null)
         {
-            Debug.LogError("상호작용 본체 프리팹 또는 ID가 없습니다.");
+            Debug.LogError("상호작용 ID 또는 DataManager를 확인해 주세요.");
             return null;
         }
 
-        if (!Prefab_InteractionObject.TryGetComponent<NetworkObject>(out _) || !Prefab_InteractionObject.TryGetComponent<InteractionNetwork>(out _))
+        FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(id);
+
+        if (data == null)
+            return null;
+
+        InteractableObject prefab;
+
+        switch (data.InteractionType)
         {
-            Debug.LogError( "상호작용 본체에 NetworkObject와 InteractionNetwork가 필요합니다.");
+            case "Gathering":
+                prefab = Prefab_InteractionObject;
+                break;
+
+            case "Logging":
+            case "Mining":
+                prefab = Prefab_LoggingMiningObject;
+                break;
+                /*
+            case "Fishing":
+                prefab = Prefab_FishingObject;
+                break;
+                */
+            default:
+                Debug.LogError($"지원하지 않는 상호작용 종류입니다: {data.InteractionType}");
+                return null;
+        }
+
+        if (prefab == null)
+        {
+            Debug.LogError($"상호작용 본체 프리팹이 연결되지 않았습니다: {data.InteractionType}");
             return null;
         }
 
-        InteractableObject instance = Instantiate(Prefab_InteractionObject, position, rotation);
+        if (!prefab.TryGetComponent<NetworkObject>(out _) || !prefab.TryGetComponent<InteractionNetwork>(out _))
+        {
+            Debug.LogError($"상호작용 본체에 NetworkObject와 InteractionNetwork가 필요합니다: {prefab.name}");
+            return null;
+        }
+
+        InteractableObject instance = Instantiate(prefab, position, rotation);
 
         instance.GetComponent<InteractionNetwork>().SetObjectId(id);
         instance.GetComponent<NetworkObject>().Spawn();
@@ -150,10 +182,7 @@ public class ObjectManager : MonoBehaviour
         return instance;
     }
 
-    public void SpawnMonster(
-    string id,
-    PatrolArea patrolObject,
-    Vector3 spawnPosition)
+    public void SpawnMonster(string id, PatrolArea patrolObject, Vector3 spawnPosition)
     {
         if (!CanSpawn())
             return;

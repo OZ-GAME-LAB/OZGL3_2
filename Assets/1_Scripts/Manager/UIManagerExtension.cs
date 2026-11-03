@@ -25,6 +25,7 @@ public enum UIType
     InventorySlotUI,
     CraftingUI,
     NetworkSelectUI,
+    LoggingMiningUI,
 }
 
 

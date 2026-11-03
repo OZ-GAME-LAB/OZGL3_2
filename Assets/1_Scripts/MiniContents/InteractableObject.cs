@@ -10,7 +10,7 @@ public abstract class InteractableObject : MonoBehaviour
     private InteractionNetwork _interactionNetwork;
     public abstract InteractionVMBase ViewModel { get; }
 
-    public event Action Completed;
+    public event Action<float> Completed;
 
     public event Action InteractionEndRequested; //상호작용 종료 이벤트 추가
 
@@ -115,9 +115,9 @@ public abstract class InteractableObject : MonoBehaviour
         _infoUI = null;
     }
 
-    protected void NotifyCompleted()
+    protected void NotifyCompleted(float accuracy = 1f)
     {
-        Completed?.Invoke();
+        Completed?.Invoke(accuracy);
     }
 
     protected void RegisterVisual(GameObject visualObject)
