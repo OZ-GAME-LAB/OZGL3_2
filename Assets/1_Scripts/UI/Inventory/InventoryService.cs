@@ -98,15 +98,15 @@ public class InventoryService
             Debug.LogError("InventoryUIView가 null입니다.");
             return;
         }
-        GetInvantoryViewModel();
-        InitTestInventoryItem();
+        
+        
         inventoryView.Bind(_inventoryViewModel);
     }
 
     //서비스를 가지고 있는 곳에서 실행시켜주기
     public void InitTestInventoryItem()
     {
-
+        GetInvantoryViewModel();
         Dictionary<string, ItemData> dataTable = DataManager.Inst.ReadData<ItemData>();
         Debug.Log($"DataManager 아이템 수: {dataTable.Count}");
 
