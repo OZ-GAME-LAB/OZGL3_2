@@ -44,6 +44,8 @@ public class PlayerInteractionController : NetworkBehaviour
     // 입력 담당자가 이 이벤트를 받아 진행 중인 상호작용을 취소한다.
     public event Action<InteractableObject> LockedTargetLost;
 
+    public event Action InteractionEnded;
+
     // 본인 플레이어 여부와 실제 사용할 카메라를 전달한다.
     // 플레이어 네트워크 초기화 후 호출 함수
     public void Initialize(bool isLocalPlayer, Camera playerCamera)
@@ -424,10 +426,12 @@ public class PlayerInteractionController : NetworkBehaviour
 
     private void ClearLocalRequest()
     {
-        // 상호작용 종료 이벤트 구독 해제
+        bool hadRequest = _hasLocalRequest;
+
         if (_requestedTarget != null)
         {
             _requestedTarget.InteractionEndRequested -= OnInteractionEndRequested;
+            _requestedTarget.Completed -= CompleteRequestedInteraction;
         }
 
         _usesServerReservation = false;
@@ -435,6 +439,9 @@ public class PlayerInteractionController : NetworkBehaviour
         _localInteractionStarted = false;
         _requestedTarget = null;
         _activeRequestId = 0;
+
+        if (hadRequest)
+            InteractionEnded?.Invoke();
     }
 
     public override void OnNetworkSpawn()
@@ -528,32 +535,27 @@ public class PlayerInteractionController : NetworkBehaviour
             clientRpcParams);
     }
 
-    private void CompleteRequestedInteraction()
+    private void CompleteRequestedInteraction(float accuracy)
     {
-        if (!IsSpawned || !IsOwner ||
-            !_hasLocalRequest || !_localInteractionStarted)
+        if (!IsSpawned || !IsOwner || !_hasLocalRequest || !_localInteractionStarted)
             return;
 
         ulong requestId = _activeRequestId;
 
         ClearLocalRequest();
 
-        RequestCompleteServerRpc(requestId);
+        RequestCompleteServerRpc(requestId, accuracy);
 
         ReleaseTarget();
     }
 
     [ServerRpc]
-    private void RequestCompleteServerRpc(
-    ulong requestId,
-    ServerRpcParams rpcParams = default)
+    private void RequestCompleteServerRpc(ulong requestId, float accuracy, ServerRpcParams rpcParams = default)
     {
         if (_serverTarget == null || _serverRequestId != requestId)
             return;
 
-        bool completed = _serverTarget.CompleteInteraction(
-            rpcParams.Receive.SenderClientId,
-            requestId);
+        bool completed = _serverTarget.CompleteInteraction(rpcParams.Receive.SenderClientId, requestId, accuracy);
 
         if (!completed)
             return;
@@ -619,5 +621,13 @@ public class PlayerInteractionController : NetworkBehaviour
         }
 
         StartCurrentInteraction(requestId);
+    }
+
+    public void ConfirmCurrentInteraction()
+    {
+        if (!IsSpawned || !IsOwner || !_hasLocalRequest || !_localInteractionStarted || _requestedTarget == null)
+            return;
+
+        _requestedTarget.ConfirmInteraction();
     }
 }

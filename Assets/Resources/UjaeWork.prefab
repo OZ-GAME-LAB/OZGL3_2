@@ -57,7 +57,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f2c24f8bb5b5f54db9c2b6584b8004e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldInteractionSpawnTest
-  _testId: GatherObj_01
+  _testId: GatherObj_02
   _spawnPoints:
   - {fileID: 535445883153684486}
   _monsterTestId: monster_test_01
