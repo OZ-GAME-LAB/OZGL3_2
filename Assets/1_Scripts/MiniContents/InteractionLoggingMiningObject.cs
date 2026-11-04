@@ -142,6 +142,30 @@ public class InteractionLoggingMiningObject : InteractableObject
 
         Debug.Log($"벌목·채광 종료: 평균 정확도 {accuracy:P1}", this);
 
+        if (_openUI is LoggingMiningUI resultUI)
+        {
+            resultUI.ShowFinalResult();
+
+            _openUI = null;
+        }
+        else
+        {
+            CloseContent();
+        }
+
+        if (accuracy <= 0f)
+        {
+            RequestInteractionEnd();
+            return;
+        }
+
+        NotifyCompleted(accuracy);
+    }
+
+    private void CompleteAfterResult()
+    {
+        float accuracy = _viewModel.FinalAccuracy;
+
         CloseContent();
 
         if (accuracy <= 0f)

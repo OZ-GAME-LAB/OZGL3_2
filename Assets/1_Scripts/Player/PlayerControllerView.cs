@@ -908,6 +908,11 @@ public class PlayerControllerView : MonoBehaviour
             return;
         }
 
+        if (UIManager.Inst != null)
+        {
+            UIManager.Inst.TryCloseLoggingMiningResult();
+        }
+
         bool requested = _interactionController.TryRequestInteraction();
 
         Debug.Log(
@@ -956,8 +961,20 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnOpenSettings(InputAction.CallbackContext context)
     {
-        Debug.Log($"{nameof(OnOpenSettings)} 실행");
+        if (_networkObject == null ||
+        !_networkObject.IsSpawned ||
+        !_networkObject.IsOwner)
+        {
+            return;
+        }
 
+        if (UIManager.Inst != null &&
+            UIManager.Inst.TryCloseLoggingMiningResult())
+        {
+            return;
+        }
+
+        Debug.Log($"{nameof(OnOpenSettings)} 실행");
     }
 
     private void OnOpenRuneInventory(InputAction.CallbackContext context)
