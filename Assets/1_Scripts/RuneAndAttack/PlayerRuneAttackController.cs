@@ -121,7 +121,7 @@ public class PlayerRuneAttackController : NetworkBehaviour
             return;
         }
 
-        if (isActiveAndEnabled == false)
+        if (isActiveAndEnabled == false || IsSpawned == false)
         {
             Debug.LogWarning("[공격 중단] 공격 컴포넌트가 비활성입니다.", this);
             return;
@@ -149,7 +149,7 @@ public class PlayerRuneAttackController : NetworkBehaviour
             return;
         }
 
-        if (TryBuildProfile(out AttackProfile profile) == false)
+        if (TryGetProfile(out AttackProfile profile) == false)
         {
             Debug.LogError("[공격 중단] 룬 조합 계산에 실패했습니다.", this);
             return;
@@ -167,6 +167,7 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
         if (attackPower < 0f || float.IsNaN(attackPower) || float.IsInfinity(attackPower))
         {
+            Debug.LogError("플레이어 공격력이 올바르지 않습니다.", this);
             return;
         }
 
@@ -230,7 +231,7 @@ public class PlayerRuneAttackController : NetworkBehaviour
         }
     }
 
-    private bool TryBuildProfile(out AttackProfile profile)
+    private bool TryGetProfile(out AttackProfile profile)
     {
         profile = null;
 
@@ -241,51 +242,13 @@ public class PlayerRuneAttackController : NetworkBehaviour
             return false;
         }
 
-        if (_runeEquipmentController.TryBuildAttackProfile(out profile, out string error) == false)
+        if (_runeEquipmentController.TryGetAttackProfile(out profile, out string error) == false)
         {
             Debug.LogWarning(error, this);
             return false;
         }
 
         return true;
-        /*
-         * 이하 하드코딩 테스트용 코드
-        profile = null;
-
-        if (DataManager.Inst == null)
-        {
-            return false;
-        }
-
-        int count = _testRuneIds == null ? 0 : _testRuneIds.Length;
-        var slots = new RuneData[count];
-
-        for (int i = 0; i < count; i++)
-        {
-            string id = _testRuneIds[i];
-
-            if (string.IsNullOrEmpty(id))
-            {
-                continue;
-            }
-            
-            slots[i] = DataManager.Inst.GetData<RuneData>(id);
-
-            if (slots[i] == null)
-            {
-                Debug.LogError($"룬 데이터가 없습니다: {id}", this);
-                return false;
-            }
-        }
-
-        if (AttackProfileBuilder.TryBuild(slots, out profile, out string error) == false)
-        {
-            Debug.LogError(error, this);
-            return false;
-        }
-
-        return true;
-        */
     }
 
     private Vector2 GetAttackPosition()
@@ -311,33 +274,21 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
         foreach (Collider2D hit in hits)
         {
-            RuneCombatActor target =
-                hit.GetComponentInParent<RuneCombatActor>();
-
-            if (target == null)
+            if (hit == null)
             {
-                Debug.LogWarning(
-                    $"[근접 판정] {hit.name}의 부모에서 " +
-                    "RuneCombatActor를 찾지 못했습니다.",
-                    hit);
-
                 continue;
             }
 
-            if (_hitTargets.Add(target) == false)
+            RuneCombatActor target = hit.GetComponentInParent<RuneCombatActor>();
+
+            if (target == null || _hitTargets.Add(target) == false)
+            {
                 continue;
+            }
 
-            bool accepted = RuneHitResolver.TryHitOnServer(
-                _actor,
-                target,
-                profile,
-                _attackPowerSnapshot);
+            bool accepted = RuneHitResolver.TryHitOnServer(_actor, target, profile, _attackPowerSnapshot);
 
-            Debug.Log(
-                $"[근접 적중 결과] 대상: {target.name}, " +
-                $"생존 여부(처리 후): {target.IsAlive}, " +
-                $"적중 승인: {accepted}",
-                this);
+            Debug.Log($"[근접 적중 결과] 대상: {target.name}, " + $"생존 여부(처리 후): {target.IsAlive}, " + $"적중 승인: {accepted}", this);
         }
     }
 
@@ -345,10 +296,7 @@ public class PlayerRuneAttackController : NetworkBehaviour
     {
         Debug.Log($"[투사체 발사] 플레이어: {name}, 위치: {GetAttackPosition()}", this);
 
-        PlayerAttackProjectile projectile = Instantiate(
-            _projectilePrefab,
-            GetAttackPosition(),
-            Quaternion.identity);
+        PlayerAttackProjectile projectile = Instantiate(_projectilePrefab, GetAttackPosition(), Quaternion.identity);
 
         projectile.InitOnServer(
             _actor,
