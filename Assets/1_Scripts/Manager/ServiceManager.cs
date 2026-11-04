@@ -9,6 +9,7 @@ public class ServiceManager : MonoBehaviour
     public InventoryService InventoryService { get; private set; }
     public NetworkCraftingService CraftingService { get; private set; }
     public PlayerService PlayerService { get; private set; }
+    public NetworkRuneService NetworkRuneService { get; private set; }
 
     private void Awake()
     {
@@ -22,6 +23,7 @@ public class ServiceManager : MonoBehaviour
         CraftingService = new NetworkCraftingService();
         InventoryService = new InventoryService();
         PlayerService = new PlayerService();
+        NetworkRuneService = new NetworkRuneService(InventoryService);
     }
 
     public void InitInventory()

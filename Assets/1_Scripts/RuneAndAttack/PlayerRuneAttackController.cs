@@ -10,6 +10,9 @@ public class PlayerRuneAttackController : NetworkBehaviour
     [Header("임시 장착 룬 - 서버에서 사용")]
     [SerializeField] private string[] _testRuneIds;
 
+    [SerializeField]
+    private PlayerRuneEquipmentController _runeEquipmentController;
+
     [Header("기본 공격")]
     [SerializeField, Min(0.01f)]
     private float _baseAttackInterval = 0.6f;
@@ -67,6 +70,11 @@ public class PlayerRuneAttackController : NetworkBehaviour
         if (_actor == null)
         {
             _actor = GetComponent<RuneCombatActor>();
+        }
+
+        if (_runeEquipmentController == null)
+        {
+            _runeEquipmentController = GetComponent<PlayerRuneEquipmentController>();
         }
     }
 
@@ -226,6 +234,24 @@ public class PlayerRuneAttackController : NetworkBehaviour
     {
         profile = null;
 
+        if (_runeEquipmentController == null)
+        {
+            Debug.LogError("PlayerRuneEquipmentController가 없습니다.", this);
+
+            return false;
+        }
+
+        if (_runeEquipmentController.TryBuildAttackProfile(out profile, out string error) == false)
+        {
+            Debug.LogWarning(error, this);
+            return false;
+        }
+
+        return true;
+        /*
+         * 이하 하드코딩 테스트용 코드
+        profile = null;
+
         if (DataManager.Inst == null)
         {
             return false;
@@ -259,6 +285,7 @@ public class PlayerRuneAttackController : NetworkBehaviour
         }
 
         return true;
+        */
     }
 
     private Vector2 GetAttackPosition()

@@ -1,4 +1,4 @@
-using ObservableCollections;
+﻿using ObservableCollections;
 using System.Collections.Generic;
 
 public class InventoryUIViewModel : ViewModelBase
@@ -10,7 +10,7 @@ public class InventoryUIViewModel : ViewModelBase
     }
 
 
-    private ObservableDictionary<string,InventoryItemViewModel> _inventoryItemViewModelDictionary;
+    private ObservableDictionary<string, InventoryItemViewModel> _inventoryItemViewModelDictionary;
 
     public ObservableDictionary<string, InventoryItemViewModel> InventoryItemViewModelDictionary
     {

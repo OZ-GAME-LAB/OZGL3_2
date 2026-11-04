@@ -138,4 +138,24 @@ public class InventoryService
         };
         return inventoryViewModel;
     }
+
+    //인벤토리 아이템들을 반환하는 메서드 추가
+    public IEnumerable<InventoryItemViewModel> GetInventoryItems()
+    {
+        var viewModel = GetInvantoryViewModel();
+        var items = viewModel.InventoryItemViewModelDictionary;
+
+        if (items == null)
+        {
+            yield break;
+        }
+
+        foreach (var pair in items)
+        {
+            if (pair.Value != null)
+            {
+                yield return pair.Value;
+            }
+        }
+    }
 }
