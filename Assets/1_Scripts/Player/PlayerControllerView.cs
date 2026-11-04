@@ -92,6 +92,12 @@ public class PlayerControllerView : MonoBehaviour
 
     private PlayerStatViewModel _playerStatViewModel;
 
+    private InputAction _miniGameConfirmAction;
+    private InputAction _miniGameCancelAction;
+
+    private bool _isMiniGameMode;
+    private int _miniGameEnteredFrame;
+
     void Awake()
     {
         TryGetComponent(out _networkObject);
@@ -138,6 +144,8 @@ public class PlayerControllerView : MonoBehaviour
         _settingsAction = _playerInput.actions["OpenSettings"];
         _runeInventoryAction = _playerInput.actions["OpenRuneInventory"];
         _inputActionsInitialized = true;
+        _miniGameConfirmAction = _playerInput.actions["MiniGame/Confirm"];
+        _miniGameCancelAction = _playerInput.actions["MiniGame/Cancel"];
     }
 
     private void OnEnable()
@@ -159,10 +167,18 @@ public class PlayerControllerView : MonoBehaviour
         _settingsAction.performed += OnOpenSettings;
         _fieldInteractAction.canceled += OnFieldInteractCanceled;
         _runeInventoryAction.performed += OnOpenRuneInventory;
+        _miniGameConfirmAction.performed += OnMiniGameConfirm;
+        _miniGameCancelAction.performed += OnMiniGameCancel;
 
         //ServiceManager.Inst.PlayerService.BindPlayerControllerView(this);
 
         PlayerNetworkStats stats = GetComponent<PlayerNetworkStats>();
+
+        if (_interactionController != null)
+        {
+            _interactionController.InteractionStartResolved += OnInteractionStartResolved;
+            _interactionController.InteractionEnded += ExitMiniGameMode;
+        }
 
         if (stats != null)
         {
@@ -201,9 +217,19 @@ public class PlayerControllerView : MonoBehaviour
         _journalAction.performed -= OnOpenJournal;
         _settingsAction.performed -= OnOpenSettings;
         _fieldInteractAction.canceled -= OnFieldInteractCanceled;
+
+        _miniGameConfirmAction.performed -= OnMiniGameConfirm;
+        _miniGameCancelAction.performed -= OnMiniGameCancel;
+
+        if (_interactionController != null)
+        {
+            _interactionController.InteractionStartResolved -= OnInteractionStartResolved;
+            _interactionController.InteractionEnded -= ExitMiniGameMode;
+        }
+        ExitMiniGameMode();
+
         _interactionController?.CancelRequestedInteraction();
         _runeInventoryAction.performed -= OnOpenRuneInventory;
-
 
         Unbind();
     }
@@ -221,10 +247,13 @@ public class PlayerControllerView : MonoBehaviour
             return;
         }
 
-        if (_fieldInteractAction.IsPressed())
+        if (_isMiniGameMode || _fieldInteractAction.IsPressed())
         {
             _interactionController?.TickInteraction(Time.deltaTime);
         }
+
+        if (_isMiniGameMode)
+            return;
 
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null || !_playerInput.isActiveAndEnabled || !_playerInput.inputIsActive)
@@ -307,6 +336,19 @@ public class PlayerControllerView : MonoBehaviour
     {
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
+
+        if (_isMiniGameMode)
+        {
+            SetMoveInput(0f);
+
+            Vector2 velocity = _rigidbody2D.linearVelocity;
+            velocity.x = 0f;
+            _rigidbody2D.linearVelocity = velocity;
+
+            UpdateGroundStateAndAnimation();
+            return;
+        }
+
         UpdateThinPlatformCollisions();
         UpdateCrouchState();
         UpdateWallState();
@@ -1035,6 +1077,76 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnFieldInteractCanceled(InputAction.CallbackContext context)
     {
+        if (_isMiniGameMode)
+            return;
+
+        if (_interactionController == null)
+            return;
+
+        InteractableObject target = _interactionController.LockedTarget;
+
+        if (target != null && target.UsesMiniGameInput)
+            return;
+
+        _interactionController.CancelRequestedInteraction();
+    }
+
+    private void OnInteractionStartResolved(bool started)
+    {
+        if (!started || _interactionController == null)
+            return;
+
+        InteractableObject target = _interactionController.LockedTarget;
+
+        if (target == null || !target.UsesMiniGameInput)
+            return;
+
+        EnterMiniGameMode();
+    }
+
+    private void EnterMiniGameMode()
+    {
+        if (_isMiniGameMode)
+            return;
+
+        _isMiniGameMode = true;
+        _miniGameEnteredFrame = Time.frameCount;
+
+        if (_isSpectatorMode)
+            SetSpectatorMode(false);
+
+        SetMoveInput(0f);
+        _wallCling?.ResetState();
+
+        Vector2 velocity = _rigidbody2D.linearVelocity;
+        velocity.x = 0f;
+        _rigidbody2D.linearVelocity = velocity;
+
+        _playerInput.SwitchCurrentActionMap("MiniGame");
+    }
+
+    private void ExitMiniGameMode()
+    {
+        if (!_isMiniGameMode)
+            return;
+
+        _playerInput.SwitchCurrentActionMap("Player");
+        _isMiniGameMode = false;
+    }
+
+    private void OnMiniGameConfirm(InputAction.CallbackContext context)
+    {
+        if (!_isMiniGameMode || Time.frameCount == _miniGameEnteredFrame)
+            return;
+
+        _interactionController?.ConfirmCurrentInteraction();
+    }
+
+    private void OnMiniGameCancel(InputAction.CallbackContext context)
+    {
+        if (!_isMiniGameMode)
+            return;
+
         _interactionController?.CancelRequestedInteraction();
     }
 }

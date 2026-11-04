@@ -20,6 +20,8 @@ public abstract class InteractableObject : MonoBehaviour
     private GameObject _visualObject;
     private bool _isDormant;
 
+    public virtual bool UsesMiniGameInput => false;
+
     public virtual bool RequiresServerReservation => true; //점유가 필요한 상호작용인지 여부를 나타내는 프로퍼티
 
     protected virtual void Awake()
@@ -156,6 +158,8 @@ public abstract class InteractableObject : MonoBehaviour
     public virtual void UpdateInteraction(float deltaTime) { }
     public virtual void CancelInteraction() { }
     public virtual void BeginInteraction(Transform[] playerUIAnchor, Camera playerCamera) { }
+    public virtual void ConfirmInteraction() { }
+
 
     // 상호작용 종료 요청 이벤트를 호출 메서드 추가
     protected void RequestInteractionEnd()

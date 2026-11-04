@@ -8,6 +8,10 @@ public class InteractionLoggingMiningObject : InteractableObject
     [SerializeField] private float _endSizeRatio = 0.5f;
     [SerializeField] private float _shrinkSpeed = 1f;
 
+    [Header("판정 설정")]
+    [SerializeField] private float _successStartRatio = 2f;
+    [SerializeField] private float _perfectTolerance = 0.05f;
+
     private readonly InteractionLoggingMiningVM _viewModel = new();
 
     public override InteractionVMBase ViewModel => _viewModel;
@@ -17,6 +21,8 @@ public class InteractionLoggingMiningObject : InteractableObject
 
     private int _uiRequestVersion;
 
+    public override bool UsesMiniGameInput => true;
+
     public override async UniTask InitObject(string id)
     {
         FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(id);
@@ -24,7 +30,7 @@ public class InteractionLoggingMiningObject : InteractableObject
         if (data == null)
             return;
 
-        _viewModel.Initialize(_startSizeRatio, _endSizeRatio, _shrinkSpeed);
+        _viewModel.Initialize(_startSizeRatio, _endSizeRatio, _shrinkSpeed, _successStartRatio, _perfectTolerance);
 
         GameObject visual = await ResourceManager.Inst.InstantiateAsync(
             data.PrefabPath,
@@ -91,12 +97,15 @@ public class InteractionLoggingMiningObject : InteractableObject
 
         miniGameUI.Bind(_viewModel);
 
-        _viewModel.BeginRound();
+        _viewModel.BeginGame();
     }
 
     public override void UpdateInteraction(float deltaTime)
     {
-        _viewModel.UpdateRound(deltaTime);
+        if (_viewModel.UpdateRound(deltaTime))
+        {
+            FinishMiniGame();
+        }
     }
 
     public override void CancelInteraction()
@@ -114,5 +123,33 @@ public class InteractionLoggingMiningObject : InteractableObject
 
         UIManager.Inst.Close(UIType.LoggingMiningUI);
         _openUI = null;
+    }
+
+    public override void ConfirmInteraction()
+    {
+        if (_openUI == null)
+            return;
+
+        if (_viewModel.Confirm())
+        {
+            FinishMiniGame();
+        }
+    }
+
+    private void FinishMiniGame()
+    {
+        float accuracy = _viewModel.FinalAccuracy;
+
+        Debug.Log($"벌목·채광 종료: 평균 정확도 {accuracy:P1}", this);
+
+        CloseContent();
+
+        if (accuracy <= 0f)
+        {
+            RequestInteractionEnd();
+            return;
+        }
+
+        NotifyCompleted(accuracy);
     }
 }
