@@ -134,7 +134,9 @@ public class FieldObjectData : GameDataBase
     public bool DestroyAfterUse;
     public string RequiredToolAction;
     public int Tier;
-    public string DropGroupId;
+    public bool IsMandatoryDropItem;
+    public string MandatoryDropGroupId;
+    public string ProbabilityDropGroupId;
     public string PrefabPath;
 }
 

@@ -273,62 +273,41 @@ public class InteractionNetwork : NetworkBehaviour
 
     private void SpawnRewardsOnServer(float rewardMultiplier, int playerCount)
     {
-        if (!IsServer)
+        if (!IsServer || playerCount <= 0)
             return;
 
         FieldObjectData objectData = DataManager.Inst.GetData<FieldObjectData>(_objectId.Value.ToString());
 
-        if (objectData == null || string.IsNullOrWhiteSpace(objectData.DropGroupId))
+        if (objectData == null)
         {
-            Debug.LogError("상호작용 오브젝트의 보상 그룹을 확인해 주세요.", this);
+            Debug.LogError("상호작용 오브젝트 데이터를 찾지 못했습니다.", this);
             return;
         }
 
-        DropGroupData dropData = DataManager.Inst.GetData<DropGroupData>(objectData.DropGroupId);
+        List<string> selectedItems = new();
 
-        if (dropData == null)
-            return;
-
-        if (dropData.ItemId == null || dropData.DropChance == null || dropData.ItemId.Length == 0 || dropData.ItemId.Length != dropData.DropChance.Length)
+        if (objectData.IsMandatoryDropItem)
         {
-            Debug.LogError("아이템 목록과 확률 배열의 길이를 확인해 주세요.", this);
-            return;
-        }
-
-        if (dropData.MinQuantity < 0 || dropData.MaxQuantity < dropData.MinQuantity || dropData.MaxQuantity == int.MaxValue)
-        {
-            Debug.LogError("보상 최소·최대 수량을 확인해 주세요.", this);
-            return;
-        }
-
-        float totalChance = 0f;
-
-        foreach (float chance in dropData.DropChance)
-        {
-            if (float.IsNaN(chance) || float.IsInfinity(chance) || chance < 0f)
+            if (!TryAppendRewards(
+                    objectData.MandatoryDropGroupId,
+                    true,
+                    rewardMultiplier,
+                    selectedItems))
             {
-                Debug.LogError("드롭 확률은 0 이상의 유효한 숫자여야 합니다.", this);
                 return;
             }
-
-            totalChance += chance;
         }
 
-        if (!Mathf.Approximately(totalChance, 1f))
+        if (!string.IsNullOrWhiteSpace(objectData.ProbabilityDropGroupId))
         {
-            Debug.LogError($"드롭 확률의 합이 1이 아닙니다: {totalChance}", this);
-            return;
-        }
-
-        int baseQuantity = UnityEngine.Random.Range(dropData.MinQuantity, dropData.MaxQuantity + 1);
-
-        int quantity = Mathf.FloorToInt(baseQuantity * rewardMultiplier);
-
-        List<string> selectedItems = new List<string>(quantity);
-
-        for (int i = 0; i < quantity; i++)
-        {
-            selectedItems.Add(SelectRewardItem(dropData, totalChance));
+            if (!TryAppendRewards(
+                    objectData.ProbabilityDropGroupId,
+                    false,
+                    rewardMultiplier,
+                    selectedItems))
+            {
+                return;
+            }
         }
 
         foreach (string itemId in selectedItems)
@@ -366,6 +345,130 @@ public class InteractionNetwork : NetworkBehaviour
         }
 
         return dropData.ItemId[lastPositiveIndex];
+    }
+
+    private bool TryAppendRewards(string groupId, bool isMandatory, float rewardMultiplier, List<string> selectedItems)
+    {
+        if (!TryGetRewardGroup(groupId, isMandatory, out DropGroupData dropData))
+        {
+            return false;
+        }
+
+        if (isMandatory)
+        {
+            foreach (string itemId in dropData.ItemId)
+            {
+                int baseQuantity = UnityEngine.Random.Range(dropData.MinQuantity, dropData.MaxQuantity + 1);
+
+                int quantity = Mathf.FloorToInt(baseQuantity * rewardMultiplier);
+
+                for (int i = 0; i < quantity; i++)
+                {
+                    selectedItems.Add(itemId);
+                }
+            }
+        }
+        else
+        {
+            int baseQuantity = UnityEngine.Random.Range(dropData.MinQuantity, dropData.MaxQuantity + 1);
+
+            int quantity = Mathf.FloorToInt(baseQuantity * rewardMultiplier);
+
+            float totalChance = 0f;
+
+            foreach (float chance in dropData.DropChance)
+            {
+                totalChance += chance;
+            }
+
+            for (int i = 0; i < quantity; i++)
+            {
+                selectedItems.Add(SelectRewardItem(dropData, totalChance));
+            }
+        }
+
+        return true;
+    }
+
+    private bool TryGetRewardGroup(
+    string groupId,
+    bool isMandatory,
+    out DropGroupData dropData)
+    {
+        dropData = null;
+
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            Debug.LogError("필수 드롭 그룹 ID가 비어 있습니다.", this);
+            return false;
+        }
+
+        dropData = DataManager.Inst.GetData<DropGroupData>(groupId);
+
+        if (dropData == null)
+        {
+            Debug.LogError(
+                $"드롭 그룹을 찾지 못했습니다: {groupId}", this);
+            return false;
+        }
+
+        if (dropData.ItemId == null || dropData.ItemId.Length == 0)
+        {
+            Debug.LogError(
+                $"드롭 그룹의 아이템 목록이 비어 있습니다: {groupId}", this);
+            return false;
+        }
+
+        foreach (string itemId in dropData.ItemId)
+        {
+            if (string.IsNullOrWhiteSpace(itemId))
+            {
+                Debug.LogError(
+                    $"드롭 그룹에 빈 아이템 ID가 있습니다: {groupId}", this);
+                return false;
+            }
+        }
+
+        if (dropData.MinQuantity < 0 ||
+            dropData.MaxQuantity < dropData.MinQuantity ||
+            dropData.MaxQuantity == int.MaxValue)
+        {
+            Debug.LogError(
+                $"드롭 수량 범위를 확인해 주세요: {groupId}", this);
+            return false;
+        }
+
+        // 필수 그룹은 확률을 사용하지 않음.
+        if (isMandatory)
+            return true;
+
+        if (dropData.DropChance == null ||
+            dropData.ItemId.Length != dropData.DropChance.Length)
+        {
+            Debug.LogError(
+                $"아이템 목록과 확률 배열의 길이가 다릅니다: {groupId}", this);
+            return false;
+        }
+
+        float totalChance = 0f;
+
+        foreach (float chance in dropData.DropChance)
+        {
+            if (float.IsNaN(chance) || float.IsInfinity(chance) || chance < 0f || chance > 1f)
+            {
+                Debug.LogError($"드롭 확률은 0~1의 유효한 숫자여야 합니다: {groupId}", this);
+                return false;
+            }
+            totalChance += chance;
+        }
+
+        if (!Mathf.Approximately(totalChance, 1f))
+        {
+            Debug.LogError($"드롭 확률 합계가 1이 아닙니다: {groupId}, 합계: {totalChance}", this);
+            return false;
+        }
+
+        return true;
     }
 
     //-------------------------------------------------------------------------------

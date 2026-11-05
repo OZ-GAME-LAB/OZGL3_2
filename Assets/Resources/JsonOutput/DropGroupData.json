@@ -96,7 +96,7 @@
     "MinQuantity": 1,
     "MaxQuantity": 2,
     "DropChance": [
-      1,
+      0.5,
       0.5
     ]
   }
