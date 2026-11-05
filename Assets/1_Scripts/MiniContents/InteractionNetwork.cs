@@ -28,7 +28,8 @@ public class InteractionNetwork : NetworkBehaviour
 
     private FixedString128Bytes _pendingObjectId;
 
-
+    private string _selectedFishId;
+    private int _selectedFishQuantity;
 
     public override void OnNetworkSpawn()
     {
@@ -60,6 +61,9 @@ public class InteractionNetwork : NetworkBehaviour
             _hasInteractor = false;
             _interactorClientId = 0;
             _interactionRequestId = 0;
+
+            _selectedFishId = null;
+            _selectedFishQuantity = 0;
         }
 
         AvailabilityChanged?.Invoke(false);
@@ -77,15 +81,25 @@ public class InteractionNetwork : NetworkBehaviour
         if (!IsServer || !IsSpawned)
             return false;
 
-        if (_hasInteractor &&
-            _interactorClientId == clientId &&
-            _interactionRequestId == requestId)
-        {
+        if (_hasInteractor && _interactorClientId == clientId && _interactionRequestId == requestId)
             return true;
-        }
 
         if (_hasInteractor || !_serverAllowsInteraction)
             return false;
+
+        FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(_objectId.Value.ToString());
+
+        if (data == null)
+            return false;
+
+        _selectedFishId = null;
+        _selectedFishQuantity = 0;
+
+        if (data.InteractionType == "Fishing")
+        {
+            if (!TryPrepareFishingReward(data))
+                return false;
+        }
 
         _hasInteractor = true;
         _interactorClientId = clientId;
@@ -125,6 +139,9 @@ public class InteractionNetwork : NetworkBehaviour
         _hasInteractor = false;
         _interactorClientId = 0;
         _interactionRequestId = 0;
+
+        _selectedFishId = null;
+        _selectedFishQuantity = 0;
 
         RefreshAvailabilityOnServer();
     }
@@ -298,16 +315,27 @@ public class InteractionNetwork : NetworkBehaviour
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(objectData.ProbabilityDropGroupId))
+        if (objectData.InteractionType == "Fishing")
         {
-            if (!TryAppendRewards(
-                    objectData.ProbabilityDropGroupId,
-                    false,
-                    rewardMultiplier,
-                    selectedItems))
+            if (string.IsNullOrWhiteSpace(_selectedFishId))
             {
+                Debug.LogError("낚시 시작 시 결정된 물고기가 없습니다.", this);
                 return;
             }
+
+            int quantity = Mathf.FloorToInt(_selectedFishQuantity * rewardMultiplier);
+
+            for (int i = 0; i < quantity; i++)
+            {
+                selectedItems.Add(_selectedFishId);
+            }
+
+            Debug.Log($"낚시 보상: {_selectedFishId}, 기본 보상 {quantity}개, 인원 {playerCount}명", this);
+        }
+        else if (!string.IsNullOrWhiteSpace(objectData.ProbabilityDropGroupId))
+        {
+            if (!TryAppendRewards(objectData.ProbabilityDropGroupId, false, rewardMultiplier, selectedItems))
+                return;
         }
 
         foreach (string itemId in selectedItems)
@@ -467,6 +495,25 @@ public class InteractionNetwork : NetworkBehaviour
             Debug.LogError($"드롭 확률 합계가 1이 아닙니다: {groupId}, 합계: {totalChance}", this);
             return false;
         }
+
+        return true;
+    }
+
+    private bool TryPrepareFishingReward(FieldObjectData objectData)
+    {
+        if (!TryGetRewardGroup(objectData.ProbabilityDropGroupId, false, out DropGroupData dropData))
+            return false;
+
+        float totalChance = 0f;
+
+        foreach (float chance in dropData.DropChance)
+            totalChance += chance;
+
+        _selectedFishId = SelectRewardItem(dropData, totalChance);
+
+        _selectedFishQuantity = UnityEngine.Random.Range(dropData.MinQuantity, dropData.MaxQuantity + 1);
+
+        Debug.Log($"낚시 시작: 물고기 {_selectedFishId}, 기본 수량 {_selectedFishQuantity}", this);
 
         return true;
     }
