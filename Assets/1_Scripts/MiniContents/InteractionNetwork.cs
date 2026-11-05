@@ -221,6 +221,14 @@ public class InteractionNetwork : NetworkBehaviour
 
         int playerCount = NetworkManager.ConnectedClientsList.Count;
 
+        if (data.InteractionType == "Fishing")
+        {
+            SpawnRewardsOnServer(rewardMultiplier, playerCount);
+
+            ReleaseInteractorOnServer();
+            return true;
+        }
+
         _serverAllowsInteraction = false;
         ReleaseInteractorOnServer();
 
