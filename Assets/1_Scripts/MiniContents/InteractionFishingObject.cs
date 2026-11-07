@@ -24,10 +24,21 @@ public class InteractionFishingObject : InteractableObject
         return UniTask.CompletedTask;
     }
 
-    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera)
+    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera, string equipmentId)
     {
+        base.BeginInteraction(playerUIAnchors, playerCamera, equipmentId);
+
+        if (!TryGetInteractionEquipmentData(out EquipmentData equipmentData))
+        {
+            RequestInteractionEnd();
+            return;
+        }
+
         _playerUIAnchors = playerUIAnchors;
         _playerCamera = playerCamera;
+
+        // TODO : 추후 equipmentData 또는 같은 ID의 ItemData에서
+        // TODO : 장비 티어를 읽고 회전 속도를 계산할 위치.
 
         PlayContent();
     }

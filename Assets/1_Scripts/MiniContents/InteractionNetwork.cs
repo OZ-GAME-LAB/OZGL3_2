@@ -192,6 +192,7 @@ public class InteractionNetwork : NetworkBehaviour
             return;
 
         interactableObject.SetDestroyAfterUse(data.DestroyAfterUse);
+        interactableObject.SetRequiredToolAction(data.RequiredToolAction);
 
         await interactableObject.InitObject(id);
 
