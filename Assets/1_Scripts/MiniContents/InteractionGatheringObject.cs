@@ -66,8 +66,10 @@ public class InteractionGatheringObject : InteractableObject
         }
     }
 
-    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera)
+    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera, string equipmentId)
     {
+        base.BeginInteraction(playerUIAnchors, playerCamera, equipmentId);
+
         _playerUIAnchors = playerUIAnchors;
         _playerCamera = playerCamera;
 

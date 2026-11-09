@@ -47,8 +47,16 @@ public class InteractionLoggingMiningObject : InteractableObject
         RegisterVisual(visual);
     }
 
-    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera)
+    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera, string equipmentId)
     {
+        base.BeginInteraction(playerUIAnchors, playerCamera, equipmentId);
+
+        if (!TryGetInteractionEquipmentData(out EquipmentData equipmentData))
+        {
+            RequestInteractionEnd();
+            return;
+        }
+
         _playerUIAnchors = playerUIAnchors;
         _playerCamera = playerCamera;
 
