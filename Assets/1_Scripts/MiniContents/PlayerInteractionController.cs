@@ -536,9 +536,13 @@ public class PlayerInteractionController : NetworkBehaviour
             }
         };
 
+        string fishId = approved && _serverTarget != null 
+            ? _serverTarget.SelectedFishId ?? string.Empty : string.Empty;
+
         ReceiveStartResultClientRpc(
             requestId,
             approved,
+            fishId,
             clientRpcParams);
     }
 
@@ -592,6 +596,7 @@ public class PlayerInteractionController : NetworkBehaviour
     private void ReceiveStartResultClientRpc(
         ulong requestId,
         bool approved,
+        string fishId,
         ClientRpcParams rpcParams = default)
     {
         if (!IsOwner)
@@ -626,6 +631,12 @@ public class PlayerInteractionController : NetworkBehaviour
             InteractionStartResolved?.Invoke(false);
             return;
         }
+
+        if (_requestedTarget is InteractionFishingObject fishingObject)
+        {
+            fishingObject.SetSelectedFishId(fishId);
+        }
+
 
         StartCurrentInteraction(requestId);
     }

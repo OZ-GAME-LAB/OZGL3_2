@@ -31,6 +31,8 @@ public class InteractionNetwork : NetworkBehaviour
     private string _selectedFishId;
     private int _selectedFishQuantity;
 
+    public string SelectedFishId => _selectedFishId;
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
