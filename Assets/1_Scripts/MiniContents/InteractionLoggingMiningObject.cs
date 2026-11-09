@@ -12,6 +12,12 @@ public class InteractionLoggingMiningObject : InteractableObject
     [SerializeField] private float _successStartRatio = 2f;
     [SerializeField] private float _perfectTolerance = 0.05f;
 
+    [Header("난이도 설정")]
+    [SerializeField, Min(0f)]
+    private float _increasePerTier = 0.25f;
+
+    private int _targetTier;
+
     private readonly InteractionLoggingMiningVM _viewModel = new();
 
     public override InteractionVMBase ViewModel => _viewModel;
@@ -29,6 +35,8 @@ public class InteractionLoggingMiningObject : InteractableObject
 
         if (data == null)
             return;
+
+        _targetTier = data.Tier;
 
         _viewModel.Initialize(_startSizeRatio, _endSizeRatio, _shrinkSpeed, _successStartRatio, _perfectTolerance);
 
@@ -51,11 +59,40 @@ public class InteractionLoggingMiningObject : InteractableObject
     {
         base.BeginInteraction(playerUIAnchors, playerCamera, equipmentId);
 
-        if (!TryGetInteractionEquipmentData(out EquipmentData equipmentData))
+        if (!TryGetInteractionEquipmentData(out _))
         {
             RequestInteractionEnd();
             return;
         }
+
+        ItemData equipmentItem = DataManager.Inst.GetData<ItemData>(InteractionEquipmentId);
+
+        if (equipmentItem == null)
+        {
+            Debug.LogWarning($"장비의 아이템 데이터를 찾지 못했습니다: {InteractionEquipmentId}", this);
+
+            RequestInteractionEnd();
+            return;
+        }
+
+        if (_targetTier < 1 || equipmentItem.Tier < 1)
+        {
+            Debug.LogWarning($"티어는 1 이상이어야 합니다. " + $"대상: {_targetTier}, 장비: {equipmentItem.Tier}", this);
+
+            RequestInteractionEnd();
+            return;
+        }
+
+        float multiplier = GameUtil.CalculateInteractionDifficultyMultiplier(_targetTier, equipmentItem.Tier, _increasePerTier);
+
+        float shrinkSpeed = _shrinkSpeed * multiplier;
+
+        _viewModel.Initialize(
+            _startSizeRatio,
+            _endSizeRatio,
+            shrinkSpeed,
+            _successStartRatio,
+            _perfectTolerance);
 
         _playerUIAnchors = playerUIAnchors;
         _playerCamera = playerCamera;
