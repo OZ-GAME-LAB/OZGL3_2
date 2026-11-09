@@ -9,8 +9,7 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
     public const int SlotCount = 3;
 
     [Header("서버 인벤토리 연결 전 테스트 전용")]
-    [SerializeField]
-    private bool _allowTestEquipment;
+    [SerializeField] private bool _allowTestEquipment;
 
     private NetworkList<FixedString128Bytes> _equippedRuneIds;
     private AttackProfile _cachedAttackProfile;

@@ -19,10 +19,10 @@ public enum EquipmentSlot
 
 public enum ToolAction
 {
-    None = 1,
-    Logging = 2,
-    Fishing = 3,
-    Mining = 4
+    None = 0,
+    Logging = 1,
+    Fishing = 2,
+    Mining = 3
 }
 
 public enum EffectType

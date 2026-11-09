@@ -9,45 +9,25 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
     [Header("임시 장착 룬 - 서버에서 사용")]
     [SerializeField] private string[] _testRuneIds;
-
-    [SerializeField]
-    private PlayerRuneEquipmentController _runeEquipmentController;
+    [SerializeField] private PlayerRuneEquipmentController _runeEquipmentController;
 
     [Header("기본 공격")]
-    [SerializeField, Min(0.01f)]
-    private float _baseAttackInterval = 0.6f;
-
-    [SerializeField, Min(0f)]
-    private float _windupSeconds = 0.1f;
-
-    [SerializeField, Min(0.01f)]
-    private float _tripleHitInterval = 0.12f;
-
-    [SerializeField, Min(0.01f)]
-    private float _recoverySeconds = 0.15f;
+    [SerializeField, Min(0.01f)] private float _baseAttackInterval = 0.6f;
+    [SerializeField, Min(0f)] private float _windupSeconds = 0.1f;
+    [SerializeField, Min(0.01f)] private float _tripleHitInterval = 0.12f;
+    [SerializeField, Min(0.01f)] private float _recoverySeconds = 0.15f;
 
     [Header("근접 공격")]
-    [SerializeField] 
-    private LayerMask _targetLayer;
-
-    [SerializeField]
-    private Vector2 _attackOffset = new Vector2(0.8f, 0.3f);
-
-    [SerializeField, Min(0.01f)]
-    private float _meleeRadius = 0.7f;
+    [SerializeField] private LayerMask _targetLayer;    
+    [SerializeField] private Vector2 _attackOffset = new Vector2(0.8f, 0.3f);
+    [SerializeField, Min(0.01f)] private float _meleeRadius = 0.7f;
 
     [Header("투사체")]
     [SerializeField] private PlayerAttackProjectile _projectilePrefab;
     [SerializeField] private LayerMask _wallLayer;
-
-    [SerializeField, Min(0.01f)]
-    private float _projectileSpeed = 10f;
-
-    [SerializeField, Min(0.01f)]
-    private float _projectileDistance = 8f;
-
-    [SerializeField, Min(0.01f)]
-    private float _projectileRadius = 0.15f;
+    [SerializeField, Min(0.01f)] private float _projectileSpeed = 10f;
+    [SerializeField, Min(0.01f)] private float _projectileDistance = 8f;
+    [SerializeField, Min(0.01f)] private float _projectileRadius = 0.15f;
 
     private readonly HashSet<RuneCombatActor> _hitTargets = new();
 
