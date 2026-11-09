@@ -16,8 +16,10 @@ public class CraftingObject : InteractableObject
     {
     }
 
-    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera)
+    public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera, string equipmentId)
     {
+        base.BeginInteraction(playerUIAnchors, playerCamera, equipmentId);
+
         if (isActiveAndEnabled == false || _sessionActive)
         {
             return;

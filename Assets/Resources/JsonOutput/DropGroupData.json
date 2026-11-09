@@ -9,5 +9,95 @@
     "DropChance": [
       1
     ]
+  },
+  {
+    "Id": "drop_monster_01",
+    "ItemId": [
+      "mat_slime_lump"
+    ],
+    "MinQuantity": null,
+    "MaxQuantity": null,
+    "DropChance": [
+      1
+    ]
+  },
+  {
+    "Id": "drop_monster_02",
+    "ItemId": [
+      "mat_monster_02"
+    ],
+    "MinQuantity": null,
+    "MaxQuantity": null,
+    "DropChance": [
+      1
+    ]
+  },
+  {
+    "Id": "drop_monster_03",
+    "ItemId": [
+      "mat_monster_03"
+    ],
+    "MinQuantity": null,
+    "MaxQuantity": null,
+    "DropChance": [
+      1
+    ]
+  },
+  {
+    "Id": "drop_fishing_01",
+    "ItemId": [
+      "con_fish_01",
+      "con_fish_02"
+    ],
+    "MinQuantity": 1,
+    "MaxQuantity": 1,
+    "DropChance": [
+      0.7,
+      0.3
+    ]
+  },
+  {
+    "Id": "drop_logging_01",
+    "ItemId": [
+      "mat_wood_01"
+    ],
+    "MinQuantity": 1,
+    "MaxQuantity": 3,
+    "DropChance": [
+      1
+    ]
+  },
+  {
+    "Id": "drop_berry_01",
+    "ItemId": [
+      "con_red_berry"
+    ],
+    "MinQuantity": null,
+    "MaxQuantity": null,
+    "DropChance": null
+  },
+  {
+    "Id": "drop_berry_02",
+    "ItemId": [
+      "con_berry_02"
+    ],
+    "MinQuantity": 1,
+    "MaxQuantity": 3,
+    "DropChance": [
+      1
+    ]
+  },
+  {
+    "Id": "drop_mining_01",
+    "ItemId": [
+      "mat_ore_01",
+      "mat_ore_02"
+    ],
+    "MinQuantity": 1,
+    "MaxQuantity": 2,
+    "DropChance": [
+      0.5,
+      0.5
+    ]
   }
 ]

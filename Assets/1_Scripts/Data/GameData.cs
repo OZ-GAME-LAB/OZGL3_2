@@ -14,7 +14,9 @@ public enum EquipmentSlot
     None = 0,
     Axe = 1,
     FishingRod = 2,
-    PickAxe = 3
+    PickAxe = 3,
+    Talisman = 4,
+    Weapon = 5
 }
 
 public enum ToolAction
@@ -25,11 +27,12 @@ public enum ToolAction
     Mining = 3
 }
 
-public enum EffectType
+public enum EquipmentEffectType
 {
     None = 0,
     InstantHeal = 1,
-    StatusDamage = 2
+    StatusDamage = 2,
+    ReducePoisonDamageTaken = 3
 }
 
 public enum Target
@@ -53,6 +56,22 @@ public enum MoveType
     Move = 2
 }
 
+public enum ValueBasis
+{
+    Flat = 0,
+    Percent = 1,
+    MultiplePercent = 2
+}
+
+public enum ValueOperation
+{
+    Flat = 0,
+    AddPercent = 1,
+    MultiplePercent = 2
+}
+
+
+
 [Serializable]
 public class GameDataBase
 {
@@ -64,6 +83,7 @@ public class ItemData : GameDataBase
 {
     public string Name;
     public string ItemType;
+    public string Tier;
     public string Description;
     public int MaxStack;
     public int Price;
@@ -77,7 +97,10 @@ public class EquipmentData : GameDataBase
 {
     public EquipmentSlot EquipmentSlot;
     public ToolAction ToolAction;
-    public float Power;
+    public EquipmentEffectType EquipmentEffectType;
+    public float EffectValue;
+    public ValueBasis ValueBasis;
+    public ValueOperation ValueOperation;
 }
 
 [Serializable]
@@ -103,7 +126,7 @@ public class RuneData : GameDataBase
 [Serializable]
 public class EffectData : GameDataBase
 {
-    public EffectType EffectType;
+    public EquipmentEffectType EffectType;
     public string Target;
     public ValueUnit ValueUnit;
     public string Description;
@@ -134,7 +157,9 @@ public class FieldObjectData : GameDataBase
     public bool DestroyAfterUse;
     public string RequiredToolAction;
     public int Tier;
-    public string DropGroupId;
+    public bool IsMandatoryDropItem;
+    public string MandatoryDropGroupId;
+    public string ProbabilityDropGroupId;
     public string PrefabPath;
 }
 
