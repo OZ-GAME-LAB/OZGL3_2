@@ -83,7 +83,7 @@ public class ItemData : GameDataBase
 {
     public string Name;
     public string ItemType;
-    public string Tier;
+    public int Tier;
     public string Description;
     public int MaxStack;
     public int Price;
