@@ -10,9 +10,9 @@ public abstract class InteractableObject : MonoBehaviour
     private InteractionNetwork _interactionNetwork;
     public abstract InteractionVMBase ViewModel { get; }
 
-    public event Action Completed;
+    public event Action<float> Completed;
 
-    public event Action InteractionEndRequested; //상호작용 종료 이벤트 추가
+    public event Action InteractionEndRequested; 
 
     private bool _destroyAfterUse = true;
     public bool DestroyAfterUse => _destroyAfterUse;
@@ -20,7 +20,13 @@ public abstract class InteractableObject : MonoBehaviour
     private GameObject _visualObject;
     private bool _isDormant;
 
-    public virtual bool RequiresServerReservation => true; //점유가 필요한 상호작용인지 여부를 나타내는 프로퍼티
+    public virtual bool UsesMiniGameInput => false;
+
+    public virtual bool RequiresServerReservation => true;
+
+    public string RequiredToolAction { get; private set; }
+
+    protected string InteractionEquipmentId { get; private set; }
 
     protected virtual void Awake()
     {
@@ -115,9 +121,9 @@ public abstract class InteractableObject : MonoBehaviour
         _infoUI = null;
     }
 
-    protected void NotifyCompleted()
+    protected void NotifyCompleted(float accuracy = 1f)
     {
-        Completed?.Invoke();
+        Completed?.Invoke(accuracy);
     }
 
     protected void RegisterVisual(GameObject visualObject)
@@ -146,11 +152,49 @@ public abstract class InteractableObject : MonoBehaviour
                _interactionNetwork.TryReactivateOnServer();
     }
 
+    public void SetDestroyAfterUse(bool destroyAfterUse)
+    {
+        _destroyAfterUse = destroyAfterUse;
+    }
+
+    public void SetRequiredToolAction(string requiredToolAction)
+    {
+        RequiredToolAction = requiredToolAction;
+    }
+
+    public virtual void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera, string equipmentId)
+    {
+        InteractionEquipmentId = equipmentId;
+    }
+
+    protected bool TryGetInteractionEquipmentData(out EquipmentData equipmentData)
+    {
+        equipmentData = null;
+
+        if (string.IsNullOrWhiteSpace(InteractionEquipmentId))
+        {
+            Debug.LogWarning("상호작용에 사용할 장비 ID가 없습니다.", this);
+
+            return false;
+        }
+
+        equipmentData = DataManager.Inst.GetData<EquipmentData>(InteractionEquipmentId);
+
+        if (equipmentData == null)
+        {
+            Debug.LogWarning($"장비 데이터를 확인해 주세요: {InteractionEquipmentId}", this);
+
+            return false;
+        }
+
+        return true;
+    }
+
     protected virtual void PlayContent(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/) { }
     public virtual void CloseContent() { }
     public virtual void UpdateInteraction(float deltaTime) { }
     public virtual void CancelInteraction() { }
-    public virtual void BeginInteraction(Transform[] playerUIAnchor, Camera playerCamera) { }
+    public virtual void ConfirmInteraction() { }
 
     // 상호작용 종료 요청 이벤트를 호출 메서드 추가
     protected void RequestInteractionEnd()

@@ -1,20 +1,56 @@
 [
   {
+    "Id": "equipment_poison_charm",
+    "EquipmentSlot": 4,
+    "ToolAction": 1,
+    "EquipmentEffectType": 3,
+    "EffectValue": 0.2,
+    "ValueBasis": 1,
+    "ValueOperation": 2
+  },
+  {
+    "Id": "weapon_basic_sword",
+    "EquipmentSlot": 5,
+    "ToolAction": 1,
+    "EquipmentEffectType": 0,
+    "EffectValue": 1,
+    "ValueBasis": 1,
+    "ValueOperation": 2
+  },
+  {
     "Id": "eq_worn_axe",
-    "EquipmentSlot": "Axe",
-    "ToolAction": "Logging",
-    "Power": null
+    "EquipmentSlot": 1,
+    "ToolAction": 2,
+    "EquipmentEffectType": 0,
+    "EffectValue": 1,
+    "ValueBasis": 1,
+    "ValueOperation": 2
   },
   {
     "Id": "eq_worn_fishingrod",
-    "EquipmentSlot": "FishingRod",
-    "ToolAction": "Fishing",
-    "Power": null
+    "EquipmentSlot": 2,
+    "ToolAction": 3,
+    "EquipmentEffectType": 0,
+    "EffectValue": 1,
+    "ValueBasis": 1,
+    "ValueOperation": 2
   },
   {
     "Id": "eq_worn_pickaxe",
-    "EquipmentSlot": "PickAxe",
-    "ToolAction": "Mining",
-    "Power": null
+    "EquipmentSlot": 3,
+    "ToolAction": 4,
+    "EquipmentEffectType": 0,
+    "EffectValue": 1,
+    "ValueBasis": 1,
+    "ValueOperation": 2
+  },
+  {
+    "Id": "eq_normal_axe",
+    "EquipmentSlot": 1,
+    "ToolAction": 2,
+    "EquipmentEffectType": 0,
+    "EffectValue": 1.5,
+    "ValueBasis": 1,
+    "ValueOperation": 2
   }
 ]

@@ -183,5 +183,19 @@ public class UIManager : MonoBehaviour
             uiObject.transform.SetParent(rectTransform);
         }
     }
-  
+
+    public bool TryCloseLoggingMiningResult()
+    {
+        if (!_openedUISet.Contains(UIType.LoggingMiningUI))
+            return false;
+
+        if (!_createdUICacheDictionary.TryGetValue(
+                UIType.LoggingMiningUI, out UIBase ui))
+        {
+            return false;
+        }
+
+        return ui is LoggingMiningUI resultUI &&
+               resultUI.TryCloseResult();
+    }
 }

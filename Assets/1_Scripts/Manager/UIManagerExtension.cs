@@ -26,6 +26,8 @@ public enum UIType
     CraftingUI,
     NetworkSelectUI,
     RuneInventoryUI,
+    LoggingMiningUI,
+    FishingUI,
 }
 
 
