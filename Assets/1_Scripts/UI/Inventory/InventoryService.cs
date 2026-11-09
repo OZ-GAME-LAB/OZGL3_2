@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class InventoryService
@@ -134,6 +135,10 @@ public class InventoryService
     {
         var inventoryViewModel = new InventoryUIViewModel
         {
+            TalismanItemViewModel = new(),
+            FishingItemViewModel = new(),
+            LoggingItemViewModel = new(),
+            MiningItemViewModel = new(),
             InventoryItemViewModelDictionary = new()
         };
         return inventoryViewModel;

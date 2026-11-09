@@ -1,5 +1,6 @@
 using ObservableCollections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,12 @@ public class InventoryUIView : UIBase
     [SerializeField] private Transform _inventorySlotRoot;
     [SerializeField] private Button _closeButton;
     [SerializeField] private GameObject _inventorySlotPrefab;
+
+    [SerializeField] private Transform _talismanItemSlotRoot;
+    [SerializeField] private Transform _fishingItemSlotRoot;
+    [SerializeField] private Transform _loggingItemSlotRoot;
+    [SerializeField] private Transform _miningItemSlotRoot;
+
 
 
     InventoryUIViewModel _InventoryUIViewModel;
@@ -36,9 +43,15 @@ public class InventoryUIView : UIBase
         _InventoryUIViewModel = inventory;
 
         if (_InventoryUIViewModel?.InventoryItemViewModelDictionary == null)
+        {
             return;
 
+        }
         _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged += OnInventoryChanged;
+
+        if (_InventoryUIViewModel != null)
+            _InventoryUIViewModel.PropertyChanged += OnPropertyChanged;
+        _InventoryUIViewModel.InvokeOnceOnInit();
 
         RebuildSlots();
     }
@@ -46,6 +59,21 @@ public class InventoryUIView : UIBase
     private void OnInventoryChanged(in NotifyCollectionChangedEventArgs<KeyValuePair<string, InventoryItemViewModel>> e)
     {
         RebuildSlots();
+    }
+
+    private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(_InventoryUIViewModel.FishingItemViewModel):
+                {
+
+                    break;
+                }
+         
+        }
+
+       
     }
 
     private void RebuildSlots()
