@@ -13,7 +13,10 @@
     "PoisonResistance": 10,
     "BleedAble": true,
     "HaveSkillIdList": [
-      "skill"
+      "MonsterMeleeAtk/MonsterMeleeAtkSkill"
+    ],
+    "MonsterSkillCollTime": [
+      3
     ],
     "MonsterType": 2,
     "IsMandatoryDropItem": true,

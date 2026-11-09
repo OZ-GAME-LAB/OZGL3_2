@@ -188,6 +188,7 @@ public class MonsterData : GameDataBase
     public float PoisonResistance;
     public bool BleedAble;
     public string[] HaveSkillIdList;
+    public float[] MonsterSkillCollTime;
     public MoveType MonsterType;
     public string MonsterAddressableId;
 }
