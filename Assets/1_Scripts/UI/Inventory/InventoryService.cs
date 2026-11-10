@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class InventoryService
@@ -8,7 +7,19 @@ public class InventoryService
 
     private int _nextSlotNumber = 1;
 
-   
+    public Dictionary<EquipmentSlot, string> GetEquipmentItemsId()
+    {
+        var inventory = GetInvantoryViewModel();
+
+        return new Dictionary<EquipmentSlot, string>
+        {
+            [EquipmentSlot.Talisman] = inventory.TalismanItemViewModel?.Id,
+            [EquipmentSlot.FishingRod] = inventory.FishingItemViewModel?.Id,
+            [EquipmentSlot.Axe] = inventory.LoggingItemViewModel?.Id,
+            [EquipmentSlot.PickAxe] = inventory.MiningItemViewModel?.Id
+        };
+    }
+
     public bool AddItem(string itemDataId)
     {
         if (!DataManager.Inst.ReadData<ItemData>().TryGetValue(itemDataId, out var data))
@@ -33,19 +44,7 @@ public class InventoryService
                 return true;
             }
         }
-        var itemViewModel = new InventoryItemViewModel
-        {
-            Id = data.Id,
-            Name = data.Name,
-            ItemType = data.ItemType,
-            Description = data.Description,
-            MaxStack = data.MaxStack,
-            Price = data.Price,
-            SellingPrice = data.SellingPrice,
-            IconPath = data.IconPath,
-            PrefabPath = data.PrefabPath,
-            Count = 1
-        };
+        var itemViewModel = CreateInventoryItemViewModel(data);
 
         string slotKey = _nextSlotNumber.ToString();
         _inventoryViewModel.InventoryItemViewModelDictionary.Add(slotKey, itemViewModel);
@@ -104,6 +103,122 @@ public class InventoryService
         inventoryView.Bind(_inventoryViewModel);
     }
 
+    public bool TryEquipItem(InventoryItemViewModel item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.Id))
+            return false;
+
+        if (!DataManager.Inst.ReadData<EquipmentData>()
+            .TryGetValue(item.Id, out var equipmentData))
+        {
+            return false;
+        }
+
+        var inventory = GetInvantoryViewModel();
+
+        InventoryItemViewModel equippedItem;
+
+        // 교체할 슬롯의 기존 장비 확인
+        switch (equipmentData.EquipmentSlot)
+        {
+            case EquipmentSlot.Axe:
+                equippedItem = inventory.LoggingItemViewModel;
+                break;
+
+            case EquipmentSlot.FishingRod:
+                equippedItem = inventory.FishingItemViewModel;
+                break;
+
+            case EquipmentSlot.PickAxe:
+                equippedItem = inventory.MiningItemViewModel;
+                break;
+
+            case EquipmentSlot.Talisman:
+                equippedItem = inventory.TalismanItemViewModel;
+                break;
+
+            default:
+                return false;
+        }
+
+        if (ReferenceEquals(equippedItem, item))
+            return UnequipItem(item);
+
+        // 기존 장비를 인벤토리에 반환
+        if (!string.IsNullOrEmpty(equippedItem?.Id))
+        {
+            if (!AddItem(equippedItem.Id))
+                return false;
+        }
+
+        // 새 장비 장착
+        switch (equipmentData.EquipmentSlot)
+        {
+            case EquipmentSlot.Axe:
+                inventory.LoggingItemViewModel = item;
+                break;
+
+            case EquipmentSlot.FishingRod:
+                inventory.FishingItemViewModel = item;
+                break;
+
+            case EquipmentSlot.PickAxe:
+                inventory.MiningItemViewModel = item;
+                break;
+
+            case EquipmentSlot.Talisman:
+                inventory.TalismanItemViewModel = item;
+                break;
+        }
+
+        return true;
+    }
+    
+    public bool UnequipItem(InventoryItemViewModel item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.Id))
+            return false;
+
+        var inventory = GetInvantoryViewModel();
+
+        EquipmentSlot slot;
+
+        if (ReferenceEquals(inventory.TalismanItemViewModel, item))
+            slot = EquipmentSlot.Talisman;
+        else if (ReferenceEquals(inventory.FishingItemViewModel, item))
+            slot = EquipmentSlot.FishingRod;
+        else if (ReferenceEquals(inventory.LoggingItemViewModel, item))
+            slot = EquipmentSlot.Axe;
+        else if (ReferenceEquals(inventory.MiningItemViewModel, item))
+            slot = EquipmentSlot.PickAxe;
+        else
+            return false;
+
+        if (!AddItem(item.Id))
+            return false;
+
+        switch (slot)
+        {
+            case EquipmentSlot.Talisman:
+                inventory.TalismanItemViewModel = new InventoryItemViewModel();
+                break;
+
+            case EquipmentSlot.FishingRod:
+                inventory.FishingItemViewModel = new InventoryItemViewModel();
+                break;
+
+            case EquipmentSlot.Axe:
+                inventory.LoggingItemViewModel = new InventoryItemViewModel();
+                break;
+
+            case EquipmentSlot.PickAxe:
+                inventory.MiningItemViewModel = new InventoryItemViewModel();
+                break;
+        }
+
+        return true;
+    }
+
     //서비스를 가지고 있는 곳에서 실행시켜주기
     public void InitTestInventoryItem()
     {
@@ -144,6 +259,28 @@ public class InventoryService
         return inventoryViewModel;
     }
 
+    private InventoryItemViewModel CreateInventoryItemViewModel(ItemData data)
+    {
+        var itemViewModel = new InventoryItemViewModel
+        {
+
+            Id = data.Id,
+            Name = data.Name,
+            ItemType = data.ItemType,
+            Tier = data.Tier,
+            Description = data.Description,
+            MaxStack = data.MaxStack,
+            Price = data.Price,
+            SellingPrice = data.SellingPrice,
+            IconPath = data.IconPath,
+            PrefabPath = data.PrefabPath,
+            Count = 1
+        };
+        return itemViewModel;
+    }
+
+   
+
     //인벤토리 아이템들을 반환하는 메서드 추가
     public IEnumerable<InventoryItemViewModel> GetInventoryItems()
     {
@@ -163,4 +300,6 @@ public class InventoryService
             }
         }
     }
+
+   
 }

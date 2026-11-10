@@ -10,15 +10,13 @@ public class InventoryUIView : UIBase
     [SerializeField] private Button _closeButton;
     [SerializeField] private GameObject _inventorySlotPrefab;
 
-    [SerializeField] private Transform _talismanItemSlotRoot;
-    [SerializeField] private Transform _fishingItemSlotRoot;
-    [SerializeField] private Transform _loggingItemSlotRoot;
-    [SerializeField] private Transform _miningItemSlotRoot;
-
-
+    [SerializeField] private Transform _EquipmentSlotRoot;
 
     InventoryUIViewModel _InventoryUIViewModel;
     private readonly Dictionary<InventorySlotUIView, InventoryItemViewModel> _inventorySlots = new();
+
+    private readonly List<InventorySlotUIView> _equipmentSlots = new();
+
 
     private void OnEnable()
     {
@@ -34,24 +32,31 @@ public class InventoryUIView : UIBase
 
     public void Bind(InventoryUIViewModel inventory)
     {
-        if (_InventoryUIViewModel?.InventoryItemViewModelDictionary != null)
+        if (_InventoryUIViewModel != null)
         {
-            _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged -= OnInventoryChanged;
+            if (_InventoryUIViewModel.InventoryItemViewModelDictionary != null)
+            {
+                _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged
+                    -= OnInventoryChanged;
+            }
+
+            _InventoryUIViewModel.PropertyChanged -= OnPropertyChanged;
         }
 
         ClearInventorySlots();
+        ClearEquipmentSlots();
         _InventoryUIViewModel = inventory;
 
+
         if (_InventoryUIViewModel?.InventoryItemViewModelDictionary == null)
-        {
             return;
 
-        }
         _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged += OnInventoryChanged;
 
-        if (_InventoryUIViewModel != null)
-            _InventoryUIViewModel.PropertyChanged += OnPropertyChanged;
-        _InventoryUIViewModel.InvokeOnceOnInit();
+        _InventoryUIViewModel.PropertyChanged += OnPropertyChanged;
+
+
+        RebuildEquipmentSlots();
 
         RebuildSlots();
     }
@@ -65,15 +70,16 @@ public class InventoryUIView : UIBase
     {
         switch (e.PropertyName)
         {
-            case nameof(_InventoryUIViewModel.FishingItemViewModel):
-                {
+            case nameof(InventoryUIViewModel.TalismanItemViewModel):
+            case nameof(InventoryUIViewModel.FishingItemViewModel):
+            case nameof(InventoryUIViewModel.LoggingItemViewModel):
+            case nameof(InventoryUIViewModel.MiningItemViewModel):
+                RebuildEquipmentSlots();
+                break;
 
-                    break;
-                }
-         
         }
 
-       
+
     }
 
     private void RebuildSlots()
@@ -100,20 +106,29 @@ public class InventoryUIView : UIBase
         }
 
         slotView.Bind(item);
-        slotView.ItemUsed += OnItemUsed;
+        slotView.ItemOnClickEvent += ItemOnClick;
         _inventorySlots.Add(slotView, item);
     }
 
-    private void OnItemUsed(InventorySlotUIView slot, InventoryItemViewModel item)
+    private void ItemOnClick(InventorySlotUIView slot, InventoryItemViewModel item)
     {
         if (slot == null || item == null)
             return;
 
+        if (item.ItemType == nameof(ItemType.Equipment))
+        {
+            if (!ServiceManager.Inst.InventoryService.TryEquipItem(item))
+            {
+                Debug.LogWarning($"{item.Name} 은 장착 아이템이 아닙니다");
+            }
+            RemoveItemRequest(item);
+            return;
+        }
         ServiceManager.Inst.InventoryService.UseItem(item);
-        RemoveItem(item);
+        RemoveItemRequest(item);
     }
 
-    private void RemoveItem(InventoryItemViewModel item)
+    private void RemoveItemRequest(InventoryItemViewModel item)
     {
         ServiceManager.Inst.InventoryService.RemoveItem(item);
     }
@@ -125,11 +140,54 @@ public class InventoryUIView : UIBase
             if (slot == null)
                 continue;
 
-            slot.ItemUsed -= OnItemUsed;
+            slot.ItemOnClickEvent -= ItemOnClick;
             Destroy(slot.gameObject);
         }
 
         _inventorySlots.Clear();
+    }
+
+    private void RebuildEquipmentSlots()
+    {
+        ClearEquipmentSlots();
+        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.TalismanItemViewModel);
+        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.LoggingItemViewModel);
+        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.FishingItemViewModel);
+        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.MiningItemViewModel);
+    }
+
+    private void CreateEquipmentSlot(Transform root, InventoryItemViewModel inventoryItemViewModel)
+    {
+        if (root == null)
+            return;
+
+        var slotObject = Instantiate(_inventorySlotPrefab, root);
+        var slotView = slotObject.GetComponent<InventorySlotUIView>();
+
+        if (slotView == null)
+        {
+            Destroy(slotObject);
+            Debug.LogError("InventorySlotUIView가 프리팹에 없습니다.", _inventorySlotPrefab);
+            return;
+        }
+
+        slotView.Bind(inventoryItemViewModel);
+        slotView.ItemOnClickEvent += ItemOnClick;
+        _equipmentSlots.Add(slotView);
+    }
+
+    private void ClearEquipmentSlots()
+    {
+        foreach (var slot in _equipmentSlots)
+        {
+            if (slot != null)
+            {
+                slot.ItemOnClickEvent -= ItemOnClick;
+                Destroy(slot.gameObject);
+            }
+        }
+
+        _equipmentSlots.Clear();
     }
 
     private void OnClickCloseButton()

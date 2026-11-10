@@ -58,6 +58,21 @@ public class InventoryItemViewModel : ViewModelBase
         }
     }
 
+    private int _tier;
+
+    public int Tier
+    {
+        get => _tier;
+        set
+        {
+            if (_tier != value)
+            {
+                _tier = value;
+                OnPropertyChanged(nameof(Tier));
+            }
+        }
+    }
+
     private string _description;
     public string Description
     {

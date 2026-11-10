@@ -3,7 +3,7 @@
 public enum ItemType
 {
     None = 0,
-    EquipmentItem = 1,
+    Equipment = 1,
     Consumable = 2,
     Material = 3,
     Rune = 4
@@ -83,7 +83,7 @@ public class ItemData : GameDataBase
 {
     public string Name;
     public string ItemType;
-    public string Tier;
+    public int Tier;
     public string Description;
     public int MaxStack;
     public int Price;
