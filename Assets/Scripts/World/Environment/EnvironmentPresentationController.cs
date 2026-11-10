@@ -29,6 +29,7 @@ public sealed class EnvironmentPresentationController : MonoBehaviour
     private readonly HashSet<EnvironmentScreenEffect> _requestedEffects =
         new HashSet<EnvironmentScreenEffect>();
     private Transform _target;
+    private Transform _mapRoot;
     private NetworkObject _networkOwner;
     private Camera _outputCamera;
     private CinemachineBrain _cameraBrain;
@@ -52,6 +53,7 @@ public sealed class EnvironmentPresentationController : MonoBehaviour
 
         ReleaseEffects();
         _target = target;
+        _mapRoot = mapRoot;
         _networkOwner = target.GetComponentInParent<NetworkObject>();
         _outputCamera = outputCamera;
         _cameraBrain = outputCamera.GetComponent<CinemachineBrain>();
@@ -164,7 +166,8 @@ public sealed class EnvironmentPresentationController : MonoBehaviour
             for (int i = 0; i < profile.EffectCount; i++)
             {
                 EnvironmentPresentationProfile.EffectEntry entry = profile.GetEffect(i);
-                if (entry == null || entry.Prefab == null)
+                // 먼지는 각 EnvironmentEffectArea가 소유하므로 기존 프로필에서는 생성하지 않습니다.
+                if (entry == null || entry.Prefab == null || entry.Prefab is EnvironmentDustEffect)
                     continue;
                 if (!_requestedEffects.Add(entry.Prefab))
                 {
@@ -196,6 +199,8 @@ public sealed class EnvironmentPresentationController : MonoBehaviour
         staging.SetActive(false);
         EnvironmentScreenEffect instance = Instantiate(prefab, staging.transform);
         instance.gameObject.SetActive(false);
+        instance.BindSourcePrefab(prefab);
+        instance.BindWorldContext(_target, _mapRoot);
         if (!instance.Initialize(_outputCamera))
         {
             Debug.LogWarning("환경 효과의 카메라 및 이미지 연결을 확인해 주세요.", prefab);
