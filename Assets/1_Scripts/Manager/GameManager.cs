@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,11 +7,6 @@ using UnityEngine.InputSystem;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Inst { get; private set; }
-
-    private void Awake()
-    {
-        Inst = this;
-    }
 
     [Header("작업 공간 프리팹 설정")]
     [SerializeField] private GameObject _workspacePrefab_1;
@@ -22,10 +17,16 @@ public class GameManager : MonoBehaviour
     private bool _worldInitialized;
     private GameObject _mapWorkspace;
 
+    private void Awake()
+    {
+        Inst = this;
+    }
+
     private void Start()
     {
         ServiceManager.Inst.InitInventory();
-        //StartGame(); // 로비, 네트워크 선택 UI를 만들었기 때문에 바로 시작하지 않도록 주석처리했습니다.
+
+        // 로비와 네트워크 연결 흐름에서 StartGame()을 호출합니다.
     }
 
     public void StartGame()
@@ -33,7 +34,10 @@ public class GameManager : MonoBehaviour
         if (_worldInitialized)
             return;
 
-        if (_workspacePrefab_1 == null || _workspacePrefab_2 == null || _workspacePrefab_3 == null || _workspacePrefab_4 == null)
+        if (_workspacePrefab_1 == null ||
+            _workspacePrefab_2 == null ||
+            _workspacePrefab_3 == null ||
+            _workspacePrefab_4 == null)
         {
             Debug.LogError("GameManager의 작업 공간 프리팹이 비어 있습니다.");
             return;
@@ -52,50 +56,9 @@ public class GameManager : MonoBehaviour
 
         _worldInitialized = true;
 
-        if (NetworkManager.Singleton.IsClient)
-        {
-            InitializeBackground(_mapWorkspace);
+        NetworkManager network = NetworkManager.Singleton;
+        if (network != null && network.IsClient)
             StartCoroutine(ConnectLocalPlayer());
-        }
-    }
-
-    private void InitializeEnvironmentPresentation(GameObject mapWorkspace, PlayerControllerView player)
-    {
-        if (mapWorkspace == null || player == null)
-            return;
-
-        EnvironmentPresentationController controller =
-            mapWorkspace.GetComponentInChildren<EnvironmentPresentationController>(true);
-        if (controller == null)
-            return; // 컨트롤러를 배치하지 않은 기존 맵은 그대로 실행합니다.
-
-        controller.Initialize(player.transform, Camera.main, mapWorkspace.transform);
-    }
-
-    private void InitializeBackground(GameObject mapWorkspace)
-    {
-        if (mapWorkspace == null)
-            return;
-
-        ParallaxBackground background =
-            mapWorkspace.GetComponentInChildren<ParallaxBackground>(true);
-
-        if (background == null)
-        {
-            Debug.LogWarning("SungjunWork 안에 ParallaxBackground가 없습니다.", mapWorkspace);
-            return;
-        }
-
-        // 기존 씬의 출력 카메라를 게임 시작 시 한 번만 가져온다.
-        Camera outputCamera = Camera.main;
-        if (outputCamera == null)
-        {
-            Debug.LogWarning("MainCamera 태그가 지정된 활성 Camera가 필요합니다.", this);
-            return;
-        }
-
-        if (!background.Initialize(outputCamera))
-            Debug.LogWarning("배경 초기화에 실패했습니다. Inspector 연결을 확인해 주세요.", background);
     }
 
     private IEnumerator ConnectLocalPlayer()
@@ -103,12 +66,11 @@ public class GameManager : MonoBehaviour
         NetworkManager network = NetworkManager.Singleton;
         NetworkObject playerObject = null;
 
+        // 네트워크에서 본인 플레이어의 생성이 완료될 때까지 기다립니다.
         while (network != null && network.IsListening)
         {
             if (network.LocalClient != null)
-            {
                 playerObject = network.LocalClient.PlayerObject;
-            }
 
             if (playerObject != null && playerObject.IsSpawned)
                 break;
@@ -116,11 +78,8 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        if (network == null || !network.IsListening ||
-            playerObject == null)
-        {
+        if (network == null || !network.IsListening || playerObject == null)
             yield break;
-        }
 
         if (!playerObject.TryGetComponent(out PlayerControllerView player) ||
             !playerObject.TryGetComponent(out PlayerInput input) ||
@@ -130,7 +89,7 @@ public class GameManager : MonoBehaviour
             yield break;
         }
 
-        // LocalClient.PlayerObject이므로 본인 플레이어만 활성화
+        // LocalClient.PlayerObject이므로 본인 플레이어만 활성화합니다.
         body.bodyType = RigidbodyType2D.Dynamic;
         player.enabled = true;
         input.enabled = true;
@@ -144,6 +103,67 @@ public class GameManager : MonoBehaviour
             followCamera.gameObject.SetActive(true);
         }
 
-        InitializeEnvironmentPresentation(_mapWorkspace, player);
+        // 실제 로컬 플레이어를 확보한 뒤 배경과 장식에 연결합니다.
+        InitializeBackground(_mapWorkspace, player);
+    }
+
+    private void InitializeBackground(
+        GameObject mapWorkspace,
+        PlayerControllerView player)
+    {
+        if (mapWorkspace == null || player == null)
+            return;
+
+        Camera outputCamera = Camera.main;
+        if (outputCamera == null)
+        {
+            Debug.LogWarning(
+                "MainCamera 태그가 지정된 활성 Camera가 필요합니다.",
+                this);
+            return;
+        }
+
+        InitializeSceneryGroups(
+            mapWorkspace,
+            outputCamera,
+            player.transform);
+
+        ParallaxBackground background =
+            mapWorkspace.GetComponentInChildren<ParallaxBackground>(true);
+
+        if (background == null)
+        {
+            Debug.LogWarning(
+                "SungjunWork 안에 ParallaxBackground가 없습니다.",
+                mapWorkspace);
+            return;
+        }
+
+        if (!background.Initialize(outputCamera))
+        {
+            Debug.LogWarning(
+                "배경 초기화에 실패했습니다. Inspector 연결을 확인해 주세요.",
+                background);
+        }
+    }
+
+    private void InitializeSceneryGroups(
+        GameObject mapWorkspace,
+        Camera outputCamera,
+        Transform player)
+    {
+        // 비활성 지역도 한 번 연결하고, 활성화될 때 추적을 시작합니다.
+        ParallaxSceneryGroup[] groups =
+            mapWorkspace.GetComponentsInChildren<ParallaxSceneryGroup>(true);
+
+        for (int i = 0; i < groups.Length; i++)
+        {
+            if (!groups[i].Initialize(outputCamera, player))
+            {
+                Debug.LogWarning(
+                    "장식 Parallax 초기화에 실패했습니다.",
+                    groups[i]);
+            }
+        }
     }
 }

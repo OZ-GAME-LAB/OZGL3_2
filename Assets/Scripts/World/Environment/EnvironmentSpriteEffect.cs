@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>카메라를 따라가는 안개 이미지의 전체 알파를 조절합니다.</summary>
+/// <summary>영역에 연결하면 영역 사각 범위에 이미지를 배치하고, 연결하지 않으면 기존 화면 배치를 사용합니다.</summary>
 [DisallowMultipleComponent]
 public sealed class EnvironmentSpriteEffect : EnvironmentScreenEffect
 {
@@ -13,6 +13,14 @@ public sealed class EnvironmentSpriteEffect : EnvironmentScreenEffect
 
     private Color[] _originalColors;
     private Vector3 _originalScale;
+    private EnvironmentEffectArea _area;
+    private Bounds _localImageBounds;
+
+    public override bool BindArea(EnvironmentEffectArea area)
+    {
+        _area = area;
+        return area != null;
+    }
 
     protected override bool Prepare()
     {
@@ -23,11 +31,35 @@ public sealed class EnvironmentSpriteEffect : EnvironmentScreenEffect
         _originalScale = transform.localScale;
         for (int i = 0; i < _sprites.Length; i++)
         {
-            if (_sprites[i] == null || _sprites[i].sprite == null)
+            if (_sprites[i] == null || _sprites[i].sprite == null
+                || !_sprites[i].transform.IsChildOf(transform))
                 return false;
             _originalColors[i] = _sprites[i].color;
         }
+        CacheLocalImageBounds();
         return true;
+    }
+
+    private void CacheLocalImageBounds()
+    {
+        bool found = false;
+        for (int i = 0; i < _sprites.Length; i++)
+        {
+            Bounds bounds = _sprites[i].localBounds;
+            for (int corner = 0; corner < 8; corner++)
+            {
+                Vector3 point = bounds.center + Vector3.Scale(bounds.extents, new Vector3(
+                    (corner & 1) == 0 ? -1f : 1f,
+                    (corner & 2) == 0 ? -1f : 1f,
+                    (corner & 4) == 0 ? -1f : 1f));
+                point = transform.InverseTransformPoint(_sprites[i].transform.TransformPoint(point));
+                if (found)
+                    _localImageBounds.Encapsulate(point);
+                else
+                    _localImageBounds = new Bounds(point, Vector3.zero);
+                found = true;
+            }
+        }
     }
 
     public override void ApplyIntensity(float intensity)
@@ -52,6 +84,12 @@ public sealed class EnvironmentSpriteEffect : EnvironmentScreenEffect
         if (OutputCamera == null)
             return;
 
+        if (_area != null)
+        {
+            RefreshAreaPlacement();
+            return;
+        }
+
         float distance = Mathf.Clamp(_distanceFromCamera,
             OutputCamera.nearClipPlane + 0.01f, OutputCamera.farClipPlane - 0.01f);
         transform.SetPositionAndRotation(
@@ -71,5 +109,24 @@ public sealed class EnvironmentSpriteEffect : EnvironmentScreenEffect
         float viewHeight = OutputCamera.orthographicSize * 2f * _viewportPadding;
         float fit = Mathf.Max(viewHeight / height, viewHeight * OutputCamera.aspect / width);
         transform.localScale = _originalScale * fit;
+    }
+
+    private void RefreshAreaPlacement()
+    {
+        bool visible = _area.TryGetBounds(out Bounds bounds)
+            && _localImageBounds.size.x > 0f && _localImageBounds.size.y > 0f;
+        for (int i = 0; i < _sprites.Length; i++)
+            _sprites[i].enabled = visible;
+        if (!visible)
+            return;
+
+        // 이미지 전체를 영역의 월드 사각 범위에 맞춥니다. Collider 모양의 마스크는 적용하지 않습니다.
+        Vector3 scale = new Vector3(bounds.size.x / _localImageBounds.size.x,
+            bounds.size.y / _localImageBounds.size.y, _originalScale.z);
+        float distance = Mathf.Clamp(_distanceFromCamera,
+            OutputCamera.nearClipPlane + 0.01f, OutputCamera.farClipPlane - 0.01f);
+        Vector3 center = new Vector3(bounds.center.x, bounds.center.y, OutputCamera.transform.position.z + distance);
+        transform.SetPositionAndRotation(center - Vector3.Scale(_localImageBounds.center, scale), Quaternion.identity);
+        transform.localScale = scale;
     }
 }
