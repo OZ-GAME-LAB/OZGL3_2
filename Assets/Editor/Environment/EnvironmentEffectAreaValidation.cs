@@ -68,8 +68,9 @@ public static class EnvironmentEffectAreaValidation
             effect.BindSourcePrefab(prefab);
             effect.BindArea(area);
             Check(effect.Initialize(camera), "Prepare succeeds", ref checks);
-            effect.SetTargetIntensity(1f);
             instance.SetActive(true);
+            // Edit Mode 검사에서는 런타임 OnEnable에 의존하지 않고 활성화 후 재생을 요청합니다.
+            effect.SetTargetIntensity(1f);
             Array layers = (Array)typeof(EnvironmentDustEffect).GetField("_layers", Fields).GetValue(effect);
             MethodInfo advance = typeof(EnvironmentDustEffect).GetMethod("AdvanceEmission", Fields);
             foreach (object layer in layers)
@@ -80,7 +81,9 @@ public static class EnvironmentEffectAreaValidation
                     bursts[i].probability = 1f;
                 advance.Invoke(effect, new object[] { layer, 12f });
                 int expected = bursts.Length > 0 ? 4 : 30;
-                Check(particles.particleCount == expected, "Rate/Burst counts", ref checks);
+                Check(particles.particleCount == expected,
+                    "Rate/Burst counts: " + particles.name + " expected " + expected + ", actual " + particles.particleCount,
+                    ref checks);
                 ParticleSystem.Particle[] buffer = new ParticleSystem.Particle[particles.main.maxParticles];
                 int count = particles.GetParticles(buffer);
                 for (int i = 0; i < count; i++)
@@ -106,6 +109,7 @@ public static class EnvironmentEffectAreaValidation
                 area.enabled = true;
             }
             effect.ResetEffect();
+            effect.SetTargetIntensity(1f);
             ValidateEmissionMultiplier(effect, area, layers, advance, ref checks);
             ValidateIndependentAreas(prefab, camera, ref checks);
             ValidateMixedEffects(prefab, camera, ref checks);
@@ -140,6 +144,7 @@ public static class EnvironmentEffectAreaValidation
         Check(particles.particleCount == 5, "Rate fraction carries to next emission", ref checks);
 
         effect.ResetEffect();
+        effect.SetTargetIntensity(1f);
         layerType.GetField("Rate").SetValue(layer, new ParticleSystem.MinMaxCurve(0f));
         layerType.GetField("Bursts").SetValue(layer, new[]
         {
@@ -149,6 +154,7 @@ public static class EnvironmentEffectAreaValidation
         Check(particles.particleCount == 1, "Four quarter-sized bursts accumulate one particle", ref checks);
 
         effect.ResetEffect();
+        effect.SetTargetIntensity(1f);
         layerType.GetField("Bursts").SetValue(layer, Array.Empty<ParticleSystem.Burst>());
         layerType.GetField("Rate").SetValue(layer, new ParticleSystem.MinMaxCurve(10f));
         Vector3 originalScale = area.transform.localScale;
@@ -157,6 +163,7 @@ public static class EnvironmentEffectAreaValidation
         advance.Invoke(effect, new object[] { layer, 1f });
         Check(particles.particleCount == 2, "Area size does not change emission amount", ref checks);
         effect.ResetEffect();
+        effect.SetTargetIntensity(1f);
         effect.SetEmissionMultiplier(1f);
         advance.Invoke(effect, new object[] { layer, 1f });
         Check(particles.particleCount == 10, "Multiplier one restores original rate", ref checks);
@@ -167,6 +174,7 @@ public static class EnvironmentEffectAreaValidation
         effect.SetEmissionMultiplier(1f);
 
         effect.ResetEffect();
+        effect.SetTargetIntensity(1f);
         int maxParticles = particles.main.maxParticles;
         layerType.GetField("Rate").SetValue(layer, new ParticleSystem.MinMaxCurve(maxParticles * 2f));
         advance.Invoke(effect, new object[] { layer, 1f });
