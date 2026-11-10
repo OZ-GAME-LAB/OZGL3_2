@@ -100,6 +100,9 @@ MonoBehaviour:
   _jumpForce: 17.5
   _playerInput: {fileID: 5287553457062025148}
   _rigidbody2D: {fileID: 6109652825985272487}
+  _normalJumpDistanceMultiplier: 0.85
+  _runUpJumpDistanceMultiplier: 1.2
+  _runUpRequiredTime: 0.3
   _animator: {fileID: 8555252319730239498}
   _idleJumpInputTime: 0.12
   _animationGroundGraceTime: 0.05
@@ -111,6 +114,9 @@ MonoBehaviour:
   _groundLayer:
     serializedVersion: 2
     m_Bits: 2304
+  _maxSlopeAngle: 45
+  _maxStepHeight: 0.03
+  _maxSeamGap: 0.03
   _bodyCollider: {fileID: 9006554137249396468}
   _thinPlatformLayer:
     serializedVersion: 2
@@ -681,6 +687,7 @@ MonoBehaviour:
   _target: {fileID: 5272157064205760542}
   _networkOwner: {fileID: 6623172072296654929}
   _keepLastBoundsOutside: 1
+  _transitionDuration: 0.45
 --- !u!1 &4602315812226495265
 GameObject:
   m_ObjectHideFlags: 0

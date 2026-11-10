@@ -36,7 +36,7 @@ public class BossDetector : MonoBehaviour
         if (!_areaCollider.IsTouching(other))
             return;
 
-        PlayerRuneCombatActor player = other.GetComponentInParent<PlayerRuneCombatActor>();
+        PlayerNetworkStats player = other.GetComponentInParent<PlayerNetworkStats>();
 
         if (player == null)
             return;
@@ -55,7 +55,7 @@ public class BossDetector : MonoBehaviour
         _contacts.Remove(other);
     }
 
-    public void GetAlivePlayers(List<PlayerRuneCombatActor> results)
+    public void GetAlivePlayers(List<PlayerNetworkStats> results)
     {
         results.Clear();
 
@@ -67,7 +67,7 @@ public class BossDetector : MonoBehaviour
 
         foreach (Collider2D contact in _contacts)
         {
-            PlayerRuneCombatActor player = contact.GetComponentInParent<PlayerRuneCombatActor>();
+            PlayerNetworkStats player = contact.GetComponentInParent<PlayerNetworkStats>();
 
             if (player == null || !player.isActiveAndEnabled || !player.IsAlive)
                 continue;
