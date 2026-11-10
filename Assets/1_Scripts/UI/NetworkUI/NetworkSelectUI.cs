@@ -4,13 +4,6 @@ using TMPro;
 
 public class NetworkSelectUI : UIBase
 {
-    // 정식 UI 제작 전 쓰이던 코드
-    /*
-    [SerializeField] private Button Button_StartAsHost;
-    [SerializeField] private Button Button_StartAsServer;
-    [SerializeField] private Button Button_StartAsClient;
-    */
-
     [Header("방 만들기")]
     [SerializeField] private TMP_InputField Input_HostPort;
     [SerializeField] private Button Button_CreateRoom;
@@ -19,14 +12,18 @@ public class NetworkSelectUI : UIBase
     [SerializeField] private TMP_InputField Input_HostAddress;
     [SerializeField] private TMP_InputField Input_JoinPort;
     [SerializeField] private Button Button_JoinRoom;
+    [SerializeField] private Button Button_CancelConnection;
 
     [Header("안내")]
     [SerializeField] private TMP_Text Text_Message;
+
+    private NetCodeNetworkManager _boundManager;
 
     private void Awake()
     {
         Button_CreateRoom.onClick.AddListener(OnCreateRoom);
         Button_JoinRoom.onClick.AddListener(OnJoinRoom);
+        Button_CancelConnection.onClick.AddListener(OnCancelConnection);
 
         if (string.IsNullOrWhiteSpace(Input_HostPort.text))
         {
@@ -46,19 +43,20 @@ public class NetworkSelectUI : UIBase
 
     private void OnEnable()
     {
-        /*
-        Button_StartAsHost.onClick.AddListener(StartAsHost);
-        Button_StartAsServer.onClick.AddListener(StartAsServer);
-        Button_StartAsClient.onClick.AddListener(StartAsClient);
-        */
-
+        TryBindManager();
         SetMessage("방을 만들거나 호스트의 IP와 포트를 입력하세요.");
         RefreshInteractable();
+    }
+
+    private void OnDisable()
+    {
+        UnbindManager();
     }
 
     private void Update()
     {
         // 접속 실패 후 네트워크 종료 처리가 끝나면 다시 입력 허용.
+        TryBindManager();
         RefreshInteractable();
     }
 
@@ -73,14 +71,58 @@ public class NetworkSelectUI : UIBase
         {
             Button_JoinRoom.onClick.RemoveListener(OnJoinRoom);
         }
+
+        if (Button_CancelConnection != null)
+        {
+            Button_CancelConnection.onClick.RemoveListener(OnCancelConnection);
+        }
+    }
+
+    private void TryBindManager()
+    {
+        NetCodeNetworkManager manager = NetCodeNetworkManager.Inst;
+
+        if (manager == _boundManager)
+        {
+            return;
+        }
+
+        UnbindManager();
+
+        _boundManager = manager;
+
+        if (_boundManager != null)
+        {
+            _boundManager.ConnectionMessageChanged += SetMessage;
+        }
+
+    }
+
+    private void UnbindManager()
+    {
+        if (ReferenceEquals(_boundManager, null) == false)
+        {
+            _boundManager.ConnectionMessageChanged -= SetMessage;
+        }
+
+        _boundManager = null;
+    }
+
+    private void OnCancelConnection()
+    {
+        if (_boundManager != null)
+        {
+            _boundManager.CancelConnection();
+        }
     }
 
     private void RefreshInteractable()
     {
-        bool canStart = (NetCodeNetworkManager.Inst != null) && (NetCodeNetworkManager.Inst.CanStartConnection);
+        bool canStart = (_boundManager != null) && (_boundManager.CanStartConnection);
 
         Button_CreateRoom.interactable = canStart;
         Button_JoinRoom.interactable = canStart;
+        Button_CancelConnection.interactable = _boundManager != null && _boundManager.IsConnecting; //canCancel/isCancelable로 빼면 가독성이 괜찮을지 고민중
 
         Input_HostPort.interactable = canStart;
         Input_HostAddress.interactable = canStart;
@@ -89,13 +131,14 @@ public class NetworkSelectUI : UIBase
 
     private void OnCreateRoom()
     {
-        if (!TryReadPort(Input_HostPort.text, out ushort port))
+        if (TryReadPort(Input_HostPort.text, out ushort port) == false)
         {
             SetMessage("호스트 포트는 1~65535 범위로 입력하세요.");
             return;
         }
 
-        var manager = NetCodeNetworkManager.Inst;
+        TryBindManager();
+        var manager = _boundManager;
 
         if (manager == null)
         {
@@ -121,7 +164,8 @@ public class NetworkSelectUI : UIBase
             return;
         }
 
-        var manager = NetCodeNetworkManager.Inst;
+        TryBindManager();
+        var manager = _boundManager;
 
         if (manager == null)
         {
@@ -152,22 +196,16 @@ public class NetworkSelectUI : UIBase
         }
     }
 
-    /*
-    public void StartAsHost()
-    {
-        NetCodeNetworkManager.Inst.StartAsHost();
-    }
-    */
-
     public void StartAsServer()
     {
-        NetCodeNetworkManager.Inst.StartAsServer();
-    }
+        TryBindManager();
 
-    /*
-    public void StartAsClient()
-    {
-        NetCodeNetworkManager.Inst.StartAsClient();
+        if (_boundManager == null)
+        {
+            SetMessage("네트워크 매니저가 없습니다.");
+            return;
+        }
+
+        _boundManager.StartAsServer();
     }
-    */
 }

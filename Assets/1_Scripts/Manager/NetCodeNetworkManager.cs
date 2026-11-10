@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using Unity.Netcode;
 using System.Net;
 using System.Net.Sockets;
@@ -10,11 +11,24 @@ public class NetCodeNetworkManager : MonoBehaviour
     public static NetCodeNetworkManager Inst { get; private set; }
 
     [SerializeField] private NetworkManager _netCodeNetworkManager;
-
     [SerializeField] private UnityTransport _transport;
+    [SerializeField, Min(1f)] private float _connectionTimeout = 8f;
 
-    private bool _starting;
-    public bool CanStartConnection => _starting == false && _netCodeNetworkManager != null && _netCodeNetworkManager.IsListening == false && _netCodeNetworkManager.ShutdownInProgress == false;
+    private double _connectionDeadLine;
+
+    private bool _isConnectingStopped;
+    private bool _isConnecting;
+    public bool IsConnecting => _isConnecting;
+
+    private bool _isStarting;
+    public bool CanStartConnection => 
+        _isStarting == false && 
+        _isConnecting == false &&
+        _isConnectingStopped == false &&
+        _netCodeNetworkManager.IsListening == false && 
+        _netCodeNetworkManager.ShutdownInProgress == false;
+
+    public event Action<string> ConnectionMessageChanged;
 
     private NetCodeCliendtSideService _clientSideService = new NetCodeCliendtSideService();
     private NetCodeServerSideService _serverSideService = new NetCodeServerSideService();
@@ -41,6 +55,86 @@ public class NetCodeNetworkManager : MonoBehaviour
         // _serverSideService.End
     }
 
+    private void Update()
+    {
+        if (_netCodeNetworkManager == null)
+        {
+            return;
+        }
+
+        if (_isConnectingStopped == true)
+        {
+            if (_netCodeNetworkManager.IsListening == false && _netCodeNetworkManager.ShutdownInProgress == false)
+            {
+                _isConnectingStopped = false;
+            }
+
+            return;
+        }
+
+        if (_isConnecting == false)
+        {
+            return;
+        }
+
+        if (Time.realtimeSinceStartupAsDouble >= _connectionDeadLine)
+        {
+            StopConnectionAttempt("접속 시간이 초과되었습니다. 호스트의 IP와 포트를 확인하세요.");
+        }
+    }
+
+    public void CancelConnection()
+    {
+        if (_isConnecting == false)
+        {
+            return;
+        }
+
+        StopConnectionAttempt("접속을 취소했습니다.");
+    }
+
+    private void StopConnectionAttempt(string message)
+    {
+        _isConnecting = false;
+        _isConnectingStopped = true;
+
+        ConnectionMessageChanged?.Invoke(message);
+
+        if (_netCodeNetworkManager != null && _netCodeNetworkManager.ShutdownInProgress == false)
+        {
+            _netCodeNetworkManager.Shutdown();
+        }
+    }
+
+    public bool AcceptLocalConnection()
+    {
+        if (_isConnectingStopped)
+        {
+            return false;
+        }
+
+        _isConnecting = false;
+        return true;
+    }
+
+    public bool HandleConnectionAttemptDisconnected(string reason)
+    {
+        if (_isConnectingStopped)
+        {
+            return true;
+        }
+
+        if (_isConnecting == false)
+        {
+            return false;
+        }
+
+        string message = string.IsNullOrEmpty(reason) ? "접속하지 못했습니다. 호스트의 실행 상태, IP, 포트를 확인하세요." : $"접속하지 못했습니다.: {reason}";
+        
+        StopConnectionAttempt(message);
+        return true;
+    }
+
     public bool TryStartHost(ushort port, out string error)
     {
         error = null;
@@ -56,7 +150,7 @@ public class NetCodeNetworkManager : MonoBehaviour
             return false;
         }
 
-        _starting = true;
+        _isStarting = true;
 
         try
         {
@@ -84,7 +178,7 @@ public class NetCodeNetworkManager : MonoBehaviour
         }
         finally
         {
-            _starting = false;
+            _isStarting = false;
         }
     }
 
@@ -115,32 +209,42 @@ public class NetCodeNetworkManager : MonoBehaviour
             return false;
         }
 
-        _starting = true;
+        _isStarting = true;
 
         try
         {
             _transport.SetConnectionData(ip.ToString(), port);
 
+            _transport.ConnectTimeoutMS = 1000;
+            _transport.MaxConnectAttempts = 5;
+
             _serverSideService.EndServerService();
             _clientSideService.EndClientService();
-
             _clientSideService.InitClientService();
 
-            bool started = _netCodeNetworkManager.StartClient();
+            _isConnecting = true;
+            _connectionDeadLine = Time.realtimeSinceStartupAsDouble + _connectionTimeout;
 
-            if (!started)
+            if ( _netCodeNetworkManager.StartClient() == false)
             {
-                _clientSideService.EndClientService();
-
-                error = "접속 시도를 시작하지 못했습니다. Console을 확인하세요.";
+                error = "접속 시도를 시작하지 못했습니다.";
+                StopConnectionAttempt(error);
+                return false;
             }
 
-            // true는 접속 완료가 아니라 접속 시도 시작을 의미.
-            return started;
+            return true;
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception, this);
+
+            error = "네트워크 시작 중 오류가 발생했습니다.";
+            StopConnectionAttempt(error);
+            return false;
         }
         finally
         {
-            _starting = false;
+            _isStarting = false;
         }
     }
 
