@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 
-
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerNetworkStats))]
 public class PlayerRuneCombatActor : RuneCombatActor
