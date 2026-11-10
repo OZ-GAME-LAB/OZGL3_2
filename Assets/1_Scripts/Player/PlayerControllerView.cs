@@ -13,6 +13,15 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField] private Rigidbody2D _rigidbody2D;
     private float _moveInput;
 
+    [Header("점프 비거리")]
+    [SerializeField, Min(0f)] private float _normalJumpDistanceMultiplier = 0.85f;
+    [SerializeField, Min(0f)] private float _runUpJumpDistanceMultiplier = 1.2f;
+    [SerializeField, Min(0f)] private float _runUpRequiredTime = 0.3f;
+    private float _runUpTime;
+    private float _runUpDirection;
+    private float _runUpJumpDirection;
+    private float _jumpDistanceMultiplier = 1f;
+
     [Header("플레이어 애니메이션")]
     [SerializeField] private Animator _animator;
     [SerializeField, Min(0f)] private float _idleJumpInputTime = 0.12f;
@@ -58,6 +67,17 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField] private Transform _groundCheck;    // 발 밑에 배치할 빈 오브젝트
     [SerializeField] private float _checkRadius = 0.5f; // 체크 범위
     [SerializeField] private LayerMask _groundLayer;    // 지면으로 인식할 레이어 (Platforms 등)
+    [Tooltip("수평 바닥 기준으로 걸어 올라갈 수 있는 최대 각도입니다. 레이어와 관계없이 급경사 이동을 제한합니다.")]
+    [SerializeField, Range(0f, 89f)] private float _maxSlopeAngle = 45f;
+
+    [Header("미세한 바닥 이음새 보정")]
+    [Tooltip("걸어서 넘을 수 있는 작은 턱의 높이(월드 단위). 0이면 보정을 끕니다.")]
+    [SerializeField, Min(0f)] private float _maxStepHeight = 0.03f;
+    [Tooltip("발 앞에서 이어지는 바닥을 확인할 최대 거리(월드 단위). 큰 구멍을 건너뛰는 기능은 아닙니다.")]
+    [SerializeField, Min(0f)] private float _maxSeamGap = 0.03f;
+    private const float SeamClearance = 0.002f;
+    private readonly RaycastHit2D[] _seamGroundHits = new RaycastHit2D[16];
+    private readonly Collider2D[] _seamObstacles = new Collider2D[16];
 
     private bool _lookRight = true;
 
@@ -66,6 +86,9 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField] private LayerMask _thinPlatformLayer;
     private readonly List<Collider2D> _nearbyThinPlatforms = new List<Collider2D>(16);
     private readonly List<Collider2D> _ignoredThinPlatforms = new List<Collider2D>(16);
+    private readonly List<Collider2D> _sidePassThinPlatforms = new List<Collider2D>(16);
+    private readonly List<RaycastHit2D> _thinPlatformSurfaceHits = new List<RaycastHit2D>(16);
+    private const float ThinPlatformClearance = 0.05f;
 
     [Header("앉기")]
     [SerializeField, Min(0.1f)] private float _crouchHeight = 4.199f;
@@ -357,10 +380,172 @@ public class PlayerControllerView : MonoBehaviour
         if (_isSpectatorMode)
             return;
 
-        _rigidbody2D.linearVelocity = new Vector2(
-            _wallCling != null ? _wallCling.ResolveHorizontalVelocity(CurrentMoveVelocity) : CurrentMoveVelocity,
-            _rigidbody2D.linearVelocity.y
-        );
+        Vector2 movementVelocity = new Vector2(CurrentMoveVelocity, _rigidbody2D.linearVelocity.y);
+        float stepContactCeiling = _bodyCollider != null
+            ? _bodyCollider.bounds.min.y + _maxStepHeight + SeamClearance : 0f;
+        Collider2D steppedGround = TryCorrectGroundSeam(movementVelocity);
+        LimitSteepSlopeMovement(ref movementVelocity, steppedGround, stepContactCeiling);
+        if (steppedGround != null)
+        {
+            _blockedRunDirection = 0f;
+            UpdateMovementAnimation();
+        }
+        // 벽 점프의 고정 속도와 붙잡기 정지는 기존 벽 상태가 최종 결정합니다.
+        if (_wallCling != null)
+            movementVelocity.x = _wallCling.ResolveHorizontalVelocity(movementVelocity.x);
+        _rigidbody2D.linearVelocity = movementVelocity;
+    }
+
+    private float MinimumGroundNormalY => Mathf.Cos(_maxSlopeAngle * Mathf.Deg2Rad);
+
+    private bool IsSteepSurface(Vector2 normal)
+    {
+        // 천장은 제외하고, 최대 경사각을 넘는 오르막과 수직 벽만 검사합니다.
+        return normal.y >= 0f && normal.y < MinimumGroundNormalY - 0.0001f;
+    }
+
+    private void LimitSteepSlopeMovement(ref Vector2 velocity, Collider2D steppedGround, float stepContactCeiling)
+    {
+        if (_bodyCollider == null)
+            return;
+
+        // Ground 밖의 절벽도 실제로 몸에 닿았다면 이동을 막아야 합니다.
+        int count = _bodyCollider.GetContacts(_groundContacts);
+        float requestedX = velocity.x;
+        for (int i = 0; i < count; i++)
+        {
+            ContactPoint2D contact = _groundContacts[i];
+            // ThinPlatform 접촉은 벽/급경사에 의한 이동 제한 대상으로 취급하지 않습니다.
+            if (IsThinPlatform(contact.collider) || IsThinPlatform(contact.otherCollider) ||
+                !IsSteepSurface(contact.normal))
+                continue;
+            // 법선은 표면 바깥 방향입니다. 벽에서 멀어지는 이동은 그대로 허용합니다.
+            if (requestedX * contact.normal.x > 0f)
+                continue;
+
+            // 보정 전 접촉 정보가 남아 있으므로, 통과를 확인한 발밑의 면만 제외합니다.
+            if (steppedGround != null && contact.point.y <= stepContactCeiling &&
+                (contact.collider == steppedGround || contact.otherCollider == steppedGround))
+                continue;
+
+            velocity.x = 0f;
+            // 충돌로 생긴 상승만 제거하고, 지상/벽 점프의 상승 속도는 유지합니다.
+            if (!_jumpInProgress && velocity.y > 0f)
+                velocity.y = 0f;
+        }
+    }
+
+    private Collider2D TryCorrectGroundSeam(Vector2 velocity)
+    {
+        if (_maxStepHeight <= 0f || _maxSeamGap <= 0f || _crouchCollider == null ||
+            !_bodyCollider.enabled || !_rigidbody2D.simulated || _jumpInProgress ||
+            Mathf.Abs(velocity.x) <= 0.01f || Mathf.Abs(velocity.y) > 0.1f ||
+            (_wallCling != null && _wallCling.IsClinging) || IsDroppingThroughPlatforms() ||
+            _ignoredThinPlatforms.Count > 0 || !HasGroundContact())
+            return null;
+
+        // 현재 플레이어처럼 회전하지 않는 박스 형태에만 적용합니다.
+        if (Mathf.Abs(Mathf.DeltaAngle(_bodyCollider.transform.eulerAngles.z, 0f)) > 0.01f)
+            return null;
+
+        Bounds bounds = _bodyCollider.bounds;
+        float direction = Mathf.Sign(velocity.x);
+        Collider2D obstacle = FindSmallStepContact(bounds, direction);
+        if (obstacle == null)
+            return null;
+
+        ContactFilter2D filter = new ContactFilter2D();
+        int mask = Physics2D.GetLayerCollisionMask(_bodyCollider.gameObject.layer);
+        mask = (mask | _bodyCollider.includeLayers.value) & ~_bodyCollider.excludeLayers.value;
+        filter.SetLayerMask(mask);
+        filter.useTriggers = false;
+
+        float frontX = direction > 0f ? bounds.max.x : bounds.min.x;
+        float advance = Mathf.Min(Mathf.Abs(velocity.x) * Time.fixedDeltaTime, _maxSeamGap);
+        Vector2 origin = new Vector2(frontX + direction * advance,
+            bounds.min.y + _maxStepHeight + SeamClearance);
+        int count = Physics2D.Raycast(origin, Vector2.down, filter, _seamGroundHits,
+            _maxStepHeight * 2f + SeamClearance);
+        if (count == _seamGroundHits.Length)
+            return null;
+
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit2D hit = _seamGroundHits[i];
+            if (hit.collider != obstacle || hit.fraction <= 0f || hit.normal.y < MinimumGroundNormalY)
+                continue;
+
+            float difference = hit.point.y - bounds.min.y;
+            if (Mathf.Abs(difference) > _maxStepHeight)
+                continue;
+            // 아래로 끌어당기지 않고, 발 모서리가 걸리지 않을 높이까지만 올립니다.
+            float lift = Mathf.Max(0f, difference) + SeamClearance;
+            if (!HasSeamClearance(bounds, lift, velocity.x * Time.fixedDeltaTime, filter))
+                return null;
+
+            _rigidbody2D.position += Vector2.up * lift;
+            return obstacle;
+        }
+        return null;
+    }
+
+    private Collider2D FindSmallStepContact(Bounds bounds, float direction)
+    {
+        int count = _bodyCollider.GetContacts(_groundContacts);
+        if (count == _groundContacts.Length)
+            return null;
+        Collider2D step = null;
+        for (int i = 0; i < count; i++)
+        {
+            ContactPoint2D contact = _groundContacts[i];
+            if (!IsSteepSurface(contact.normal) || contact.normal.x * direction >= 0f)
+                continue;
+            Collider2D other = contact.collider == _bodyCollider ? contact.otherCollider : contact.collider;
+            if (IsIgnoredThinPlatform(other))
+                continue;
+            if (contact.point.y > bounds.min.y + _maxStepHeight + SeamClearance ||
+                !IsStaticSeamGround(other) || (step != null && step != other))
+                return null;
+            step = other;
+        }
+        return step;
+    }
+
+    private bool IsStaticSeamGround(Collider2D other)
+    {
+        return other != null && !other.isTrigger && !other.usedByEffector &&
+            (_groundLayer.value & (1 << other.gameObject.layer)) != 0 &&
+            (_thinPlatformLayer.value & (1 << other.gameObject.layer)) == 0 &&
+            (other.attachedRigidbody == null || other.attachedRigidbody.bodyType == RigidbodyType2D.Static) &&
+            !Physics2D.GetIgnoreCollision(_bodyCollider, other);
+    }
+
+    private bool HasSeamClearance(Bounds bounds, float lift, float travel, ContactFilter2D filter)
+    {
+        // 위로 움직일 때의 머리 공간과, 올라간 몸이 옆으로 이동할 범위 전체를 검사합니다.
+        Vector2 headCenter = new Vector2(bounds.center.x, bounds.max.y + lift * 0.5f);
+        if (HasSeamObstacle(headCenter, new Vector2(bounds.size.x, lift), filter))
+            return false;
+        Vector2 center = (Vector2)bounds.center + new Vector2(travel * 0.5f, lift);
+        Vector2 size = new Vector2(bounds.size.x + Mathf.Abs(travel), bounds.size.y);
+        return !HasSeamObstacle(center, size, filter);
+    }
+
+    private bool HasSeamObstacle(Vector2 center, Vector2 size, ContactFilter2D filter)
+    {
+        int count = Physics2D.OverlapBox(center, size, 0f, filter, _seamObstacles);
+        // 결과가 배열을 넘었을 가능성이 있으면 보정하지 않습니다.
+        if (count == _seamObstacles.Length)
+            return true;
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D other = _seamObstacles[i];
+            if (other.attachedRigidbody == _rigidbody2D ||
+                Physics2D.GetIgnoreCollision(_bodyCollider, other) || IsIgnoredThinPlatform(other))
+                continue;
+            return true;
+        }
+        return false;
     }
 
     private void UpdateWallState()
@@ -402,7 +587,8 @@ public class PlayerControllerView : MonoBehaviour
                 (keyboard.aKey.isPressed || keyboard.dKey.isPressed ||
                  keyboard.leftArrowKey.isPressed || keyboard.rightArrowKey.isPressed))
                 input = Mathf.Sign(input);
-            return input * (_isCrouching ? _crouchMoveSpeed : _moveSpeed);
+            float speed = _isCrouching ? _crouchMoveSpeed : _moveSpeed;
+            return input * speed * _jumpDistanceMultiplier;
         }
     }
 
@@ -530,31 +716,39 @@ public class PlayerControllerView : MonoBehaviour
             return;
         }
 
-        bool dropping = IsDroppingThroughPlatforms();
-        if (dropping && _bodyCollider.enabled && _rigidbody2D.simulated)
+        if (!_bodyCollider.isActiveAndEnabled || !_rigidbody2D.simulated)
         {
-            // 다음 물리 이동 위치까지 검사해 낙하 중 만날 발판도 미리 무시합니다.
-            Bounds bounds = _bodyCollider.bounds;
-            Vector2 travel = _rigidbody2D.linearVelocity * Time.fixedDeltaTime;
-            travel.x = CurrentMoveVelocity * Time.fixedDeltaTime;
-            Vector2 size = (Vector2)bounds.size +
-                new Vector2(Mathf.Abs(travel.x), Mathf.Abs(travel.y)) + Vector2.one * 0.1f;
-            ContactFilter2D filter = new ContactFilter2D();
-            filter.SetLayerMask(_thinPlatformLayer);
-            filter.useTriggers = false;
-            Physics2D.OverlapBox((Vector2)bounds.center + travel * 0.5f, size, 0f,
-                filter, _nearbyThinPlatforms);
-            for (int i = 0; i < _nearbyThinPlatforms.Count; i++)
-            {
-                Collider2D platform = _nearbyThinPlatforms[i];
-                if (platform.attachedRigidbody == _rigidbody2D ||
-                    _ignoredThinPlatforms.Contains(platform) ||
-                    Physics2D.GetIgnoreCollision(_bodyCollider, platform))
-                    continue;
-                Physics2D.IgnoreCollision(_bodyCollider, platform, true);
-                _rigidbody2D.WakeUp();
-                _ignoredThinPlatforms.Add(platform);
-            }
+            RestoreThinPlatformCollisions();
+            return;
+        }
+
+        bool dropping = IsDroppingThroughPlatforms();
+        Bounds bounds = _bodyCollider.bounds;
+        // 옆으로 진입하기 전에 감지하고, 남아 있는 접촉도 급경사 제한보다 먼저 무시합니다.
+        Vector2 travel = _rigidbody2D.linearVelocity * Time.fixedDeltaTime;
+        travel.x = CurrentMoveVelocity * Time.fixedDeltaTime;
+        Vector2 size = (Vector2)bounds.size +
+            new Vector2(Mathf.Abs(travel.x), Mathf.Abs(travel.y)) + Vector2.one * 0.1f;
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(_thinPlatformLayer);
+        filter.useTriggers = false;
+        Physics2D.OverlapBox((Vector2)bounds.center + travel * 0.5f, size, 0f,
+            filter, _nearbyThinPlatforms);
+        int contactCount = _nearbyThinPlatforms.Count > 0 ? _bodyCollider.GetContacts(_groundContacts) : 0;
+        for (int i = 0; i < _nearbyThinPlatforms.Count; i++)
+        {
+            Collider2D platform = _nearbyThinPlatforms[i];
+            if (platform.attachedRigidbody == _rigidbody2D ||
+                _ignoredThinPlatforms.Contains(platform) ||
+                Physics2D.GetIgnoreCollision(_bodyCollider, platform))
+                continue;
+            if (!dropping && !ShouldPassThinPlatform(platform, bounds, filter, contactCount))
+                continue;
+            Physics2D.IgnoreCollision(_bodyCollider, platform, true);
+            _rigidbody2D.WakeUp();
+            _ignoredThinPlatforms.Add(platform);
+            if (!dropping)
+                _sidePassThinPlatforms.Add(platform);
         }
 
         for (int i = _ignoredThinPlatforms.Count - 1; i >= 0; i--)
@@ -562,6 +756,7 @@ public class PlayerControllerView : MonoBehaviour
             Collider2D platform = _ignoredThinPlatforms[i];
             if (platform == null)
             {
+                _sidePassThinPlatforms.Remove(platform);
                 _ignoredThinPlatforms.RemoveAt(i);
                 continue;
             }
@@ -569,20 +764,45 @@ public class PlayerControllerView : MonoBehaviour
                 !_rigidbody2D.simulated)
             {
                 Physics2D.IgnoreCollision(_bodyCollider, platform, false);
+                _sidePassThinPlatforms.Remove(platform);
                 _ignoredThinPlatforms.RemoveAt(i);
                 continue;
             }
 
             if (dropping && _nearbyThinPlatforms.Contains(platform))
             {
+                // 명시적으로 내려가기를 누르면 옆 통과가 아닌 하강 통과로 유지합니다.
+                _sidePassThinPlatforms.Remove(platform);
+                Physics2D.IgnoreCollision(_bodyCollider, platform, true);
+                continue;
+            }
+
+            // 옆 통과 상태가 상승 점프와 위에서의 착지까지 막지 않도록 먼저 해제합니다.
+            if (_sidePassThinPlatforms.Contains(platform) &&
+                (_rigidbody2D.linearVelocity.y > 0.1f ||
+                 (TryGetThinPlatformSurfaceHeight(platform, bounds.center.x, filter, out float surfaceY) &&
+                  bounds.min.y >= surfaceY + 0.005f)))
+            {
+                Physics2D.IgnoreCollision(_bodyCollider, platform, false);
+                _sidePassThinPlatforms.Remove(platform);
+                _ignoredThinPlatforms.RemoveAt(i);
+                continue;
+            }
+
+            // 접촉 전에 무시한 발판을 아직 떨어져 있다는 이유로 즉시 복원하지 않습니다.
+            if (_nearbyThinPlatforms.Contains(platform) &&
+                _sidePassThinPlatforms.Contains(platform) &&
+                ShouldPassThinPlatform(platform, bounds, filter, contactCount))
+            {
                 Physics2D.IgnoreCollision(_bodyCollider, platform, true);
                 continue;
             }
             ColliderDistance2D separation = _bodyCollider.Distance(platform);
             // S 또는 Space를 일찍 놓아도 몸이 발판을 벗어날 때까지 통과를 유지합니다.
-            if (separation.isValid && !separation.isOverlapped && separation.distance > 0.05f)
+            if (separation.isValid && !separation.isOverlapped && separation.distance > ThinPlatformClearance)
             {
                 Physics2D.IgnoreCollision(_bodyCollider, platform, false);
+                _sidePassThinPlatforms.Remove(platform);
                 _ignoredThinPlatforms.RemoveAt(i);
             }
             else
@@ -590,6 +810,62 @@ public class PlayerControllerView : MonoBehaviour
                 Physics2D.IgnoreCollision(_bodyCollider, platform, true);
             }
         }
+    }
+
+    private bool ShouldPassThinPlatform(Collider2D platform, Bounds bodyBounds,
+        ContactFilter2D filter, int contactCount)
+    {
+        // ThinPlatform 레이어여도 일방향 발판 설정이 없는 콜라이더는 변경하지 않습니다.
+        if (!platform.usedByEffector || !platform.TryGetComponent(out PlatformEffector2D effector) ||
+            !effector.enabled || !effector.useOneWay)
+            return false;
+
+        // 상승 통과는 Effector가 처리합니다. 표면 아래에 있다는 이유만으로 무시하지 않습니다.
+        float moveVelocity = CurrentMoveVelocity;
+        if (_rigidbody2D.linearVelocity.y > 0.1f || Mathf.Abs(moveVelocity) <= 0.01f)
+            return false;
+        Bounds platformBounds = platform.bounds;
+        bool enteringFromSide = moveVelocity > 0f
+            ? bodyBounds.max.x <= platformBounds.min.x + ThinPlatformClearance
+            : bodyBounds.min.x >= platformBounds.max.x - ThinPlatformClearance;
+        if (!enteringFromSide)
+            return false;
+
+        for (int i = 0; i < contactCount; i++)
+        {
+            ContactPoint2D contact = _groundContacts[i];
+            if ((contact.collider == platform || contact.otherCollider == platform) &&
+                contact.normal.y >= MinimumGroundNormalY &&
+                Mathf.Abs(contact.point.y - bodyBounds.min.y) <= ThinPlatformClearance)
+                return false;
+        }
+
+        return TryGetThinPlatformSurfaceHeight(platform, bodyBounds.center.x, filter, out float surfaceY) &&
+            bodyBounds.min.y < surfaceY - ThinPlatformClearance;
+    }
+
+    private bool TryGetThinPlatformSurfaceHeight(Collider2D platform, float bodyCenterX,
+        ContactFilter2D filter, out float surfaceY)
+    {
+        surfaceY = 0f;
+        Bounds platformBounds = platform.bounds;
+        float inset = Mathf.Min(ThinPlatformClearance, platformBounds.size.x * 0.25f);
+        float probeX = Mathf.Clamp(bodyCenterX,
+            platformBounds.min.x + inset, platformBounds.max.x - inset);
+        Vector2 origin = new Vector2(probeX, platformBounds.max.y + ThinPlatformClearance);
+        Physics2D.Raycast(origin, Vector2.down, filter, _thinPlatformSurfaceHits,
+            platformBounds.size.y + ThinPlatformClearance * 2f);
+        // 전체 bounds의 최고점 대신 실제 진입 위치의 표면을 확인합니다.
+        for (int i = 0; i < _thinPlatformSurfaceHits.Count; i++)
+        {
+            RaycastHit2D hit = _thinPlatformSurfaceHits[i];
+            if (hit.collider == platform && hit.normal.y > 0f && hit.fraction > 0f)
+            {
+                surfaceY = hit.point.y;
+                return true;
+            }
+        }
+        return false;
     }
 
     private void RestoreThinPlatformCollisions()
@@ -603,6 +879,7 @@ public class PlayerControllerView : MonoBehaviour
             }
         }
         _ignoredThinPlatforms.Clear();
+        _sidePassThinPlatforms.Clear();
     }
 
     private void OnMove(InputAction.CallbackContext context)
@@ -627,6 +904,16 @@ public class PlayerControllerView : MonoBehaviour
 
     private void SetMoveInput(float input)
     {
+        if (Mathf.Abs(input) <= 0.01f || input * _runUpDirection < 0f)
+            ResetRunUp();
+
+        // 입력을 놓거나 반대로 누른 뒤에는 일반 점프 속도로 조작합니다.
+        if (_runUpJumpDirection != 0f && input * _runUpJumpDirection <= 0.01f)
+        {
+            _runUpJumpDirection = 0f;
+            _jumpDistanceMultiplier = _normalJumpDistanceMultiplier;
+        }
+
         bool wasMoving = Mathf.Abs(_moveInput) > 0.01f;
         bool isMoving = Mathf.Abs(input) > 0.01f;
         if (!isMoving)
@@ -653,6 +940,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void ResetJumpTracking()
     {
+        ResetJumpDistance();
         _jumpInProgress = false;
         _animationGroundLostTime = 0f;
         _wasGroundedForAnimation = true;
@@ -680,10 +968,11 @@ public class PlayerControllerView : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             ContactPoint2D contact = _groundContacts[i];
-            if (IsIgnoredThinPlatform(contact.collider) || IsIgnoredThinPlatform(contact.otherCollider))
+            // 실제 이동 제한과 동일하게 ThinPlatform은 벽 막힘 애니메이션에서도 제외합니다.
+            if (IsThinPlatform(contact.collider) || IsThinPlatform(contact.otherCollider))
                 continue;
             // 입력을 막는 옆면만 벽으로 보고, 바닥과 걸어 올라갈 수 있는 경사는 제외합니다.
-            if (contact.normal.x * direction <= -0.7f && Mathf.Abs(contact.normal.y) < 0.5f)
+            if (contact.normal.x * direction < 0f && IsSteepSurface(contact.normal))
             {
                 _blockedRunDirection = direction;
                 return;
@@ -710,6 +999,7 @@ public class PlayerControllerView : MonoBehaviour
             _animationPresenter?.ClearIdleJump();
 
         UpdateJumpLandingState(grounded);
+        UpdateRunUpState(rawGrounded);
         UpdateBlockedRunState(rawGrounded);
         UpdateMovementAnimation();
         _animationPresenter?.SetGroundState(grounded, _isSpectatorMode ? 0f : verticalSpeed);
@@ -735,8 +1025,60 @@ public class PlayerControllerView : MonoBehaviour
         // 이번 정리에서는 기존 착지 확정 조건을 유지합니다.
         // Presenter가 없어도 점프 제한 해제는 Controller에서 수행합니다.
         if (grounded && !_wasGroundedForAnimation)
+        {
             _jumpInProgress = false;
+            ResetJumpDistance();
+        }
         _wasGroundedForAnimation = grounded;
+    }
+
+    private bool HasRunUpMovement()
+    {
+        if (_isSpectatorMode || _isCrouching || ReadCrouchInput() ||
+            _playerInput == null || !_playerInput.isActiveAndEnabled ||
+            !_playerInput.inputIsActive || Mathf.Abs(_moveInput) <= 0.01f)
+            return false;
+
+        // 입력만 유지한 시간 대신, 이전 물리 처리 후 실제 이동 속도를 확인합니다.
+        float minimumSpeed = Mathf.Max(0.01f, _moveSpeed * 0.5f);
+        return _rigidbody2D.linearVelocity.x * Mathf.Sign(_moveInput) >= minimumSpeed;
+    }
+
+    private void UpdateRunUpState(bool grounded)
+    {
+        if (_wallCling != null && _wallCling.IsClinging)
+        {
+            ResetJumpDistance();
+            return;
+        }
+
+        if (!grounded || _jumpInProgress || !HasRunUpMovement())
+        {
+            ResetRunUp();
+            return;
+        }
+
+        float direction = Mathf.Sign(_moveInput);
+        if (_runUpDirection != direction)
+        {
+            _runUpTime = 0f;
+            _runUpDirection = direction;
+        }
+
+        _runUpTime = Mathf.Min(_runUpTime + Time.fixedDeltaTime, _runUpRequiredTime);
+    }
+
+    private void ResetRunUp()
+    {
+        _runUpTime = 0f;
+        _runUpDirection = 0f;
+    }
+
+    private void ResetJumpDistance()
+    {
+        _jumpDistanceMultiplier = 1f;
+        _runUpJumpDirection = 0f;
+        ResetRunUp();
     }
 
     private void LateUpdate()
@@ -802,7 +1144,7 @@ public class PlayerControllerView : MonoBehaviour
             // 벽이나 발판 옆면은 착지로 보지 않습니다.
             if (IsIgnoredThinPlatform(contact.collider) || IsIgnoredThinPlatform(contact.otherCollider))
                 continue;
-            if (contact.normal.y >= 0.5f &&
+            if (contact.normal.y >= MinimumGroundNormalY - 0.0001f &&
                 Mathf.Abs(contact.point.y - _groundCheck.position.y) <= _checkRadius)
                 return true;
         }
@@ -842,6 +1184,7 @@ public class PlayerControllerView : MonoBehaviour
         if (!_wallCling.TryJump(_moveInput, _jumpForce, out bool idleJump))
             return false;
 
+        ResetJumpDistance();
         _jumpInProgress = true;
         _wasGroundedForAnimation = false;
         UpdateWallAnimation();
@@ -862,8 +1205,16 @@ public class PlayerControllerView : MonoBehaviour
 
         // 같은 프레임에 이동과 점프가 들어와도 현재 입력을 기준으로 판정합니다.
         SetMoveInput(_moveAction.ReadValue<Vector2>().x);
+        bool runUpJump = _runUpDirection * _moveInput > 0.01f &&
+            _runUpTime >= _runUpRequiredTime && HasRunUpMovement();
+        _jumpDistanceMultiplier = runUpJump
+            ? _runUpJumpDistanceMultiplier : _normalJumpDistanceMultiplier;
+        _runUpJumpDirection = runUpJump ? Mathf.Sign(_moveInput) : 0f;
+        ResetRunUp();
+
         float inputTime = _moveInputStartedTime < 0f ? 0f : Time.time - _moveInputStartedTime;
-        bool idleJump = Mathf.Abs(_moveInput) <= 0.01f || inputTime < _idleJumpInputTime;
+        bool idleJump = !runUpJump &&
+            (Mathf.Abs(_moveInput) <= 0.01f || inputTime < _idleJumpInputTime);
         _jumpInProgress = true;
         _wasGroundedForAnimation = true;
         _rigidbody2D.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
