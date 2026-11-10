@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8481493746919487581}
   - component: {fileID: 6932037821010178431}
   - component: {fileID: 6995651389844220576}
+  - component: {fileID: 2860676025520389664}
   m_Layer: 0
   m_Name: BossObject
   m_TagString: Untagged
@@ -112,6 +113,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossNetwork
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2860676025520389664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2689793130133361207}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0038c16c34866b4f9e25c9c0dc0f7e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Behavior::Unity.Behavior.BehaviorGraphAgent
+  ShowTopMostFoldoutHeaderGroup: 1
+  m_Graph: {fileID: 8865009237907185420, guid: 2bdf2bd2e74009b47bb332183efe76cc, type: 2}
+  m_BlackboardVariableOverridesList:
+  - rid: 7420511855868641384
+  m_OriginalGraph: {fileID: 0}
+  m_IsInitialised: 0
+  m_IsStarted: 0
+  NetcodeRunOnlyOnOwner: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 7420511855868641384
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 2689793130133361207}
 --- !u!1 &6749575428743769605
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,12 +1,14 @@
 using Unity.Netcode;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using Unity.Behavior;
 
 public class BossNetwork : NetworkBehaviour
 {
     private bool _statsInitialized;
     private Boss _boss;
     public bool IsReady { get; private set; }
+    private BehaviorGraphAgent _bt;
 
     private NetworkVariable<float> _maxHp = new(
         0f,
@@ -21,11 +23,20 @@ public class BossNetwork : NetworkBehaviour
     private void Awake()
     {
         _boss = GetComponent<Boss>();
+        _bt = GetComponent<BehaviorGraphAgent>();
+
+        if (_bt != null)
+            _bt.enabled = false;
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
+        IsReady = false;
+
+        if (_bt != null)
+            _bt.enabled = false;
 
         _maxHp.OnValueChanged += OnMaxHpChanged;
         _curHp.OnValueChanged += OnCurHpChanged;
@@ -51,6 +62,9 @@ public class BossNetwork : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        if (_bt != null)
+            _bt.enabled = false;
+
         _maxHp.OnValueChanged -= OnMaxHpChanged;
         _curHp.OnValueChanged -= OnCurHpChanged;
 
@@ -124,8 +138,21 @@ public class BossNetwork : NetworkBehaviour
                 return;
             }
 
+            if (!IsServer)
+                return;
+
+            if (_bt == null || _bt.Graph == null)
+            {
+                Debug.LogError("보스의 Behavior Agent와 BossBehavior 그래프 연결을 확인해 주세요.", this);
+
+                NetworkObject.Despawn();
+                return;
+            }
+
             IsReady = true;
-            Debug.Log("보스 HP와 스킬 준비가 완료되었습니다.", this);
+            _bt.enabled = true;
+
+            Debug.Log("보스 스킬 준비 완료. BT를 시작합니다.", this);
         }
         catch (System.Exception exception)
         {
