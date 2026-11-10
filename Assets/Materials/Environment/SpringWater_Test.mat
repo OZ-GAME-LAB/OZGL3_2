@@ -28,7 +28,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TerrainTex:
-        m_Texture: {fileID: 2800000, guid: 4f3c7c0a7cf4484883ce036faa4e33eb, type: 3}
+        m_Texture: {fileID: 2800000, guid: 84c0f7592cab46aa9ef9da155b8073f5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -42,7 +42,7 @@ Material:
     - _Opacity: 0.2
     - _ReflectionDepth: 0.045
     - _ReflectionStrength: 0.3
-    - _Refraction: 0.0015
+    - _Refraction: 0.0008
     - _SurfaceRippleDepth: 0.035
     - _SurfaceRippleSpeed: 0.4
     - _SurfaceRippleStrength: 0.208
