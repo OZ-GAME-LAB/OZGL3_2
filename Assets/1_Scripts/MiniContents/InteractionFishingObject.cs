@@ -7,6 +7,12 @@ public class InteractionFishingObject : InteractableObject
     [SerializeField, Min(0.01f)]
     private float _rotationSpeed = 180f;
 
+    [Header("난이도 설정")]
+    [SerializeField, Min(0f)]
+    private float _increasePerTier = 0.25f;
+
+    private string _selectedFishId;
+
     private readonly InteractionFishingVM _viewModel = new();
 
     public override InteractionVMBase ViewModel => _viewModel;
@@ -28,17 +34,48 @@ public class InteractionFishingObject : InteractableObject
     {
         base.BeginInteraction(playerUIAnchors, playerCamera, equipmentId);
 
-        if (!TryGetInteractionEquipmentData(out EquipmentData equipmentData))
+        if (!TryGetInteractionEquipmentData(out _))
         {
             RequestInteractionEnd();
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_selectedFishId))
+        {
+            Debug.LogWarning("서버에서 전달받은 물고기 ID가 없습니다.", this);
+
+            RequestInteractionEnd();
+            return;
+        }
+
+        ItemData fishData = DataManager.Inst.GetData<ItemData>(_selectedFishId);
+
+        ItemData equipmentItem = DataManager.Inst.GetData<ItemData>(InteractionEquipmentId);
+
+        if (fishData == null || equipmentItem == null)
+        {
+            Debug.LogWarning("물고기 또는 장비의 아이템 데이터를 확인해 주세요.", this);
+
+            RequestInteractionEnd();
+            return;
+        }
+
+        if (fishData.Tier < 1 || equipmentItem.Tier < 1)
+        {
+            Debug.LogWarning($"티어는 1 이상이어야 합니다. 물고기: {fishData.Tier}, 장비: {equipmentItem.Tier}", this);
+
+            RequestInteractionEnd();
+            return;
+        }
+
+        float multiplier = GameUtil.CalculateInteractionDifficultyMultiplier(fishData.Tier, equipmentItem.Tier, _increasePerTier);
+
+        float rotationSpeed = _rotationSpeed * multiplier;
+
+        _viewModel.Initialize(rotationSpeed);
+
         _playerUIAnchors = playerUIAnchors;
         _playerCamera = playerCamera;
-
-        // TODO : 추후 equipmentData 또는 같은 ID의 ItemData에서
-        // TODO : 장비 티어를 읽고 회전 속도를 계산할 위치.
 
         PlayContent();
     }
@@ -135,5 +172,10 @@ public class InteractionFishingObject : InteractableObject
             Debug.Log("누적 실패 3회: 물고기를 놓쳤습니다.", this);
             RequestInteractionEnd();
         }
+    }
+
+    public void SetSelectedFishId(string fishId)
+    {
+        _selectedFishId = fishId;
     }
 }
