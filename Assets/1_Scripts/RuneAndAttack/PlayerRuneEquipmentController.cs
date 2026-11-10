@@ -9,10 +9,10 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
     public const int SlotCount = 3;
 
     [Header("서버 인벤토리 연결 전 테스트 전용")]
-    [SerializeField]
-    private bool _allowTestEquipment;
+    [SerializeField] private bool _allowTestEquipment;
 
     private NetworkList<FixedString128Bytes> _equippedRuneIds;
+    private AttackProfile _cachedAttackProfile;
 
     public event Action EquipmentChanged;
     public event Action<string> RequestMessageReceived;
@@ -25,25 +25,43 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        _cachedAttackProfile = null;
+
         if (IsServer)
         {
-            // 현재 정책: 플레이어가 새로 스폰되면 빈 슬롯으로 시작.
             _equippedRuneIds.Clear();
 
             for (int i = 0; i < SlotCount; i++)
             {
                 _equippedRuneIds.Add(default);
             }
+
+            var emptySlots = new RuneData[SlotCount];
+
+            if (AttackProfileBuilder.TryBuild(emptySlots, out AttackProfile defaultProfile, out string error))
+            {
+                _cachedAttackProfile = defaultProfile;
+            }
+            else
+            {
+                Debug.LogError($"기본 공격 프로필 생성 실패: {error}", this);
+            }
         }
 
         _equippedRuneIds.OnListChanged += OnEquipmentListChanged;
 
         EquipmentChanged?.Invoke();
+
+        if (IsClient && IsOwner && ServiceManager.Inst != null)
+        {
+            ServiceManager.Inst.NetworkRuneService.ConnectLocalPlayer();
+        }
     }
 
     public override void OnNetworkDespawn()
     {
         _equippedRuneIds.OnListChanged -= OnEquipmentListChanged;
+        _cachedAttackProfile = null;
         Despawned?.Invoke();
     }
 
@@ -80,19 +98,15 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void RequestSetRuneServerRpc(
-        int slotIndex,
-        string runeId,
-        ServerRpcParams rpcParams = default)
+    private void RequestSetRuneServerRpc(int slotIndex, string runeId, ServerRpcParams rpcParams = default)
     {
         // 이 플레이어의 소유자만 장착 변경 가능.
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
+        {
             return;
+        }
 
-        if (!IsSpawned ||
-            slotIndex < 0 ||
-            slotIndex >= SlotCount ||
-            _equippedRuneIds.Count != SlotCount)
+        if (IsSpawned == false || slotIndex < 0 || slotIndex >= SlotCount || _equippedRuneIds.Count != SlotCount)
         {
             return;
         }
@@ -104,6 +118,12 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
         }
 
         runeId ??= "";
+
+        if (_equippedRuneIds[slotIndex].ToString() == runeId)
+        {
+            SendMessageToOwner("장착 상태가 동일합니다.");
+            return;
+        }
 
         FixedString128Bytes networkId = default;
 
@@ -121,10 +141,7 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
             var runeTable = DataManager.Inst.ReadData<RuneData>();
             var itemTable = DataManager.Inst.ReadData<ItemData>();
 
-            if (!runeTable.TryGetValue(runeId, out requestedRune) ||
-                requestedRune == null ||
-                !itemTable.TryGetValue(runeId, out var itemData) ||
-                itemData == null)
+            if (runeTable.TryGetValue(runeId, out requestedRune) == false || requestedRune == null || itemTable.TryGetValue(runeId, out var itemData) == false || itemData == null)
             {
                 SendMessageToOwner("아이템 또는 룬 데이터가 없습니다.");
                 return;
@@ -132,15 +149,13 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
 
             if (CanEquipOwnedRuneOnServer(runeId) == false)
             {
-                SendMessageToOwner(
-                    "서버 인벤토리 검증이 연결되지 않았습니다. " +
-                    "테스트 중이라면 테스트 장착 옵션을 켜세요.");
+                SendMessageToOwner( "서버 인벤토리 검증이 연결되지 않았습니다. " + "테스트 중이라면 테스트 장착 옵션을 켜세요.");
                 return;
             }
         }
 
         // 변경하려는 결과를 먼저 계산하고 검증.
-        if (!TryReadEquippedRunes(out RuneData[] slots))
+        if (TryReadEquippedRunes(out RuneData[] slots) == false)
         {
             SendMessageToOwner("현재 장착 데이터를 읽지 못했습니다.");
             return;
@@ -148,21 +163,20 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
 
         slots[slotIndex] = requestedRune;
 
-        if (!AttackProfileBuilder.TryBuild(
-                slots, out _, out string error))
+        if (AttackProfileBuilder.TryBuild(slots, out AttackProfile newProfile, out string error) == false)
         {
             SendMessageToOwner(error);
             return;
         }
 
-        // 검증 성공 후에만 실제 상태 변경.
-        _equippedRuneIds[slotIndex] =
-            new FixedString128Bytes(runeId);
+        var newRuneId = new FixedString128Bytes(runeId);
 
-        SendMessageToOwner(
-            string.IsNullOrEmpty(runeId)
-                ? "룬을 해제했습니다."
-                : "룬을 장착했습니다.");
+        _cachedAttackProfile = newProfile;
+
+        // 검증 성공 후에만 실제 상태 변경.
+        _equippedRuneIds[slotIndex] = newRuneId;
+
+        SendMessageToOwner(string.IsNullOrEmpty(runeId) ? "룬을 해제했습니다." : "룬을 장착했습니다.");
     }
 
     private bool CanEquipOwnedRuneOnServer(string runeId)
@@ -181,8 +195,7 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
     {
         slots = null;
 
-        if (DataManager.Inst == null ||
-            _equippedRuneIds.Count != SlotCount)
+        if (DataManager.Inst == null || _equippedRuneIds.Count != SlotCount)
         {
             return false;
         }
@@ -197,7 +210,7 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
             if (string.IsNullOrEmpty(runeId))
                 continue;
 
-            if (!runeTable.TryGetValue(runeId, out RuneData rune) || rune == null)
+            if (runeTable.TryGetValue(runeId, out RuneData rune) == false || rune == null)
             {
                 return false;
             }
@@ -209,27 +222,25 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
         return true;
     }
 
-    // 공격하는 플레이어 자신의 컴포넌트에서 호출.
-    public bool TryBuildAttackProfile(
-        out AttackProfile profile,
-        out string error)
+    public bool TryGetAttackProfile(out AttackProfile profile, out string error)
     {
         profile = null;
         error = null;
 
-        if (!IsServer || !IsSpawned)
+        if (IsServer == false || IsSpawned == false)
         {
             error = "서버에서 스폰된 플레이어만 공격을 계산합니다.";
             return false;
         }
 
-        if (!TryReadEquippedRunes(out RuneData[] slots))
+        if (_cachedAttackProfile == null)
         {
-            error = "장착 룬 데이터를 읽지 못했습니다.";
+            error = "공격 프로필이 준비되지 않았습니다.";
             return false;
         }
 
-        return AttackProfileBuilder.TryBuild(slots, out profile, out error);
+        profile = _cachedAttackProfile;
+        return true;
     }
 
     private void SendMessageToOwner(string message)

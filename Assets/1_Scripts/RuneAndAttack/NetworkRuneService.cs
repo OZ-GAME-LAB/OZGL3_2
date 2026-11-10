@@ -80,6 +80,17 @@ public class NetworkRuneService : IDisposable
         return true;
     }
 
+    public void ConnectLocalPlayer()
+    {
+        if (TryConnectLocalPlayer() == false)
+        {
+            return;
+        }
+
+        RefreshInventory();
+        RefreshEquipment();
+    }
+
     public void RefreshInventory()
     {
         var ids = new List<string>();
