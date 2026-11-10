@@ -26,6 +26,9 @@ public class ObjectManager : MonoBehaviour
     [Header("필드 드롭 아이템 프리팹")]
     [SerializeField] private FieldItemObject Prefab_FieldDropItem;
 
+    [Header("보스 프리팹")]
+    [SerializeField] private Boss Prefab_Boss;
+
     private void Awake()
     {
         if (Inst != null && Inst != this)
@@ -274,5 +277,48 @@ public class ObjectManager : MonoBehaviour
         item.Init(itemDataId, count);
         item.NetworkObject.Spawn(destroyWithScene: true);
         return item;
+    }
+
+    public Boss SpawnBoss(string id, Vector3 position)
+    {
+        if (!CanSpawn())
+            return null;
+
+        if (Prefab_Boss == null)
+        {
+            Debug.LogError("보스 프리팹이 연결되지 않았습니다.", this);
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            Debug.LogError("보스 데이터 ID가 비어 있습니다.", this);
+            return null;
+        }
+
+        if (!Prefab_Boss.TryGetComponent<NetworkObject>(out _) || !Prefab_Boss.TryGetComponent<BossNetwork>(out _))
+        {
+            Debug.LogError("보스 프리팹의 루트에 NetworkObject와 BossNetwork가 필요합니다.", this);
+
+            return null;
+        }
+
+        Boss instance = Instantiate(Prefab_Boss, position, Quaternion.identity);
+
+        NetworkObject networkObject = instance.GetComponent<NetworkObject>();
+
+        BossNetwork bossNetwork = instance.GetComponent<BossNetwork>();
+
+        networkObject.Spawn();
+
+        if (!bossNetwork.InitializeStatsOnServer(id))
+        {
+            Debug.LogError($"보스 초기화에 실패했습니다: {id}", instance);
+
+            networkObject.Despawn();
+            return null;
+        }
+
+        return instance;
     }
 }

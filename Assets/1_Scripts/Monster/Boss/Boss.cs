@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 public class Boss : MonoBehaviour
 {
+    public MonsterVM ViewModel { get; } = new MonsterVM();
+
     [Header("지면 감지 — 가시덩굴")]
     [SerializeField] private BossDetector[] _groundDetectors;
 
@@ -23,6 +26,9 @@ public class Boss : MonoBehaviour
 
     private readonly List<BossDetector> _groundAttackCandidates = new();
 
+    private readonly List<MonsterSkillBase> _skills = new();
+
+    public IReadOnlyList<MonsterSkillBase> Skills => _skills;
 
     public void GetGroundPlayers(List<PlayerNetworkStats> results)
     {
@@ -130,5 +136,53 @@ public class Boss : MonoBehaviour
         }
 
         Debug.Log($"가시덩굴 공격 지면: {selectedArea.name}", selectedArea);
+    }
+
+    public async UniTask<bool> InitSkillsAsync(MonsterData data)
+    {
+        if (data == null)
+            return false;
+
+        string[] skillIds = data.HaveSkillIdList;
+        float[] cooldowns = data.MonsterSkillCollTime;
+
+        if (skillIds == null || skillIds.Length == 0)
+            return true;
+
+        if (cooldowns == null || cooldowns.Length != skillIds.Length)
+        {
+            Debug.LogError("보스의 스킬과 쿨타임 배열 개수가 다릅니다.", this);
+            return false;
+        }
+
+        if (MonsterSkillManager.Inst == null)
+        {
+            Debug.LogError("MonsterSkillManager가 준비되지 않았습니다.", this);
+            return false;
+        }
+
+        for (int i = 0; i < skillIds.Length; i++)
+        {
+            float cooldown = cooldowns[i];
+
+            if (float.IsNaN(cooldown) || float.IsInfinity(cooldown) || cooldown < 0f)
+            {
+                Debug.LogError($"잘못된 보스 스킬 쿨타임: {skillIds[i]}", this);
+                return false;
+            }
+
+            MonsterSkillBase skill = await MonsterSkillManager.Inst.CreateSkillAsync(skillIds[i], transform, 0f, data.Atk);
+
+            if (this == null)
+                return false;
+
+            if (skill == null)
+                return false;
+
+            skill.InitCooldown(cooldown);
+            _skills.Add(skill);
+        }
+
+        return true;
     }
 }

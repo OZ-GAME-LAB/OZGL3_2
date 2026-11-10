@@ -50,3 +50,4 @@ MonoBehaviour:
   Prefab_LoggingMiningObject: {fileID: 1304325225332849116, guid: 7bc642997cf192f4293b5e9acf9362fd, type: 3}
   Prefab_Monster: {fileID: 6866738638208545897, guid: db53d1154b78e514198c78ecc6e8445c, type: 3}
   Prefab_FieldDropItem: {fileID: 5588425799300892576, guid: c33317cefec91664e8e4084534a745f7, type: 3}
+  Prefab_Boss: {fileID: 8481493746919487581, guid: 8b7584bde7a5ba043b02920da5ac5239, type: 3}

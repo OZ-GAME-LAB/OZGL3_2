@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6660365921583430348}
   - component: {fileID: 8481493746919487581}
+  - component: {fileID: 6932037821010178431}
+  - component: {fileID: 6995651389844220576}
   m_Layer: 0
   m_Name: BossObject
   m_TagString: Untagged
@@ -70,6 +72,46 @@ MonoBehaviour:
   - {fileID: 6732229312346506100}
   - {fileID: 3512580703362615529}
   - {fileID: 7640892296930126517}
+--- !u!114 &6932037821010178431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2689793130133361207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1090451676
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &6995651389844220576
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2689793130133361207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899db5debc9587f499266c563e697c73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossNetwork
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &6749575428743769605
 GameObject:
   m_ObjectHideFlags: 0
