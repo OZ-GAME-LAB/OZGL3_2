@@ -3,7 +3,7 @@
 public enum ItemType
 {
     None = 0,
-    EquipmentItem = 1,
+    Equipment = 1,
     Consumable = 2,
     Material = 3,
     Rune = 4

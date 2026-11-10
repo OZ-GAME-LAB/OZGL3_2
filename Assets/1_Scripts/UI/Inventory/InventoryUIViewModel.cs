@@ -6,8 +6,78 @@ public class InventoryUIViewModel : ViewModelBase
 
     public void InvokeOnceOnInit()
     {
+        OnPropertyChanged(nameof(TalismanItemViewModel));
+        OnPropertyChanged(nameof(FishingItemViewModel));
+        OnPropertyChanged(nameof(LoggingItemViewModel));
+        OnPropertyChanged(nameof(MiningItemViewModel));
         OnPropertyChanged(nameof(InventoryItemViewModelDictionary));
     }
+
+
+    private InventoryItemViewModel _talismanItemViewModel;
+
+
+    public InventoryItemViewModel TalismanItemViewModel
+    {
+        get => _talismanItemViewModel;
+        set
+        {
+            if (_talismanItemViewModel != value)
+            {
+                _talismanItemViewModel = value;
+                OnPropertyChanged(nameof(TalismanItemViewModel));
+            }
+        }
+    }
+
+
+    private InventoryItemViewModel _fishingItemViewModel;
+
+
+    public InventoryItemViewModel FishingItemViewModel
+    {
+        get => _fishingItemViewModel;
+        set
+        {
+            if (_fishingItemViewModel != value)
+            {
+                _fishingItemViewModel = value;
+                OnPropertyChanged(nameof(FishingItemViewModel));
+            }
+        }
+    }
+
+
+    private InventoryItemViewModel _loggingItemViewModel;
+
+    public InventoryItemViewModel LoggingItemViewModel
+    {
+        get => _loggingItemViewModel;
+        set
+        {
+            if (_loggingItemViewModel != value)
+            {
+                _loggingItemViewModel = value;
+                OnPropertyChanged(nameof(LoggingItemViewModel));
+            }
+        }
+    }
+
+    private InventoryItemViewModel _miningItemViewModel;
+
+    public InventoryItemViewModel MiningItemViewModel
+    {
+        get => _miningItemViewModel;
+        set
+        {
+            if (_miningItemViewModel != value)
+            {
+                _miningItemViewModel = value;
+                OnPropertyChanged(nameof(MiningItemViewModel));
+            }
+        }
+    }
+
 
 
     private ObservableDictionary<string, InventoryItemViewModel> _inventoryItemViewModelDictionary;

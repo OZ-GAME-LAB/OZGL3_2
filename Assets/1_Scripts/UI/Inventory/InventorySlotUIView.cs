@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using NUnit.Framework.Interfaces;
 using System;
 using System.ComponentModel;
 using TMPro;
@@ -14,7 +13,7 @@ public class InventorySlotUIView : MonoBehaviour
     [SerializeField] private Image Image_ItemIcon;
 
     private InventoryItemViewModel _viewModel;
-    public event Action<InventorySlotUIView, InventoryItemViewModel> ItemUsed;
+    public event Action<InventorySlotUIView, InventoryItemViewModel> ItemOnClickEvent;
 
     public void Bind(InventoryItemViewModel viewModel)
     {
@@ -40,16 +39,29 @@ public class InventorySlotUIView : MonoBehaviour
                 }
             case nameof(_viewModel.Count):
                 {
-                    _itemCount.text = _viewModel.Count.ToString();
+                    if(_viewModel.ItemType == nameof(ItemType.Equipment) || _viewModel.Count == 0){
+                        _itemCount.text = null;
+                    }
+                    else
+                    {
+                        _itemCount.text = _viewModel.Count.ToString();
+
+                    }
+
+                    break;
+                }
+            case nameof(_viewModel.IconPath):
+                {
+                    Image_ItemIcon.sprite = null;
+
+                    if (!string.IsNullOrEmpty(_viewModel.IconPath))
+                        LoadItemIconAsync(_viewModel.IconPath).Forget();
 
                     break;
                 }
         }
 
-        if (!string.IsNullOrEmpty(_viewModel.IconPath))
-        {
-            LoadItemIconAsync(_viewModel.IconPath).Forget();
-        }
+        
     }
 
     
@@ -66,7 +78,12 @@ public class InventorySlotUIView : MonoBehaviour
     {
         if (_useButton != null)
             _useButton.onClick.RemoveListener(OnClickUseButton);
+    }
+
+    private void OnDestroy()
+    {
         Unbind();
+
     }
 
     private void Unbind()
@@ -80,7 +97,7 @@ public class InventorySlotUIView : MonoBehaviour
     private void OnClickUseButton()
     {
         if (_viewModel != null)
-            ItemUsed?.Invoke(this, _viewModel);
+            ItemOnClickEvent?.Invoke(this, _viewModel);
     }
 
     private async UniTaskVoid LoadItemIconAsync(string iconPath)
