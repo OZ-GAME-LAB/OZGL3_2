@@ -110,53 +110,72 @@ public class BossThornAttackObject : MonoBehaviour
         return true;
     }
 
-    public void Play()
+    public void Play(double startTime)
     {
-        if (!_initialized || !isActiveAndEnabled)
-        {
-            Debug.LogWarning("가시 오브젝트를 활성화하고 초기화한 뒤 실행해 주세요.", this);
+        if (!_initialized || !isActiveAndEnabled || IsPlaying)
             return;
-        }
 
-        if (IsPlaying)
+        var manager = Unity.Netcode.NetworkManager.Singleton;
+
+        if (manager == null || !manager.IsListening || !manager.IsServer)
             return;
 
         IsPlaying = true;
-        StartCoroutine(PlayRoutine());
+        StartCoroutine(PlayRoutine(startTime));
     }
 
-    private IEnumerator PlayRoutine()
+    private IEnumerator PlayRoutine(double startTime)
     {
-        _thornVisual.gameObject.SetActive(false);
-        _hitbox.gameObject.SetActive(false);
-        _warningVisual.gameObject.SetActive(true);
+        var manager = Unity.Netcode.NetworkManager.Singleton;
 
-        yield return new WaitForSeconds(_warningSeconds);
+        float warningDuration = Mathf.Max(0f, _warningSeconds);
+        float riseDuration = Mathf.Max(0.01f, _riseSeconds);
+        float holdDuration = Mathf.Max(0f, _holdSeconds);
+
+        float totalDuration = warningDuration + riseDuration + holdDuration;
+
+        bool attackStarted = false;
 
         _warningVisual.gameObject.SetActive(false);
+        _thornVisual.gameObject.SetActive(false);
+        _hitbox.gameObject.SetActive(false);
 
-        SetRiseProgress(0f);
-        _thornVisual.gameObject.SetActive(true);
-
-        AttackStarted?.Invoke();
-
-        float elapsed = 0f;
-        float duration = Mathf.Max(0.01f, _riseSeconds);
-
-        while (elapsed < duration)
+        while (manager != null && manager.IsListening)
         {
+            double elapsed = manager.ServerTime.Time - startTime;
+
+            if (elapsed >= totalDuration)
+                break;
+
+            if (elapsed < warningDuration)
+            {
+                _warningVisual.gameObject.SetActive(true);
+                _thornVisual.gameObject.SetActive(false);
+                _hitbox.gameObject.SetActive(false);
+            }
+            else
+            {
+                _warningVisual.gameObject.SetActive(false);
+                _thornVisual.gameObject.SetActive(true);
+
+                float progress = Mathf.Clamp01(
+                    (float)(elapsed - warningDuration) / riseDuration);
+
+                SetRiseProgress(progress);
+
+                if (!attackStarted)
+                {
+                    attackStarted = true;
+
+                    if (manager.IsServer)
+                        AttackStarted?.Invoke();
+                }
+            }
+
             yield return null;
-
-            elapsed += Time.deltaTime;
-
-            float progress = Mathf.Clamp01(elapsed / duration);
-            SetRiseProgress(progress);
         }
 
-        SetRiseProgress(1f);
-
-        yield return new WaitForSeconds(_holdSeconds);
-
+        _warningVisual.gameObject.SetActive(false);
         _thornVisual.gameObject.SetActive(false);
         _hitbox.gameObject.SetActive(false);
 
@@ -185,6 +204,20 @@ public class BossThornAttackObject : MonoBehaviour
         bool isServer = manager != null && manager.IsServer;
 
         _hitbox.gameObject.SetActive(isServer);
+    }
+
+    public void PlayClientVisual(double startTime)
+    {
+        if (!_initialized || !isActiveAndEnabled || IsPlaying)
+            return;
+
+        var manager = Unity.Netcode.NetworkManager.Singleton;
+
+        if (manager == null || !manager.IsListening || manager.IsServer)
+            return;
+
+        IsPlaying = true;
+        StartCoroutine(PlayRoutine(startTime));
     }
 
     

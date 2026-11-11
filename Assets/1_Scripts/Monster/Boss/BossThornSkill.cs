@@ -7,6 +7,7 @@ public class BossThornSkill : MonsterSkillBase
 {
     private Boss _boss;
     private BossThornAttackObject _attackObject;
+    private BossNetwork _bossNetwork;
 
     [SerializeField, Min(0.01f)]
     private float _thornHeight = 2f;
@@ -42,6 +43,12 @@ public class BossThornSkill : MonsterSkillBase
             return;
         }
 
+        if (!owner.TryGetComponent(out _bossNetwork))
+        {
+            Debug.LogError("보스에 BossNetwork가 필요합니다.", this);
+            return;
+        }
+
         if (!owner.TryGetComponent(out _boss))
         {
             Debug.LogError("스킬 소유 오브젝트에 Boss가 필요합니다.", this);
@@ -59,6 +66,19 @@ public class BossThornSkill : MonsterSkillBase
         _attackObject.transform.localScale = Vector3.one;
         _attackObject.gameObject.SetActive(false);
 
+        BossThornHitbox hitbox = _attackObject.GetComponentInChildren<BossThornHitbox>(true);
+
+        if (hitbox == null)
+        {
+            Debug.LogError("가시 프리팹의 Hitbox에 BossThornHitbox가 필요합니다.", this);
+
+            Destroy(_attackObject.gameObject);
+            _attackObject = null;
+            return;
+        }
+
+        hitbox.Initialize(_bossNetwork, atk);
+
         _attackObject.AttackStarted += StartCooldown;
     }
 
@@ -72,7 +92,10 @@ public class BossThornSkill : MonsterSkillBase
         if (manager == null || !manager.IsServer)
             return;
 
-        if (_boss == null || _attackObject == null)
+        if (_boss == null || _attackObject == null || _bossNetwork == null)
+            return;
+
+        if (!_bossNetwork.IsSpawned)
             return;
 
         if (!_boss.TrySelectGroundAttackArea(out BossDetector selectedArea))
@@ -94,7 +117,10 @@ public class BossThornSkill : MonsterSkillBase
             return;
 
         _attackObject.gameObject.SetActive(true);
-        _attackObject.Play();
+
+        double startTime = manager.ServerTime.Time;
+
+        _attackObject.Play(startTime);
 
         if (!_attackObject.IsPlaying)
         {
@@ -103,6 +129,9 @@ public class BossThornSkill : MonsterSkillBase
         }
 
         IsAttacking = true;
+
+        _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime);
+
         StartCoroutine(WaitForAttackEnd());
     }
 

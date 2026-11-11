@@ -144,6 +144,9 @@ MonoBehaviour:
   _thornVisual: {fileID: 1675769414596735189}
   _hitbox: {fileID: 8823619081795806394}
   _warningHeight: 0.1
+  _warningSeconds: 1
+  _riseSeconds: 0.2
+  _holdSeconds: 1
 --- !u!1 &2753480363946456921
 GameObject:
   m_ObjectHideFlags: 0
@@ -153,6 +156,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3464959759501962975}
+  - component: {fileID: 8607945358810348164}
   - component: {fileID: 8823619081795806394}
   - component: {fileID: 3349277871481341446}
   m_Layer: 0
@@ -177,6 +181,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7645520495510980096}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8607945358810348164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2753480363946456921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdb5a7533ddf29f46881aa9f92e22d28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossThornHitbox
 --- !u!61 &8823619081795806394
 BoxCollider2D:
   m_ObjectHideFlags: 0

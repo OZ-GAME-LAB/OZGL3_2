@@ -162,4 +162,81 @@ public class BossNetwork : NetworkBehaviour
                 NetworkObject.Despawn();
         }
     }
+
+    public void BroadcastThornAttack(string skillId, Vector3 position, float width, float height, double startTime)
+    {
+        if (!IsServer || !IsSpawned)
+            return;
+
+        PlayThornAttackClientRpc(skillId, position, width, height, startTime);
+    }
+
+    [ClientRpc]
+    private void PlayThornAttackClientRpc(string skillId, Vector3 position, float width, float height, double startTime)
+    {
+        if (IsServer)
+            return;
+
+        ShowThornVisualAsync(skillId, position, width, height, startTime).Forget();
+
+    }
+
+    private async UniTask ShowThornVisualAsync(string skillId, Vector3 position, float width, float height, double startTime)
+    {
+        BossThornAttackObject visual = null;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(skillId))
+                return;
+
+            if (DataManager.Inst == null || ResourceManager.Inst == null)
+            {
+                Debug.LogError("가시 연출에 필요한 매니저가 준비되지 않았습니다.", this);
+                return;
+            }
+
+            MonsterSkillData data = DataManager.Inst.GetData<MonsterSkillData>(skillId);
+
+            if (data == null || string.IsNullOrWhiteSpace(data.SkillPrefabPath))
+            {
+                Debug.LogError($"가시 스킬 데이터를 확인해 주세요: {skillId}", this);
+                return;
+            }
+
+            GameObject prefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.SkillPrefabPath);
+
+            if (this == null || !IsSpawned || prefab == null)
+                return;
+
+            if (!prefab.TryGetComponent(out BossThornAttackObject prefabComponent))
+            {
+                Debug.LogError($"프리팹에 BossThornAttackObject가 없습니다: {skillId}", this);
+
+                return;
+            }
+
+            visual = Instantiate(prefabComponent, position, Quaternion.identity);
+
+            visual.transform.localScale = Vector3.one;
+            visual.gameObject.SetActive(false);
+
+            if (!visual.Initialize(width, height))
+                return;
+
+            visual.gameObject.SetActive(true);
+            visual.PlayClientVisual(startTime);
+
+            await UniTask.WaitUntil(() => this == null || !IsSpawned || visual == null || !visual.IsPlaying);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception);
+        }
+        finally
+        {
+            if (visual != null)
+                Destroy(visual.gameObject);
+        }
+    }
 }

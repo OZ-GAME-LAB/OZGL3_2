@@ -3,6 +3,7 @@ using UnityEngine;
 public class MonsterSkillBase : MonoBehaviour
 {
     public bool IsAttacking { get; protected set; }
+    public string SkillId { get; private set; }
 
     private float _cooldownSeconds;
     private float _nextUseTime;
@@ -21,5 +22,10 @@ public class MonsterSkillBase : MonoBehaviour
     protected void StartCooldown()
     {
         _nextUseTime = Time.time + _cooldownSeconds;
+    }
+
+    public void SetSkillId(string skillId)
+    {
+        SkillId = skillId;
     }
 }
