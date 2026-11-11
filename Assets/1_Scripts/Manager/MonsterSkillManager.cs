@@ -80,11 +80,39 @@ public class MonsterSkillManager : MonoBehaviour
         return true;
     }
 
-    public async UniTask<MonsterSkillBase> CreateSkillAsync(string address, Transform owner, float bodyHeight, float atk)
+    public async UniTask<MonsterSkillBase> CreateSkillAsync(string skillId, Transform owner, float bodyHeight, float atk)
     {
-        if (owner == null || bodyHeight <= 0f)
+        if (owner == null)
         {
-            Debug.LogError("스킬을 사용할 몬스터와 몸 높이를 확인하세요.");
+            Debug.LogError("스킬 소유 오브젝트가 없습니다.", this);
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(skillId))
+        {
+            Debug.LogError("스킬 ID가 비어 있습니다.", this);
+            return null;
+        }
+
+        if (DataManager.Inst == null)
+        {
+            Debug.LogError("DataManager가 준비되지 않았습니다.", this);
+            return null;
+        }
+
+        MonsterSkillData data = DataManager.Inst.GetData<MonsterSkillData>(skillId);
+
+        if (data == null)
+        {
+            Debug.LogError($"스킬 데이터를 찾을 수 없습니다: {skillId}", this);
+            return null;
+        }
+
+        string address = data.SkillPrefabPath;
+
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            Debug.LogError($"스킬 프리팹 경로가 비어 있습니다: {skillId}", this);
             return null;
         }
 
@@ -93,21 +121,24 @@ public class MonsterSkillManager : MonoBehaviour
 
         if (ResourceManager.Inst == null)
         {
-            Debug.LogError("ResourceManager가 준비되지 않았습니다.");
+            Debug.LogError("ResourceManager가 준비되지 않았습니다.", this);
             return null;
         }
 
         GameObject attackPrefab = await ResourceManager.Inst.LoadAsset<GameObject>(address);
+
         if (attackPrefab == null || owner == null)
             return null;
 
         MonsterSkillBase skill = owner.gameObject.AddComponent(skillType) as MonsterSkillBase;
+
         if (skill == null)
         {
-            Debug.LogError($"스킬 컴포넌트를 추가하지 못했습니다: {address}");
+            Debug.LogError($"스킬 컴포넌트를 추가하지 못했습니다: {skillId}", this);
             return null;
         }
 
+        skill.SetSkillId(skillId);
         skill.InitSkill(owner, bodyHeight, atk, attackPrefab);
 
         return skill;

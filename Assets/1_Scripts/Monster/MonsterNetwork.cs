@@ -182,23 +182,35 @@ public class MonsterNetwork : NetworkBehaviour
     public bool TryTakeDamageOnServer(float damage, out float actualDamage)
     {
         actualDamage = 0f;
-        if (IsServer == false || IsSpawned == false)
-        {
+
+        if (!IsServer || !IsAlive)
             return false;
-        }
 
         if (float.IsNaN(damage) || float.IsInfinity(damage) || damage <= 0f)
-        {
             return false;
-        }
 
         float previousHp = _curHp.Value;
 
-        _curHp.Value = Mathf.Max(0f, _curHp.Value - damage);
+        _curHp.Value = Mathf.Max(0f, previousHp - damage);
 
         actualDamage = previousHp - _curHp.Value;
 
+        if (_curHp.Value <= 0f)
+        {
+            DieOnServer();
+        }
+
         return true;
+    }
+
+    private void DieOnServer()
+    {
+        if (!IsServer || !IsSpawned)
+            return;
+
+        Debug.Log($"몬스터 사망: {_monsterId.Value}", this);
+
+        NetworkObject.Despawn();
     }
 
     public void HealOnServer(float amount)

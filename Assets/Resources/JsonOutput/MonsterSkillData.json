@@ -1,0 +1,10 @@
+[
+  {
+    "Id": "monster_melee_01",
+    "SkillPrefabPath": "MonsterMeleeAtk/MonsterMeleeAtkSkill"
+  },
+  {
+    "Id": "boss_thorn_atk",
+    "SkillPrefabPath": "BossThornSkill/BossThornAttackObject"
+  }
+]

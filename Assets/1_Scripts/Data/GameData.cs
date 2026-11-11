@@ -179,7 +179,6 @@ public class MonsterData : GameDataBase
     public string Description;
     public float Hp;
     public float Atk;
-    public float[] AtkCollTime;
     public float AtkDistance;
     public float PhysicalResistance;
     public float FireResistance;
@@ -188,6 +187,13 @@ public class MonsterData : GameDataBase
     public float PoisonResistance;
     public bool BleedAble;
     public string[] HaveSkillIdList;
+    public float[] MonsterSkillCollTime;
     public MoveType MonsterType;
     public string MonsterAddressableId;
+}
+
+[Serializable]
+public class MonsterSkillData : GameDataBase
+{ 
+    public string SkillPrefabPath;
 }

@@ -209,13 +209,15 @@ public class Monster : MonoBehaviour
 
     public bool IsTargetInAttackRange()
     {
-        if (VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
+        if (_monsterCollider == null || !_monsterCollider.isActiveAndEnabled || VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
             return false;
 
-        Vector2 monsterPosition = transform.position;
-        Vector2 targetPosition = VisibleTarget.bounds.center;
+        ColliderDistance2D result = _monsterCollider.Distance(VisibleTarget);
 
-        float distance = Vector2.Distance(monsterPosition, targetPosition);
+        if (!result.isValid)
+            return false;
+
+        float distance = Mathf.Max(0f, result.distance);
 
         return distance <= _attackRange;
     }
@@ -255,7 +257,7 @@ public class Monster : MonoBehaviour
         if (data.HaveSkillIdList == null || data.HaveSkillIdList.Length == 0)
             return true;
 
-        if (data.AtkCollTime == null || data.AtkCollTime.Length != data.HaveSkillIdList.Length)
+        if (data.MonsterSkillCollTime == null || data.MonsterSkillCollTime.Length != data.HaveSkillIdList.Length)
         {
             Debug.LogError($"스킬과 쿨타임 배열의 개수가 다릅니다: {id}", this);
             return false;
@@ -282,7 +284,7 @@ public class Monster : MonoBehaviour
 
         for (int i = 0; i < data.HaveSkillIdList.Length; i++)
         {
-            float cooldown = data.AtkCollTime[i];
+            float cooldown = data.MonsterSkillCollTime[i];
 
             if (float.IsNaN(cooldown) || float.IsInfinity(cooldown) || cooldown < 0f)
             {

@@ -13,12 +13,40 @@
     "PoisonResistance": 10,
     "BleedAble": true,
     "HaveSkillIdList": [
-      "skill"
+      "monster_melee_01"
+    ],
+    "MonsterSkillCollTime": [
+      3
     ],
     "MonsterType": 2,
-    "IsMandatoryDropItem": true,
+    "IsMandatoryDropItem": false,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": null,
     "MonsterAddressableId": "Monster/TestMonsterVisualPrefab"
+  },
+  {
+    "Id": "monster_test_boss",
+    "Name": "테스트 보스 데이터",
+    "Description": "테스트 보스 데이터",
+    "Hp": 1000,
+    "Atk": 10,
+    "AtkDistance": null,
+    "PhysicalResistance": 10,
+    "FireResistance": 10,
+    "IceResistance": 10,
+    "ElectricalResistance": 10,
+    "PoisonResistance": 10,
+    "BleedAble": false,
+    "HaveSkillIdList": [
+      "boss_thorn_atk"
+    ],
+    "MonsterSkillCollTime": [
+      2
+    ],
+    "MonsterType": null,
+    "IsMandatoryDropItem": false,
+    "MandatoryDropGroupId": null,
+    "ProbabilityDropGroupId": null,
+    "MonsterAddressableId": "Boss/BossObject"
   }
 ]
