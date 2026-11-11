@@ -1,10 +1,17 @@
 [
   {
     "Id": "monster_melee_01",
+    "SkillClassName": "MonsterMeleeAtk",
     "SkillPrefabPath": "MonsterMeleeAtk/MonsterMeleeAtkSkill"
   },
   {
-    "Id": "boss_thorn_atk",
+    "Id": "boss_thornground_atk",
+    "SkillClassName": "BossThornSkill",
+    "SkillPrefabPath": "BossThornSkill/BossThornAttackObject"
+  },
+  {
+    "Id": "boss_thornplatform_atk",
+    "SkillClassName": "BossPlatformThornSkill",
     "SkillPrefabPath": "BossThornSkill/BossThornAttackObject"
   }
 ]

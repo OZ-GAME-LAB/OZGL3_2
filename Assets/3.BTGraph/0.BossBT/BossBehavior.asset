@@ -30,7 +30,11 @@ MonoBehaviour:
   m_Nodes:
   - rid: 7420511855868641362
   - rid: 7420511855868641372
-  m_VersionTimestamp: 639299533857665646
+  - rid: 7420511869787701331
+  - rid: 7420511869787701345
+  - rid: 7420511869787701350
+  - rid: 7420511869787701355
+  m_VersionTimestamp: 639300155653716039
   m_SerializedVersion: 3
   m_DebugInfo: {fileID: -2911504098292322417}
   m_RuntimeGraph: {fileID: 8865009237907185420}
@@ -67,6 +71,41 @@ MonoBehaviour:
       Tooltip: 
     NamedChildren: []
     IsPlaceholder: 0
+  - Name: BossPlatformThornAction
+    Story: '[Agent] uses platform thorns'
+    RuntimeTypeString: BossPlatformThornAction, Assembly-CSharp, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 10481085571019143630
+      m_Value1: 13440848635234294883
+    Variables:
+    - Name: Agent
+      Type:
+        m_SerializableType: UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null
+      Tooltip: 
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Run In Parallel
+    Story: 
+    RuntimeTypeString: Unity.Behavior.ParallelAllComposite, Unity.Behavior, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 6216542881172158703
+      m_Value1: 2191282456596108218
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: Repeat
+    Story: 
+    RuntimeTypeString: Unity.Behavior.RepeaterModifier, Unity.Behavior, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 3696095273264312494
+      m_Value1: 14191201703811421854
+    Variables: []
+    NamedChildren: []
+    IsPlaceholder: 0
   m_Blackboards: []
   m_MainBlackboardAuthoringAsset: {fileID: 3876145385659835857}
   m_CommandBuffer:
@@ -97,7 +136,7 @@ MonoBehaviour:
           m_Value0: 3335272451348827663
           m_Value1: 11549843281177505721
         m_FieldValues: []
-        Repeat: 1
+        Repeat: 0
         AllowMultipleRepeatsPerTick: 0
     - rid: 7420511855868641363
       type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
@@ -108,11 +147,11 @@ MonoBehaviour:
         m_NodeModel:
           rid: 7420511855868641362
         m_Connections:
-        - rid: 7420511855868641373
+        - rid: 7420511869787701346
     - rid: 7420511855868641372
       type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
       data:
-        Position: {x: -144.90007, y: 167.7}
+        Position: {x: -139.28981, y: 305.14883}
         ID:
           m_Value0: 13011603316896447180
           m_Value1: 11493956665586251750
@@ -137,7 +176,7 @@ MonoBehaviour:
         m_NodeModel:
           rid: 7420511855868641372
         m_Connections:
-        - rid: 7420511855868641363
+        - rid: 7420511869787701352
     - rid: 7420511855868641374
       type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
       data:
@@ -176,6 +215,203 @@ MonoBehaviour:
         IsExposed: 1
         m_IsShared: 0
         m_Value: {fileID: 0}
+    - rid: 7420511869787701331
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: 133.48518, y: 304.1384}
+        ID:
+          m_Value0: 2199170040259721564
+          m_Value1: 822595268101786945
+        Parents: []
+        PortModels:
+        - rid: 7420511869787701332
+        - rid: 7420511869787701333
+        NodeType:
+          m_SerializableType: BossPlatformThornAction, Assembly-CSharp, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 10481085571019143630
+          m_Value1: 13440848635234294883
+        m_FieldValues:
+        - rid: 7420511869787701334
+    - rid: 7420511869787701332
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511869787701331
+        m_Connections:
+        - rid: 7420511869787701357
+    - rid: 7420511869787701333
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511869787701331
+        m_Connections: []
+    - rid: 7420511869787701334
+      type: {class: BehaviorGraphNodeModel/FieldModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        FieldName: Agent
+        Type:
+          m_SerializableType: UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        LocalValue:
+          rid: 7420511869787701335
+        LinkedVariable:
+          rid: 7420511869787701339
+    - rid: 7420511869787701335
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: {fileID: 0}
+    - rid: 7420511869787701339
+      type: {class: 'TypedVariableModel`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: {fileID: 0}
+    - rid: 7420511869787701345
+      type: {class: RunInParallelNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -0.59097415, y: 100.87028}
+        ID:
+          m_Value0: 16305576377251354445
+          m_Value1: 14169359016411108460
+        Parents: []
+        PortModels:
+        - rid: 7420511869787701346
+        - rid: 7420511869787701347
+        NodeType:
+          m_SerializableType: Unity.Behavior.ParallelAllComposite, Unity.Behavior,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 6216542881172158703
+          m_Value1: 2191282456596108218
+        m_FieldValues: []
+        m_Mode: 0
+    - rid: 7420511869787701346
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511869787701345
+        m_Connections:
+        - rid: 7420511855868641363
+    - rid: 7420511869787701347
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511869787701345
+        m_Connections:
+        - rid: 7420511869787701351
+        - rid: 7420511869787701356
+    - rid: 7420511869787701350
+      type: {class: RepeatNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -139.9092, y: 195.30745}
+        ID:
+          m_Value0: 11805205212113193630
+          m_Value1: 16719349442796203150
+        Parents: []
+        PortModels:
+        - rid: 7420511869787701351
+        - rid: 7420511869787701352
+        NodeType:
+          m_SerializableType: Unity.Behavior.RepeaterModifier, Unity.Behavior, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 3696095273264312494
+          m_Value1: 14191201703811421854
+        m_FieldValues: []
+        AllowMultipleRepeatsPerTick: 0
+        <ConditionModels>k__BackingField: []
+        <RequiresAllConditionsTrue>k__BackingField: 0
+        <ShouldTruncateNodeUI>k__BackingField: 0
+        m_RepeatMode: 0
+        <ObserverType>k__BackingField: 0
+        <ReturnFailureOnConditionFail>k__BackingField: 1
+    - rid: 7420511869787701351
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511869787701350
+        m_Connections:
+        - rid: 7420511869787701347
+    - rid: 7420511869787701352
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511869787701350
+        m_Connections:
+        - rid: 7420511855868641373
+    - rid: 7420511869787701355
+      type: {class: RepeatNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: 133.11716, y: 191.56717}
+        ID:
+          m_Value0: 9788245352693652716
+          m_Value1: 4546402164657410683
+        Parents: []
+        PortModels:
+        - rid: 7420511869787701356
+        - rid: 7420511869787701357
+        NodeType:
+          m_SerializableType: Unity.Behavior.RepeaterModifier, Unity.Behavior, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 3696095273264312494
+          m_Value1: 14191201703811421854
+        m_FieldValues: []
+        AllowMultipleRepeatsPerTick: 0
+        <ConditionModels>k__BackingField: []
+        <RequiresAllConditionsTrue>k__BackingField: 0
+        <ShouldTruncateNodeUI>k__BackingField: 0
+        m_RepeatMode: 0
+        <ObserverType>k__BackingField: 0
+        <ReturnFailureOnConditionFail>k__BackingField: 1
+    - rid: 7420511869787701356
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511869787701355
+        m_Connections:
+        - rid: 7420511869787701347
+    - rid: 7420511869787701357
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511869787701355
+        m_Connections:
+        - rid: 7420511869787701332
 --- !u!114 &3155276396224411016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -220,8 +456,8 @@ MonoBehaviour:
   m_Name: BossBehavior Blackboard
   m_EditorClassIdentifier: Unity.Behavior.Authoring::Unity.Behavior.BehaviorBlackboardAuthoringAsset
   AssetID:
-    m_Value0: 0
-    m_Value1: 0
+    m_Value0: 12972971566025137963
+    m_Value1: 14733242773636559739
   m_Variables:
   - rid: 7420511855868641365
   m_VersionTimestamp: 639299519612227268
@@ -273,8 +509,8 @@ MonoBehaviour:
           rid: 7420511855868641367
         BlackboardGroupReferences: []
         Root:
-          rid: 7420511855868641382
-        m_VersionTimestamp: 639299533857665646
+          rid: 7420511869787701385
+        m_VersionTimestamp: 639300155653716039
     - rid: 7420511855868641367
       type: {class: BlackboardReference, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
@@ -285,16 +521,8 @@ MonoBehaviour:
       type: {class: Blackboard, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         m_Variables:
-        - rid: 7420511855868641370
-    - rid: 7420511855868641370
-      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
-      data:
-        GUID:
-          m_Value0: 1
-          m_Value1: 0
-        Name: Self
-        m_Value: {fileID: 0}
-    - rid: 7420511855868641382
+        - rid: 7420511869787701387
+    - rid: 7420511869787701385
       type: {class: Start, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -305,10 +533,58 @@ MonoBehaviour:
         m_Parent:
           rid: -2
         m_Child:
-          rid: 7420511855868641383
-        Repeat: 1
+          rid: 7420511869787701386
+        Repeat: 0
         AllowMultipleRepeatsPerTick: 0
-    - rid: 7420511855868641383
+    - rid: 7420511869787701386
+      type: {class: ParallelAllComposite, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        ID:
+          m_Value0: 16305576377251354445
+          m_Value1: 14169359016411108460
+        Graph:
+          rid: 7420511855868641366
+        m_Parent:
+          rid: 7420511869787701385
+        m_Children:
+        - rid: 7420511869787701388
+        - rid: 7420511869787701389
+        m_RegisteredObservers: []
+    - rid: 7420511869787701387
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 0}
+    - rid: 7420511869787701388
+      type: {class: RepeaterModifier, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        ID:
+          m_Value0: 11805205212113193630
+          m_Value1: 16719349442796203150
+        Graph:
+          rid: 7420511855868641366
+        m_Parent:
+          rid: 7420511869787701386
+        m_Child:
+          rid: 7420511869787701390
+        m_AllowMultipleRepeatsPerTick: 0
+    - rid: 7420511869787701389
+      type: {class: RepeaterModifier, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        ID:
+          m_Value0: 9788245352693652716
+          m_Value1: 4546402164657410683
+        Graph:
+          rid: 7420511855868641366
+        m_Parent:
+          rid: 7420511869787701386
+        m_Child:
+          rid: 7420511869787701391
+        m_AllowMultipleRepeatsPerTick: 0
+    - rid: 7420511869787701390
       type: {class: BossThornAction, ns: , asm: Assembly-CSharp}
       data:
         ID:
@@ -317,6 +593,18 @@ MonoBehaviour:
         Graph:
           rid: 7420511855868641366
         m_Parent:
-          rid: 7420511855868641382
+          rid: 7420511869787701388
         Agent:
-          rid: 7420511855868641370
+          rid: 7420511869787701387
+    - rid: 7420511869787701391
+      type: {class: BossPlatformThornAction, ns: , asm: Assembly-CSharp}
+      data:
+        ID:
+          m_Value0: 2199170040259721564
+          m_Value1: 822595268101786945
+        Graph:
+          rid: 7420511855868641366
+        m_Parent:
+          rid: 7420511869787701389
+        Agent:
+          rid: 7420511869787701387

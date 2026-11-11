@@ -4,6 +4,10 @@ using Cysharp.Threading.Tasks;
 
 public class Boss : MonoBehaviour
 {
+    private readonly HashSet<Transform> _reservedPlatforms = new();
+    private readonly List<Transform> _platformCandidates = new();
+    private readonly List<Transform> _occupiedPlatformCandidates = new();
+
     public MonsterVM ViewModel { get; } = new MonsterVM();
 
     [Header("지면 감지 — 가시덩굴")]
@@ -184,5 +188,74 @@ public class Boss : MonoBehaviour
         }
 
         return true;
+    }
+
+    public bool TryReservePlatforms(List<Transform> results)
+    {
+        results.Clear();
+        _platformCandidates.Clear();
+        _occupiedPlatformCandidates.Clear();
+
+        var manager = Unity.Netcode.NetworkManager.Singleton;
+        if (manager == null || !manager.IsServer)
+            return false;
+
+        if (_platformPoints == null)
+            return false;
+
+        foreach (Transform platform in _platformPoints)
+        {
+            if (platform == null || !platform.gameObject.activeInHierarchy)
+                continue;
+
+            if (_reservedPlatforms.Contains(platform) || _platformCandidates.Contains(platform))
+                continue;
+
+            if (!platform.TryGetComponent(out BoxCollider2D area) || !area.enabled)
+                continue;
+
+            _platformCandidates.Add(platform);
+
+            if (!platform.TryGetComponent(out BossDetector detector))
+                continue;
+
+            detector.GetAlivePlayers(_detectedPlayers);
+
+            if (_detectedPlayers.Count > 0)
+                _occupiedPlatformCandidates.Add(platform);
+        }
+
+        if (_occupiedPlatformCandidates.Count == 0)
+            return false;
+
+        int occupiedIndex = Random.Range(0, _occupiedPlatformCandidates.Count);
+        Transform firstPlatform = _occupiedPlatformCandidates[occupiedIndex];
+
+        results.Add(firstPlatform);
+        _platformCandidates.Remove(firstPlatform);
+
+        if (_platformCandidates.Count > 0)
+        {
+            int randomIndex = Random.Range(0, _platformCandidates.Count);
+            Transform secondPlatform = _platformCandidates[randomIndex];
+
+            results.Add(secondPlatform);
+        }
+
+        foreach (Transform platform in results)
+        {
+            _reservedPlatforms.Add(platform);
+        }
+
+        return true;
+    }
+
+    public void ReleasePlatform(Transform platform)
+    {
+        var manager = Unity.Netcode.NetworkManager.Singleton;
+        if (manager == null || !manager.IsServer)
+            return;
+
+        _reservedPlatforms.Remove(platform);
     }
 }

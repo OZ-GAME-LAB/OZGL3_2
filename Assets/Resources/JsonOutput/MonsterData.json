@@ -38,10 +38,12 @@
     "PoisonResistance": 10,
     "BleedAble": false,
     "HaveSkillIdList": [
-      "boss_thorn_atk"
+      "boss_thornground_atk",
+      "boss_thornplatform_atk"
     ],
     "MonsterSkillCollTime": [
-      2
+      2,
+      5
     ],
     "MonsterType": null,
     "IsMandatoryDropItem": false,

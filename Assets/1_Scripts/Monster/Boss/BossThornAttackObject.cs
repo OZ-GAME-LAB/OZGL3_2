@@ -17,12 +17,10 @@ public class BossThornAttackObject : MonoBehaviour
     [SerializeField, Min(0.01f)]
     private float _riseSeconds = 0.2f;
 
-    [SerializeField, Min(0f)]
-    private float _holdSeconds = 1f;
-
     public event System.Action AttackStarted;
 
     private bool _initialized;
+    private float _holdSeconds;
 
     public bool IsPlaying { get; private set; }
 
@@ -45,12 +43,18 @@ public class BossThornAttackObject : MonoBehaviour
         IsPlaying = false;
     }
 
-    public bool Initialize(float width, float height)
+    public bool Initialize(float width, float height, float holdSeconds)
     {
         if (IsPlaying)
             return false;
 
         _initialized = false;
+
+        if (float.IsNaN(holdSeconds) || float.IsInfinity(holdSeconds) || holdSeconds < 0f)
+        {
+            Debug.LogError("가시 유지 시간이 올바르지 않습니다.", this);
+            return false;
+        }
 
         if (_warningVisual == null || _warningVisual.sprite == null ||
             _thornMask == null || _thornMask.sprite == null ||
@@ -78,6 +82,7 @@ public class BossThornAttackObject : MonoBehaviour
 
         _width = width;
         _height = height;
+        _holdSeconds = holdSeconds;
 
         Vector3 warningSpriteSize = _warningVisual.sprite.bounds.size;
 
@@ -135,6 +140,8 @@ public class BossThornAttackObject : MonoBehaviour
         float totalDuration = warningDuration + riseDuration + holdDuration;
 
         bool attackStarted = false;
+
+        Debug.Log($"가시 시작: 경과={manager.ServerTime.Time - startTime:F3}초, 예고={warningDuration}초, 유지={holdDuration}초", this);
 
         _warningVisual.gameObject.SetActive(false);
         _thornVisual.gameObject.SetActive(false);

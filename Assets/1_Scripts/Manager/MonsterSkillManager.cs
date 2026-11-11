@@ -54,26 +54,19 @@ public class MonsterSkillManager : MonoBehaviour
         }
     }
 
-    public bool TryGetSkillType(string address, out Type skillType)
+    public bool TryGetSkillType(string className, out Type skillType)
     {
         skillType = null;
 
-        if (string.IsNullOrWhiteSpace(address))
-            return false;
-
-        int separatorIndex = address.IndexOf('/');
-
-        if (separatorIndex <= 0 || separatorIndex == address.Length - 1)
+        if (string.IsNullOrWhiteSpace(className))
         {
-            Debug.LogError($"스킬 주소 형식을 확인하세요: {address}");
+            Debug.LogError("스킬 클래스 이름이 비어 있습니다.", this);
             return false;
         }
 
-        string className = address.Substring(0, separatorIndex);
-
         if (!_skillTypesList.TryGetValue(className, out skillType))
         {
-            Debug.LogError($"등록되지 않은 스킬 클래스입니다: {className}");
+            Debug.LogError($"등록되지 않은 스킬 클래스입니다: {className}", this);
             return false;
         }
 
@@ -116,7 +109,7 @@ public class MonsterSkillManager : MonoBehaviour
             return null;
         }
 
-        if (!TryGetSkillType(address, out Type skillType))
+        if (!TryGetSkillType(data.SkillClassName, out Type skillType))
             return null;
 
         if (ResourceManager.Inst == null)

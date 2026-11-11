@@ -194,6 +194,7 @@ public class MonsterData : GameDataBase
 
 [Serializable]
 public class MonsterSkillData : GameDataBase
-{ 
+{
+    public string SkillClassName;
     public string SkillPrefabPath;
 }

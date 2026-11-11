@@ -101,6 +101,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7645520495510980096}
   - component: {fileID: 758974603455360520}
+  - component: {fileID: 4880364200154403307}
   m_Layer: 0
   m_Name: BossThornAttackObject
   m_TagString: Untagged
@@ -147,6 +148,19 @@ MonoBehaviour:
   _warningSeconds: 1
   _riseSeconds: 0.2
   _holdSeconds: 1
+--- !u!210 &4880364200154403307
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1929655086496849322}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 100
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &2753480363946456921
 GameObject:
   m_ObjectHideFlags: 0
@@ -468,7 +482,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 100
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 39ac1457a5524112940fe2cb0ff5384c, type: 3}
   m_Color: {r: 1, g: 0.02020948, b: 0, a: 0.6392157}

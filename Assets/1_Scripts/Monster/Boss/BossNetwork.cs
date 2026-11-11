@@ -163,25 +163,25 @@ public class BossNetwork : NetworkBehaviour
         }
     }
 
-    public void BroadcastThornAttack(string skillId, Vector3 position, float width, float height, double startTime)
+    public void BroadcastThornAttack(string skillId, Vector3 position, float width, float height, double startTime, float holdSeconds)
     {
         if (!IsServer || !IsSpawned)
             return;
 
-        PlayThornAttackClientRpc(skillId, position, width, height, startTime);
+        PlayThornAttackClientRpc(skillId, position, width, height, startTime, holdSeconds);
     }
 
     [ClientRpc]
-    private void PlayThornAttackClientRpc(string skillId, Vector3 position, float width, float height, double startTime)
+    private void PlayThornAttackClientRpc(string skillId, Vector3 position, float width, float height, double startTime, float holdSeconds)
     {
         if (IsServer)
             return;
 
-        ShowThornVisualAsync(skillId, position, width, height, startTime).Forget();
+        ShowThornVisualAsync(skillId, position, width, height, startTime, holdSeconds).Forget();
 
     }
 
-    private async UniTask ShowThornVisualAsync(string skillId, Vector3 position, float width, float height, double startTime)
+    private async UniTask ShowThornVisualAsync(string skillId, Vector3 position, float width, float height, double startTime, float holdSeconds)
     {
         BossThornAttackObject visual = null;
 
@@ -221,7 +221,7 @@ public class BossNetwork : NetworkBehaviour
             visual.transform.localScale = Vector3.one;
             visual.gameObject.SetActive(false);
 
-            if (!visual.Initialize(width, height))
+            if (!visual.Initialize(width, height, holdSeconds))
                 return;
 
             visual.gameObject.SetActive(true);

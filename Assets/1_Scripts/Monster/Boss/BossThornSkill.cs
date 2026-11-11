@@ -12,6 +12,8 @@ public class BossThornSkill : MonsterSkillBase
     [SerializeField, Min(0.01f)]
     private float _thornHeight = 2f;
 
+    [SerializeField, Min(0f)] private float _holdSeconds = 0.5f;
+
     private void OnDestroy()
     {
         if (_attackObject == null)
@@ -113,7 +115,7 @@ public class BossThornSkill : MonsterSkillBase
 
         _attackObject.transform.SetPositionAndRotation(position, Quaternion.identity);
 
-        if (!_attackObject.Initialize(bounds.size.x, _thornHeight))
+        if (!_attackObject.Initialize(bounds.size.x, _thornHeight, _holdSeconds))
             return;
 
         _attackObject.gameObject.SetActive(true);
@@ -130,7 +132,7 @@ public class BossThornSkill : MonsterSkillBase
 
         IsAttacking = true;
 
-        _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime);
+        _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime, _holdSeconds);
 
         StartCoroutine(WaitForAttackEnd());
     }
