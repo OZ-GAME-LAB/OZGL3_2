@@ -1,40 +1,12 @@
-﻿public class PlayerStatViewModel : ViewModelBase
+﻿public class PlayerStatViewModel : UnitVM
 {
-    public void InvokeOnceOnInit()
+    public override void InvokeOnceOnInit()
     {
-        OnPropertyChanged(nameof(Hp));
-        OnPropertyChanged(nameof(MaxHp));
         OnPropertyChanged(nameof(MoveSpeed));
         OnPropertyChanged(nameof(JumpForce));
         OnPropertyChanged(nameof(AttackPower));
-    }
-
-    private float _hp;
-    public float Hp
-    {
-        get => _hp;
-        set
-        {
-            if (_hp != value)
-            {
-                _hp = value;
-                OnPropertyChanged(nameof(Hp));
-            }
-        }
-    }
-
-    private float _maxHp;
-    public float MaxHp
-    {
-        get => _maxHp;
-        set
-        {
-            if (_maxHp == value)
-                return;
-
-            _maxHp = value;
-            OnPropertyChanged(nameof(MaxHp));
-        }
+        OnPropertyChanged(nameof(IsPoisoned));
+        OnPropertyChanged(nameof(IsBossPoisoned));
     }
 
     private float _moveSpeed;

@@ -11,6 +11,23 @@ public class PlayerNetworkStats : NetworkBehaviour
     [SerializeField, Min(0f)] private float _initialMoveSpeed = 12f;
     [SerializeField, Min(0f)] private float _initialJumpForce = 17.5f;
 
+    [Header("상태 이상")]
+    [SerializeField, Range(0f, 100f)] private float _initialPoisonResistance;
+
+    private float _poisonResistance = 0f;
+    public float PoisonResistance => _poisonResistance;
+
+    public bool SetPoisonResistanceOnServer(float value)
+    {
+        if (IsServer == false || IsSpawned == false || IsFinite(value) == false)
+        {
+            return false;
+        }
+
+        _poisonResistance = Mathf.Clamp(value, 0f, 100f);
+        return true;
+    }
+
     private NetworkVariable<float> _maxHp = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private NetworkVariable<float> _hp = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -39,6 +56,7 @@ public class PlayerNetworkStats : NetworkBehaviour
             _attackPower.Value = ValidOrDefault(_initialAttackPower, 100f, 0f);
             _moveSpeed.Value = ValidOrDefault(_initialMoveSpeed, 12f, 0f);
             _jumpForce.Value = ValidOrDefault(_initialJumpForce, 17.5f, 0f);
+            _poisonResistance = Mathf.Clamp(ValidOrDefault(_initialPoisonResistance, 0f, 0f), 0f, 100f);
         }
 
         _maxHp.OnValueChanged += OnStatChanged;
@@ -58,7 +76,7 @@ public class PlayerNetworkStats : NetworkBehaviour
         _moveSpeed.OnValueChanged -= OnStatChanged;
         _jumpForce.OnValueChanged -= OnStatChanged;
 
-        ViewModel.Hp = 0f;
+        ViewModel.CurHp = 0f;
     }
 
     private void OnStatChanged(float previousValue, float newValue)
@@ -69,7 +87,7 @@ public class PlayerNetworkStats : NetworkBehaviour
     private void RefreshViewModel()
     {
         ViewModel.MaxHp = _maxHp.Value;
-        ViewModel.Hp = _hp.Value;
+        ViewModel.CurHp = _hp.Value;
         ViewModel.AttackPower = _attackPower.Value;
         ViewModel.MoveSpeed = _moveSpeed.Value;
         ViewModel.JumpForce = _jumpForce.Value;
