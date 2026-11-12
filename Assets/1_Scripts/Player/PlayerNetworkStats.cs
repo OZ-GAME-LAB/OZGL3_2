@@ -3,8 +3,10 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
-public class PlayerNetworkStats : NetworkBehaviour
+public class PlayerNetworkStats : NetworkUnit
 {
+    protected override bool PoisonUsesMaxHp => true;
+
     [Header("임시 기본 스탯")]
     [SerializeField, Min(1f)] private float _initialMaxHp = 100f;
     [SerializeField, Min(0f)] private float _initialAttackPower = 100f;
@@ -12,27 +14,13 @@ public class PlayerNetworkStats : NetworkBehaviour
     [SerializeField, Min(0f)] private float _initialJumpForce = 17.5f;
 
     [Header("상태 이상")]
-    [SerializeField, Range(0f, 100f)] private float _initialPoisonResistance;
-
-    private float _poisonResistance = 0f;
-    public float PoisonResistance => _poisonResistance;
+    [SerializeField, Range(-1f, 1f)] private float _initialPoisonResistance;
 
     public bool SetPoisonResistanceOnServer(float value)
     {
-        if (IsServer == false || IsSpawned == false || IsFinite(value) == false)
-        {
-            return false;
-        }
-
-        _poisonResistance = Mathf.Clamp(value, 0f, 100f);
-        return true;
+        return SetResistancesOnServer(PhysicalResistance, FireResistance,
+            IceResistance, ElectricalResistance, value);
     }
-
-    private NetworkVariable<float> _maxHp = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
-    private NetworkVariable<float> _hp = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
-    private NetworkVariable<float> _attackPower = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private NetworkVariable<float> _moveSpeed = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -41,27 +29,25 @@ public class PlayerNetworkStats : NetworkBehaviour
     // 플레이어마다 서로 다른 VM 인스턴스를 가짐.
     public PlayerStatViewModel ViewModel { get; } = new();
 
-    public float MaxHp => _maxHp.Value;
-    public float Hp => _hp.Value;
-    public float AttackPower => _attackPower.Value;
-
-    public bool IsAlive => IsSpawned && Hp > 0f;
+    public float Hp => CurrentHp;
 
     public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
         if (IsServer)
         {
-            _maxHp.Value = ValidOrDefault(_initialMaxHp, 100f, 1f);
-            _hp.Value = _maxHp.Value;
-            _attackPower.Value = ValidOrDefault(_initialAttackPower, 100f, 0f);
+            if (!InitializeUnitOnServer(ValidOrDefault(_initialMaxHp, 100f, 1f),
+                ValidOrDefault(_initialAttackPower, 100f, 0f), canReceiveBossPoison: true))
+                return;
+
             _moveSpeed.Value = ValidOrDefault(_initialMoveSpeed, 12f, 0f);
             _jumpForce.Value = ValidOrDefault(_initialJumpForce, 17.5f, 0f);
-            _poisonResistance = Mathf.Clamp(ValidOrDefault(_initialPoisonResistance, 0f, 0f), 0f, 100f);
+            SetPoisonResistanceOnServer(ValidOrDefault(_initialPoisonResistance, 0f, -1f));
         }
 
-        _maxHp.OnValueChanged += OnStatChanged;
-        _hp.OnValueChanged += OnStatChanged;
-        _attackPower.OnValueChanged += OnStatChanged;
+        StatsChanged += RefreshViewModel;
+        StatusChanged += RefreshViewModel;
         _moveSpeed.OnValueChanged += OnStatChanged;
         _jumpForce.OnValueChanged += OnStatChanged;
 
@@ -70,13 +56,17 @@ public class PlayerNetworkStats : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        _maxHp.OnValueChanged -= OnStatChanged;
-        _hp.OnValueChanged -= OnStatChanged;
-        _attackPower.OnValueChanged -= OnStatChanged;
+        StatsChanged -= RefreshViewModel;
+        StatusChanged -= RefreshViewModel;
         _moveSpeed.OnValueChanged -= OnStatChanged;
         _jumpForce.OnValueChanged -= OnStatChanged;
 
         ViewModel.CurHp = 0f;
+        ViewModel.PoisonStackCount = 0;
+        ViewModel.BossPoisonStackCount = 0;
+        ViewModel.BleedStackCount = 0;
+
+        base.OnNetworkDespawn();
     }
 
     private void OnStatChanged(float previousValue, float newValue)
@@ -86,61 +76,19 @@ public class PlayerNetworkStats : NetworkBehaviour
 
     private void RefreshViewModel()
     {
-        ViewModel.MaxHp = _maxHp.Value;
-        ViewModel.CurHp = _hp.Value;
-        ViewModel.AttackPower = _attackPower.Value;
+        ViewModel.MaxHp = MaxHp;
+        ViewModel.CurHp = CurrentHp;
+        ViewModel.AttackPower = AttackPower;
+        ViewModel.PhysicalResistance = PhysicalResistance;
+        ViewModel.FireResistance = FireResistance;
+        ViewModel.IceResistance = IceResistance;
+        ViewModel.ElectricalResistance = ElectricalResistance;
+        ViewModel.PoisonResistance = PoisonResistance;
+        ViewModel.PoisonStackCount = PoisonStackCount;
+        ViewModel.BossPoisonStackCount = BossPoisonStackCount;
+        ViewModel.BleedStackCount = BleedStackCount;
         ViewModel.MoveSpeed = _moveSpeed.Value;
         ViewModel.JumpForce = _jumpForce.Value;
-    }
-
-    // 저항력 계산을 마친 최종 피해량을 받음.
-    public bool TryTakeDamageOnServer(float damage, out float actualDamage)
-    {
-        actualDamage = 0f;
-
-        if (IsServer == false || IsAlive == false)
-        {
-            return false;
-        }
-
-        if (IsFinite(damage) == false || damage <= 0f)
-        {
-            return false;
-        }
-
-        float previousHp = _hp.Value;
-
-        _hp.Value = Mathf.Max(0f, previousHp - damage);
-
-        actualDamage = previousHp - _hp.Value;
-
-        return true;
-    }
-
-    public bool HealOnServer(float amount)
-    {
-        // 사망 상태에서는 일반 회복으로 부활시키지 않음.
-        if (IsServer == false || IsAlive == false)
-        {
-            return false;
-        }
-
-        if (IsFinite(amount) == false || amount <= 0f)
-        {
-            return false;
-        }
-
-        float recoverable = Mathf.Max(0f, MaxHp - Hp);
-        float actualHeal = Mathf.Min(amount, recoverable);
-
-        if (actualHeal <= 0f)
-        {
-            return false;
-        }
-
-        _hp.Value += actualHeal;
-
-        return true;
     }
 
     public bool AddMoveSpeedOnServer(float value)

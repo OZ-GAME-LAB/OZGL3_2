@@ -78,6 +78,9 @@ public enum DamageType
     Electric,
 }
 
+
+
+
 [Serializable]
 public class GameDataBase
 {
@@ -200,6 +203,25 @@ public class MonsterData : GameDataBase
 
 [Serializable]
 public class MonsterSkillData : GameDataBase
-{ 
+{
+    public string SkillClassName;
+    public string DamageType;
+    public bool isPoison;
+    public bool isBossPoison;
     public string SkillPrefabPath;
+
+    public bool TryGetDamageType(out DamageType damageType)
+    {
+        damageType = global::DamageType.Physical;
+
+        if (string.IsNullOrWhiteSpace(DamageType))
+            return true;
+
+        if (!Enum.TryParse(DamageType, out DamageType parsedType)
+            || !Enum.IsDefined(typeof(DamageType), parsedType))
+            return false;
+
+        damageType = parsedType;
+        return true;
+    }
 }

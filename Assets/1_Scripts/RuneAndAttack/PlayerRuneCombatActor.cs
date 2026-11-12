@@ -7,7 +7,7 @@ public class PlayerRuneCombatActor : RuneCombatActor
     private PlayerNetworkStats _stats;
     private PlayerRuneAttackController _attackController;
 
-    private bool _warnedMissingStatusReceiver;
+    protected override NetworkUnit Unit => _stats;
 
     private void Awake()
     {
@@ -16,11 +16,7 @@ public class PlayerRuneCombatActor : RuneCombatActor
     }
 
     public override bool IsAlive => IsSpawned && _stats != null && _stats.IsAlive;
-
-    // 현재는 생존 여부만 검사.
-    // 기절 등 서버의 행동 제한 상태는 이후 여기에 추가.
     public override bool CanAttack => IsAlive && isActiveAndEnabled;
-
     public override float AttackPower => _stats != null ? _stats.AttackPower : 0f;
 
     public override float MaxHp => _stats != null ? _stats.MaxHp : 0f;
@@ -45,73 +41,17 @@ public class PlayerRuneCombatActor : RuneCombatActor
 
     public override bool CanHit(RuneCombatActor target)
     {
-        if (IsAlive == false || target == null || target == this || target.IsAlive == false)
-        {
-            return false;
-        }
-
-        // 현재는 플레이어가 몬스터만 공격하도록 처리.
-        return target is MonsterRuneCombatActor;
+        return IsAlive && target != null && target != this && target.IsAlive
+            && target is MonsterRuneCombatActor;
     }
 
+    // TO USE : 서버에서 플레이어에게 직접 타격을 적용할 때 사용. 실제 HP가 감소하면 공격 중단도 요청.
+    // 독의 주기적 피해는 NetworkUnit이 처리하므로 이 함수를 호출하지 않음.
     public override RuneDamageResult ReceiveDirectDamageOnServer(RuneDamageInfo damageInfo)
     {
-        if (IsServer == false || IsAlive == false)
-        {
-            return default;
-        }
-
-        // 플레이어 저항력 데이터가 아직 없으므로
-        // 현재는 저항력 0으로 처리.
-        float finalDamage = damageInfo.RawDamage;
-
-        bool accepted = _stats.TryTakeDamageOnServer(finalDamage, out float actualDamage);
-
-        if (accepted && _attackController != null)
-        {
-            // 강타 룬이 있다면 이 메서드에서 공격 중단을 막음.
-            // 사망 시에는 공격 컨트롤러의 IsAlive 검사로 중단됨.
+        RuneDamageResult result = base.ReceiveDirectDamageOnServer(damageInfo);
+        if (result.Accepted && result.ActualDamage > 0f && _attackController != null)
             _attackController.TryInterruptOnServer();
-        }
-
-        return new RuneDamageResult
-        {
-            Accepted = accepted,
-            ActualDamage = actualDamage
-        };
-    }
-
-    public override void HealOnServer(float amount)
-    {
-        if (IsServer == false || IsAlive == false)
-        {
-            return;
-        }
-
-        _stats.HealOnServer(amount);
-    }
-
-    public override void ApplyStatusOnServer(string statusProfileId, RuneCombatActor attacker)
-    {
-        if (IsServer == false || IsAlive == false || string.IsNullOrEmpty(statusProfileId))
-        {
-            return;
-        }
-
-        IRuneStatusReceiver receiver = GetComponent<IRuneStatusReceiver>();
-
-        if (receiver == null)
-        {
-            if (_warnedMissingStatusReceiver == false)
-            {
-                Debug.LogWarning("플레이어 상태이상 처리 컴포넌트가 없습니다.", this);
-
-                _warnedMissingStatusReceiver = true;
-            }
-
-            return;
-        }
-
-        receiver.ApplyStatusOnServer(statusProfileId, attacker);
+        return result;
     }
 }

@@ -54,26 +54,19 @@ public class MonsterSkillManager : MonoBehaviour
         }
     }
 
-    public bool TryGetSkillType(string address, out Type skillType)
+    public bool TryGetSkillType(string className, out Type skillType)
     {
         skillType = null;
 
-        if (string.IsNullOrWhiteSpace(address))
-            return false;
-
-        int separatorIndex = address.IndexOf('/');
-
-        if (separatorIndex <= 0 || separatorIndex == address.Length - 1)
+        if (string.IsNullOrWhiteSpace(className))
         {
-            Debug.LogError($"스킬 주소 형식을 확인하세요: {address}");
+            Debug.LogError("스킬 클래스 이름이 비어 있습니다.", this);
             return false;
         }
 
-        string className = address.Substring(0, separatorIndex);
-
         if (!_skillTypesList.TryGetValue(className, out skillType))
         {
-            Debug.LogError($"등록되지 않은 스킬 클래스입니다: {className}");
+            Debug.LogError($"등록되지 않은 스킬 클래스입니다: {className}", this);
             return false;
         }
 
@@ -108,26 +101,7 @@ public class MonsterSkillManager : MonoBehaviour
             return null;
         }
 
-        string address = data.SkillPrefabPath;
-
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            Debug.LogError($"스킬 프리팹 경로가 비어 있습니다: {skillId}", this);
-            return null;
-        }
-
-        if (!TryGetSkillType(address, out Type skillType))
-            return null;
-
-        if (ResourceManager.Inst == null)
-        {
-            Debug.LogError("ResourceManager가 준비되지 않았습니다.", this);
-            return null;
-        }
-
-        GameObject attackPrefab = await ResourceManager.Inst.LoadAsset<GameObject>(address);
-
-        if (attackPrefab == null || owner == null)
+        if (!TryGetSkillType(data.SkillClassName, out Type skillType))
             return null;
 
         MonsterSkillBase skill = owner.gameObject.AddComponent(skillType) as MonsterSkillBase;
@@ -138,10 +112,53 @@ public class MonsterSkillManager : MonoBehaviour
             return null;
         }
 
-        skill.SetSkillId(skillId);
-        skill.InitSkill(owner, bodyHeight, atk, attackPrefab);
+        bool initialized = false;
 
-        return skill;
+        try
+        {
+            string address = data.SkillPrefabPath;
+            GameObject attackPrefab = null;
+
+            if (string.IsNullOrWhiteSpace(address))
+            {
+                if (skill.RequiresAttackPrefab)
+                {
+                    Debug.LogError($"스킬 프리팹 경로가 비어 있습니다: {skillId}", this);
+                    return null;
+                }
+            }
+            else
+            {
+                if (ResourceManager.Inst == null)
+                {
+                    Debug.LogError("ResourceManager가 준비되지 않았습니다.", this);
+                    return null;
+                }
+
+                attackPrefab = await ResourceManager.Inst.LoadAsset<GameObject>(address);
+
+                if (attackPrefab == null || owner == null || skill == null)
+                    return null;
+            }
+
+            if (!skill.ConfigureDamage(data))
+                return null;
+
+            skill.SetSkillId(skillId);
+            skill.InitSkill(owner, bodyHeight, atk, attackPrefab);
+            initialized = true;
+            return skill;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            return null;
+        }
+        finally
+        {
+            if (!initialized && skill != null)
+                Destroy(skill);
+        }
     }
 
 

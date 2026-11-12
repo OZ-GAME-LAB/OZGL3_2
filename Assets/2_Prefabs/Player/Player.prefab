@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1822431701
+  GlobalObjectIdHash: 3793167364
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -411,9 +411,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkStats
   ShowTopMostFoldoutHeaderGroup: 1
   _initialMaxHp: 100
-  _initialAttackPower: 100
+  _initialAttackPower: 1
   _initialMoveSpeed: 12
   _initialJumpForce: 17.5
+  _initialPoisonResistance: 0
 --- !u!114 &5325140983784346215
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -197,4 +197,49 @@ public class WorldInteractionSpawnTest : MonoBehaviour
 
         Debug.LogWarning("보스의 스킬 목록에 BossThornSkill이 없습니다.", _spawnedBoss);
     }
+
+    [ContextMenu("테스트/보스 발판 침식")]
+    public void RequestBossPlatformThornAttack()
+    {
+        if (!CanTestBoss())
+            return;
+
+        if (_spawnedBoss == null)
+        {
+            Debug.LogWarning("먼저 테스트 보스를 생성해 주세요.", this);
+            return;
+        }
+
+        BossNetwork bossNetwork = _spawnedBoss.GetComponent<BossNetwork>();
+
+        if (!bossNetwork.IsSpawned || !bossNetwork.IsReady)
+        {
+            Debug.LogWarning("보스의 스킬 준비가 아직 끝나지 않았습니다.", _spawnedBoss);
+            return;
+        }
+
+        foreach (MonsterSkillBase skill in _spawnedBoss.Skills)
+        {
+            if (skill is not BossPlatformThornSkill platformSkill)
+                continue;
+
+            if (platformSkill.IsAttacking || !platformSkill.IsCooldownComplete)
+            {
+                Debug.Log("발판 침식이 진행 중이거나 쿨타임이 남아 있습니다.", platformSkill);
+                return;
+            }
+
+            platformSkill.UseSkill(null, Vector3.zero);
+
+            Debug.Log(
+                platformSkill.IsAttacking
+                    ? "발판 침식을 시작했습니다."
+                    : "발판 침식이 시작되지 않았습니다. 사용 가능한 발판과 오류 로그를 확인해 주세요.",
+                platformSkill);
+
+            return;
+        }
+
+        Debug.LogWarning("보스의 스킬 목록에 BossPlatformThornSkill이 없습니다.", _spawnedBoss);
+    }
 }

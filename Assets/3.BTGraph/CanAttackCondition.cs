@@ -18,12 +18,7 @@ public partial class CanAttackCondition : Condition
         if (!Agent.Value.TryGetComponent<Monster>(out var monster))
             return false;
 
-        if (monster.Skills.Count == 0)
-            return false;
-
-        MonsterSkillBase skill = monster.Skills[0];
-
-        if (skill == null || skill.IsAttacking)
+        if (!monster.TryGetAttackSkill(out MonsterSkillBase skill) || skill.IsAttacking)
             return false;
 
         return skill.IsCooldownComplete && monster.IsTargetInAttackRange();

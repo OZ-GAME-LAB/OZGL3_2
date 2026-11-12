@@ -8,9 +8,14 @@ public class MonsterVisual : MonoBehaviour
     [SerializeField] private Transform _eyePosition;
     [SerializeField] private Collider2D _monsterCollider;
 
-    public bool CheckMonsterVisualReady()
+    public bool CheckMonsterVisualReady(MoveType movementType = MoveType.Move, bool canAttack = true)
     {
-        if (_groundCheck == null || _rightWallCheck == null || _leftWallCheck == null || _eyePosition == null || _monsterCollider == null)
+        bool movementReady = movementType != MoveType.Move ||
+            (_groundCheck != null && _rightWallCheck != null && _leftWallCheck != null);
+        bool attackReady = !canAttack ||
+            (_eyePosition != null && _rightWallCheck != null && _leftWallCheck != null);
+
+        if (_monsterCollider == null || !movementReady || !attackReady)
         {
             Debug.Log("몬스터 외형 프리팹에 체크용 오브젝트가 할당되지 않았습니다.");
             return false;

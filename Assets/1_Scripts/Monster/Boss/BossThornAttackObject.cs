@@ -11,23 +11,30 @@ public class BossThornAttackObject : MonoBehaviour
     [SerializeField, Min(0.01f)]
     private float _warningHeight = 0.1f;
 
+    [SerializeField]
+    private bool _useAttackHeightForWarning;
+
     [SerializeField, Min(0f)]
     private float _warningSeconds = 1f;
 
     [SerializeField, Min(0.01f)]
     private float _riseSeconds = 0.2f;
 
-    [SerializeField, Min(0f)]
-    private float _holdSeconds = 1f;
-
     public event System.Action AttackStarted;
 
     private bool _initialized;
+    private float _holdSeconds;
 
     public bool IsPlaying { get; private set; }
 
     private float _width;
     private float _height;
+    
+    private float _playWarningSeconds;
+    public float WarningSeconds => _playWarningSeconds;
+
+    public float RiseSeconds => Mathf.Max(0.01f, _riseSeconds);
+
 
     private void OnDisable()
     {
@@ -45,12 +52,24 @@ public class BossThornAttackObject : MonoBehaviour
         IsPlaying = false;
     }
 
-    public bool Initialize(float width, float height)
+    public bool Initialize(float width, float height, float holdSeconds, float warningSeconds)
     {
         if (IsPlaying)
             return false;
 
         _initialized = false;
+
+        if (float.IsNaN(warningSeconds) || float.IsInfinity(warningSeconds) || warningSeconds < 0f)
+        {
+            Debug.LogError("가시 예고 시간이 올바르지 않습니다.", this);
+            return false;
+        }
+
+        if (float.IsNaN(holdSeconds) || float.IsInfinity(holdSeconds) || holdSeconds < 0f)
+        {
+            Debug.LogError("가시 유지 시간이 올바르지 않습니다.", this);
+            return false;
+        }
 
         if (_warningVisual == null || _warningVisual.sprite == null ||
             _thornMask == null || _thornMask.sprite == null ||
@@ -78,12 +97,16 @@ public class BossThornAttackObject : MonoBehaviour
 
         _width = width;
         _height = height;
+        _holdSeconds = holdSeconds;
+        _playWarningSeconds = warningSeconds;
+
+        float warningHeight = _useAttackHeightForWarning ? _height : _warningHeight;
 
         Vector3 warningSpriteSize = _warningVisual.sprite.bounds.size;
 
-        _warningVisual.transform.localScale = new Vector3(_width / warningSpriteSize.x, _warningHeight / warningSpriteSize.y, 1f);
+        _warningVisual.transform.localScale = new Vector3(_width / warningSpriteSize.x, warningHeight / warningSpriteSize.y, 1f);
 
-        _warningVisual.transform.localPosition = new Vector3(0f, _warningHeight * 0.5f, 0f);
+        _warningVisual.transform.localPosition = new Vector3(0f, warningHeight * 0.5f, 0f);
 
         Vector3 maskSpriteSize = _thornMask.sprite.bounds.size;
 
@@ -91,7 +114,16 @@ public class BossThornAttackObject : MonoBehaviour
 
         _thornMask.transform.localPosition = new Vector3(0f, _height * 0.5f, 0f);
 
-        _thornVisual.size = new Vector2(_width / thornScale.x, _height / thornScale.y);
+        if (_thornVisual.drawMode == SpriteDrawMode.Simple)
+        {
+            Vector3 spriteSize = _thornVisual.sprite.bounds.size;
+
+            _thornVisual.transform.localScale = new Vector3(_width / spriteSize.x, _height / spriteSize.y, thornScale.z);
+        }
+        else
+        {
+            _thornVisual.size = new Vector2(_width / thornScale.x, _height / thornScale.y);
+        }
 
         _thornVisual.transform.localPosition = new Vector3(0f, -_height * 0.5f, 0f);
 
@@ -108,6 +140,11 @@ public class BossThornAttackObject : MonoBehaviour
         _initialized = true;
 
         return true;
+    }
+
+    public bool Initialize(float width, float height, float holdSeconds)
+    {
+        return Initialize(width, height, holdSeconds, _warningSeconds);
     }
 
     public void Play(double startTime)
@@ -128,13 +165,15 @@ public class BossThornAttackObject : MonoBehaviour
     {
         var manager = Unity.Netcode.NetworkManager.Singleton;
 
-        float warningDuration = Mathf.Max(0f, _warningSeconds);
-        float riseDuration = Mathf.Max(0.01f, _riseSeconds);
+        float warningDuration = Mathf.Max(0f, _playWarningSeconds);
+        float riseDuration = RiseSeconds;
         float holdDuration = Mathf.Max(0f, _holdSeconds);
 
         float totalDuration = warningDuration + riseDuration + holdDuration;
 
         bool attackStarted = false;
+
+        Debug.Log($"가시 시작: 경과={manager.ServerTime.Time - startTime:F3}초, 예고={warningDuration}초, 유지={holdDuration}초", this);
 
         _warningVisual.gameObject.SetActive(false);
         _thornVisual.gameObject.SetActive(false);
