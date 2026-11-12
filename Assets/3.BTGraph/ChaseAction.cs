@@ -18,7 +18,7 @@ public partial class ChaseAction : Action
         if (Agent == null || Agent.Value == null || !Agent.Value.TryGetComponent<Monster>(out _monster))
             return Status.Failure;
 
-        if (_monster.VisibleTarget == null || !_monster.VisibleTarget.isActiveAndEnabled)
+        if (!_monster.CanMove || _monster.VisibleTarget == null || !_monster.VisibleTarget.isActiveAndEnabled)
             return Status.Failure;
 
         return Status.Running;
@@ -29,7 +29,7 @@ public partial class ChaseAction : Action
         if (_monster == null)
             return Status.Failure;
 
-        if (_monster.VisibleTarget == null || !_monster.VisibleTarget.isActiveAndEnabled)
+        if (!_monster.CanMove || _monster.VisibleTarget == null || !_monster.VisibleTarget.isActiveAndEnabled)
             return Status.Failure;
 
         _monster.MonsterChaisingTarget();

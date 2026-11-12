@@ -4,14 +4,14 @@ using UnityEngine;
 public class BossThornHitbox : MonoBehaviour
 {
     private BossNetwork _owner;
-    private float _damage;
+    private RuneDamageInfo _damageInfo;
 
     private readonly HashSet<PlayerRuneCombatActor> _hitPlayers = new();
 
-    public void Initialize(BossNetwork owner, float damage)
+    public void Initialize(BossNetwork owner, RuneDamageInfo damageInfo)
     {
         _owner = owner;
-        _damage = damage;
+        _damageInfo = damageInfo;
     }
 
     private void OnEnable()
@@ -24,7 +24,7 @@ public class BossThornHitbox : MonoBehaviour
         if (_owner == null || !_owner.IsServer || !_owner.IsSpawned || !_owner.IsReady)
             return;
 
-        if (float.IsNaN(_damage) || float.IsInfinity(_damage) || _damage <= 0f)
+        if (float.IsNaN(_damageInfo.RawDamage) || float.IsInfinity(_damageInfo.RawDamage) || _damageInfo.RawDamage <= 0f)
             return;
 
         if (other.isTrigger)
@@ -38,14 +38,7 @@ public class BossThornHitbox : MonoBehaviour
         if (!_hitPlayers.Add(player))
             return;
 
-        RuneDamageInfo damageInfo = new RuneDamageInfo
-        {
-            Attacker = null,
-            RawDamage = _damage,
-            Element = RuneAttackElement.Physical
-        };
-
-        RuneDamageResult result = player.ReceiveDirectDamageOnServer(damageInfo);
+        RuneDamageResult result = player.ReceiveDirectDamageOnServer(_damageInfo);
 
         if (result.Accepted)
         {

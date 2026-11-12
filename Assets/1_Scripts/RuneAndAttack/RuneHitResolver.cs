@@ -2,6 +2,8 @@
 
 public static class RuneHitResolver 
 {
+    // TO USE : 서버에서 플레이어 룬 공격이 적중했을 때 사용. 피해·룬 상태이상·흡혈을 함께 처리.
+    // attackPower에는 룬 배율을 적용하기 전 공격력을 전달.
     public static bool TryHitOnServer(RuneCombatActor attacker, RuneCombatActor target, AttackProfile profile, float attackPower)
     {
         if (attacker == null ||
@@ -43,7 +45,7 @@ public static class RuneHitResolver
                 break;
             }
 
-            target.ApplyStatusOnServer(statusId, attacker);
+            target.ApplyStatusOnServer(statusId, damageInfo.RawDamage);
         }
 
         // 박쥐: 실제 체력 감소량에 비례해서 회복.

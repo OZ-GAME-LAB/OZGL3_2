@@ -16,7 +16,13 @@ public partial class PatrolAction : Action
 
     protected override Status OnStart()
     {
-        if (Agent.Value == null || !Agent.Value.TryGetComponent<Monster>(out _monster))
+        if (Agent == null || Agent.Value == null || !Agent.Value.TryGetComponent<Monster>(out _monster))
+            return Status.Failure;
+
+        if (!_monster.CanMove)
+            return Status.Running;
+
+        if (!_monster.HasPatrolPoints)
             return Status.Failure;
 
         _targetPosition = _monster.MonsterPatricPositionSelect();
@@ -27,6 +33,12 @@ public partial class PatrolAction : Action
     protected override Status OnUpdate()
     {
         if (_monster == null)
+            return Status.Failure;
+
+        if (!_monster.CanMove)
+            return Status.Running;
+
+        if (!_monster.HasPatrolPoints)
             return Status.Failure;
 
         if (_monster.MonsterPatricMoveAndCheck(_targetPosition))

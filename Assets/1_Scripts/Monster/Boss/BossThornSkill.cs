@@ -1,6 +1,7 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;
-using System.Collections;
 
 [Preserve]
 public class BossThornSkill : MonsterSkillBase
@@ -11,6 +12,8 @@ public class BossThornSkill : MonsterSkillBase
 
     [SerializeField, Min(0.01f)]
     private float _thornHeight = 2f;
+
+    [SerializeField, Min(0f)] private float _holdSeconds = 0.5f;
 
     private void OnDestroy()
     {
@@ -77,7 +80,7 @@ public class BossThornSkill : MonsterSkillBase
             return;
         }
 
-        hitbox.Initialize(_bossNetwork, atk);
+        hitbox.Initialize(_bossNetwork, CreateDamageInfo(atk));
 
         _attackObject.AttackStarted += StartCooldown;
     }
@@ -113,7 +116,7 @@ public class BossThornSkill : MonsterSkillBase
 
         _attackObject.transform.SetPositionAndRotation(position, Quaternion.identity);
 
-        if (!_attackObject.Initialize(bounds.size.x, _thornHeight))
+        if (!_attackObject.Initialize(bounds.size.x, _thornHeight, _holdSeconds))
             return;
 
         _attackObject.gameObject.SetActive(true);
@@ -130,7 +133,7 @@ public class BossThornSkill : MonsterSkillBase
 
         IsAttacking = true;
 
-        _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime);
+        _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime, _holdSeconds, _attackObject.WarningSeconds);
 
         StartCoroutine(WaitForAttackEnd());
     }

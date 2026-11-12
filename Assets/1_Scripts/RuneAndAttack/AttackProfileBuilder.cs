@@ -82,7 +82,7 @@ public static class AttackProfileBuilder
 
                 case "Element":
                     {
-                        if (rune.EffectType != "ChangeElement" || Enum.TryParse(rune.DamageType, out RuneAttackElement element) == false || Enum.IsDefined(typeof(RuneAttackElement), element) == false)
+                        if (rune.EffectType != "ChangeElement" || Enum.TryParse(rune.DamageType, out DamageType element) == false || Enum.IsDefined(typeof(DamageType), element) == false)
                         {
                             error = $"속성 룬 설정이 올바르지 않습니다: {rune.Id}";
                             return false;

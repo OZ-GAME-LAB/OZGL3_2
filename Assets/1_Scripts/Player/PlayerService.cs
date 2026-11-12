@@ -3,11 +3,14 @@
 public class PlayerService
 {
     // 서버에서 호출해야 실제로 적용됨.
+    // TO USE : 서버에서 지정한 플레이어를 회복할 때 사용. target으로 회복할 플레이어를 구분.
     public bool AddHp(PlayerNetworkStats target, float value)
     {
         return target != null && target.HealOnServer(value);
     }
 
+    // TO USE : 서버에서 지정한 플레이어 HP에 계산 완료된 최종 피해만 적용할 때 사용.
+    // 저항력 계산·독 부여·공격 중단이 필요한 직접 타격은 대상 Actor의 ReceiveDirectDamageOnServer를 사용.
     public bool DecreaseHp(PlayerNetworkStats target, float value)
     {
         if (target == null)

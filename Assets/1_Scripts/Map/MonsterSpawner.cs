@@ -19,9 +19,9 @@ public class MonsterSpawner : MonoBehaviour
             return;
         }
 
-        if (_patrolArea == null)
+        if (ObjectManager.Inst == null)
         {
-            Debug.LogWarning("몬스터의 순찰 구역을 연결하세요.", this);
+            Debug.LogWarning("ObjectManager가 준비되지 않았습니다.", this);
             return;
         }
 
