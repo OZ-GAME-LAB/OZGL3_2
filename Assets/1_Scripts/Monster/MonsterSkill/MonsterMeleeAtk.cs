@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using static UnityEngine.UI.GridLayoutGroup;
 
@@ -9,6 +9,7 @@ public class MonsterMeleeAtk : MonsterSkillBase
 
     [SerializeField, Min(0.01f)]
     private float _attackDuration = 0.3f;
+
     [SerializeField, Min(0f)]
     private float _dashPower = 5f;
 
@@ -20,7 +21,7 @@ public class MonsterMeleeAtk : MonsterSkillBase
     {
         if (owner == null || attackPrefab == null || bodyHeight <= 0f)
         {
-            Debug.LogError("¸ó½ºÅÍ º»Ã¼, °ø°İ ÇÁ¸®ÆÕ, ¸ö ³ôÀÌ¸¦ È®ÀÎÇÏ¼¼¿ä.", this);
+            Debug.LogError("ëª¬ìŠ¤í„° ë³¸ì²´, ê³µê²© í”„ë¦¬íŒ¹, ëª¸ ë†’ì´ë¥¼ í™•ì¸í•˜ì„¸ìš”.", this);
             return;
         }
 
@@ -31,13 +32,13 @@ public class MonsterMeleeAtk : MonsterSkillBase
 
         if (!owner.TryGetComponent(out _ownerBody))
         {
-            Debug.LogError("¸ó½ºÅÍ º»Ã¼¿¡ Rigidbody2D°¡ ÇÊ¿äÇÕ´Ï´Ù.", this);
+            Debug.LogError("ëª¬ìŠ¤í„° ë³¸ì²´ì— Rigidbody2Dê°€ í•„ìš”í•©ë‹ˆë‹¤.", this);
             return;
         }
 
         if (!attackPrefab.TryGetComponent<BoxCollider2D>(out _) || !attackPrefab.TryGetComponent<MonsterMeleeAtkObj>(out _))
         {
-            Debug.LogError("°ø°İ ÇÁ¸®ÆÕ ·çÆ®¿¡ BoxCollider2D¿Í MonsterMeleeAtkObj°¡ ÇÊ¿äÇÕ´Ï´Ù.", this);
+            Debug.LogError("ê³µê²© í”„ë¦¬íŒ¹ ë£¨íŠ¸ì— BoxCollider2Dì™€ MonsterMeleeAtkObjê°€ í•„ìš”í•©ë‹ˆë‹¤.", this);
             return;
         }
 

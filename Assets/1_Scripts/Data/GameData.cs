@@ -70,7 +70,13 @@ public enum ValueOperation
     MultiplePercent = 2
 }
 
-
+public enum DamageType
+{
+    Physical,
+    Fire,
+    Ice,
+    Electric,
+}
 
 [Serializable]
 public class GameDataBase

@@ -45,6 +45,8 @@ public class MonsterNetwork : NetworkBehaviour
     public float MaxHp => _maxHp.Value;
     public bool IsAlive => IsSpawned && _curHp.Value > 0f;
     public float AttackPower { get; private set; }
+    public float PoisonResistance { get; private set; }
+    public bool BleedAble { get; private set; }
 
     private void Awake()
     {
@@ -101,6 +103,8 @@ public class MonsterNetwork : NetworkBehaviour
             _maxHp.Value = Mathf.Max(0f, data.Hp);
             _curHp.Value = _maxHp.Value;
             AttackPower = Mathf.Max(0f, data.Atk);
+            PoisonResistance = (float.IsNaN(data.PoisonResistance) || float.IsInfinity(data.PoisonResistance)) ? 0f : Mathf.Clamp(data.PoisonResistance, 0f, 100f);
+            BleedAble = data.BleedAble;
         }
 
         _maxHp.OnValueChanged += OnMaxHpChanged;
@@ -208,6 +212,35 @@ public class MonsterNetwork : NetworkBehaviour
         if (!IsServer || !IsSpawned)
             return;
 
+        // 몬스터 사망 처리에 로직 추가
+        if (_bt != null)
+        {
+            _bt.enabled = false;
+        }
+
+        if (_monster != null)
+        {
+            _monster.enabled = false;
+
+            foreach (MonsterSkillBase skill in _monster.Skills)
+            {
+                if (skill != null)
+                {
+                    // 현재 MonsterMeleeAtk의 OnDisable에서 진행 중인 공격 코루틴과 공격 판정을 정리.
+                    skill.enabled = false;
+                }
+            }
+        }
+
+        if (_body != null)
+        {
+            _body.linearVelocity = Vector2.zero;
+            _body.angularVelocity = 0f;
+            _body.simulated = false;
+        }
+
+        // 현재는 사망 즉시 제거.
+        // 사망 애니메이션이나 드롭이 필요하면 이 위치에 연결.
         Debug.Log($"몬스터 사망: {_monsterId.Value}", this);
 
         NetworkObject.Despawn();

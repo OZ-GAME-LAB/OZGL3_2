@@ -8,6 +8,9 @@ public class MonsterMeleeAtkObj : MonoBehaviour
     private float _damage;
     private MonsterRuneCombatActor _attacker;
 
+    [Header("적중 시 상태이상 없으면 비우기")]
+    [SerializeField] private string _onHitStatusProfileId;
+
     private readonly HashSet<PlayerRuneCombatActor> _hitPlayers = new();
 
     public void Init(float damage)
@@ -59,7 +62,18 @@ public class MonsterMeleeAtkObj : MonoBehaviour
         };
 
         //ApplyDamage를 사용하지 않고 ReceiveDirectDamageOnServer를 호출하도록 수정했습니다(서버 때문에)
-        target.ReceiveDirectDamageOnServer(damageInfo);
+        //target.ReceiveDirectDamageOnServer(damageInfo);
+
+        RuneDamageResult result = target.ReceiveDirectDamageOnServer(damageInfo);
+
+        if (result.Accepted &&
+            target != null &&
+            target.IsSpawned &&
+            target.IsAlive &&
+            string.IsNullOrEmpty(_onHitStatusProfileId) == false)
+        {
+            target.ApplyStatusOnServer(_onHitStatusProfileId, _attacker);
+        }
 
         /*
         if (_damage <= 0f)

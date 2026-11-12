@@ -20,6 +20,28 @@ public class MonsterRuneCombatActor : RuneCombatActor
     // 현재 MonsterNetwork.AttackPower는 서버에서 초기화한 값.
     public override float AttackPower => _monsterNetwork != null ? _monsterNetwork.AttackPower : 0f;
 
+    public override float MaxHp => _monsterNetwork != null ? _monsterNetwork.MaxHp : 0f;
+
+    public override float PoisonResistance => _monsterNetwork != null ? _monsterNetwork.PoisonResistance : 0f;
+
+    public override bool CanReceiveBleed => _monsterNetwork != null && _monsterNetwork.BleedAble;
+
+    public override RuneDamageResult ReceiveStatusDamageOnServer(float finalDamage)
+    {
+        if (IsServer == false || IsAlive == false)
+        {
+            return default;
+        }
+
+        bool accepted = _monsterNetwork.TryTakeDamageOnServer(finalDamage, out float actualDamage);
+
+        return new RuneDamageResult
+        {
+            Accepted = accepted,
+            ActualDamage = actualDamage
+        };
+    }
+
     public override bool CanHit(RuneCombatActor target)
     {
         if (IsAlive == false || target == null || target == this || target.IsAlive == false)

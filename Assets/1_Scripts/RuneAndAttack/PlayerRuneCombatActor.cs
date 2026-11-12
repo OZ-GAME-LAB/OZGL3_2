@@ -23,6 +23,26 @@ public class PlayerRuneCombatActor : RuneCombatActor
 
     public override float AttackPower => _stats != null ? _stats.AttackPower : 0f;
 
+    public override float MaxHp => _stats != null ? _stats.MaxHp : 0f;
+
+    public override float PoisonResistance => _stats != null ? _stats.PoisonResistance : 0f;
+
+    public override RuneDamageResult ReceiveStatusDamageOnServer(float finalDamage)
+    {
+        if (IsServer == false || IsAlive == false)
+        {
+            return default;
+        }
+
+        bool accepted = _stats.TryTakeDamageOnServer(finalDamage, out float actualDamage);
+
+        return new RuneDamageResult
+        {
+            Accepted = accepted,
+            ActualDamage = actualDamage
+        };
+    }
+
     public override bool CanHit(RuneCombatActor target)
     {
         if (IsAlive == false || target == null || target == this || target.IsAlive == false)
