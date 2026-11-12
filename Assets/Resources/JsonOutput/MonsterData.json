@@ -41,13 +41,15 @@
       "boss_thornground_atk",
       "boss_thornplatform_atk",
       "boss_thorndirection_atk",
-      "boss_poison_atk"
+      "boss_poison_atk",
+      "boss_flower_summon"
     ],
     "MonsterSkillCollTime": [
       2,
       5,
       6,
-      4
+      4,
+      2
     ],
     "MonsterType": null,
     "IsMandatoryDropItem": false,
@@ -68,12 +70,16 @@
     "ElectricalResistance": 0,
     "PoisonResistance": 0,
     "BleedAble": false,
-    "HaveSkillIdList": null,
-    "MonsterSkillCollTime": null,
+    "HaveSkillIdList": [
+      "flower_death_heal"
+    ],
+    "MonsterSkillCollTime": [
+      0
+    ],
     "MonsterType": 1,
     "IsMandatoryDropItem": false,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": null,
-    "MonsterAddressableId": null
+    "MonsterAddressableId": "Monster/TestFlowerVisualPrefab"
   }
 ]

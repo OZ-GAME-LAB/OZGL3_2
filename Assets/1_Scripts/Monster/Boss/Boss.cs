@@ -264,6 +264,40 @@ public class Boss : MonoBehaviour
         return true;
     }
 
+    public bool TryReserveFlowerPlatform(out Transform selectedPlatform, out Vector3 spawnPosition)
+    {
+        selectedPlatform = null;
+        spawnPosition = default;
+        _platformCandidates.Clear();
+
+        var manager = Unity.Netcode.NetworkManager.Singleton;
+        if (manager == null || !manager.IsServer || _platformPoints == null)
+            return false;
+
+        foreach (Transform platform in _platformPoints)
+        {
+            if (platform == null || !platform.gameObject.activeInHierarchy)
+                continue;
+
+            if (_reservedPlatforms.Contains(platform) || _platformCandidates.Contains(platform))
+                continue;
+
+            if (!platform.TryGetComponent(out BoxCollider2D area) || !area.enabled)
+                continue;
+
+            _platformCandidates.Add(platform);
+        }
+
+        if (_platformCandidates.Count == 0)
+            return false;
+
+        selectedPlatform = _platformCandidates[Random.Range(0, _platformCandidates.Count)];
+        Bounds bounds = selectedPlatform.GetComponent<BoxCollider2D>().bounds;
+        spawnPosition = new Vector3(bounds.center.x, bounds.max.y, selectedPlatform.position.z);
+        _reservedPlatforms.Add(selectedPlatform);
+        return true;
+    }
+
     public void ReleasePlatform(Transform platform)
     {
         var manager = Unity.Netcode.NetworkManager.Singleton;

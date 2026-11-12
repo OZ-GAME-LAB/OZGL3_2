@@ -22,6 +22,7 @@ public class MonsterNetwork : NetworkUnit
     protected override bool IsReadyForCombat => IsReady;
     public bool CanAttack => IsReady && IsAlive && AttackPower > 0f;
     public event System.Action<MonsterNetwork> Died;
+    public event System.Action<MonsterNetwork> Despawned;
 
     private void RefreshViewModel()
     {
@@ -183,7 +184,15 @@ public class MonsterNetwork : NetworkUnit
         if (_body != null)
             _body.simulated = false;
 
-        base.OnNetworkDespawn();
+        try
+        {
+            if (IsServer)
+                Despawned?.Invoke(this);
+        }
+        finally
+        {
+            base.OnNetworkDespawn();
+        }
     }
 
     // TO USE : 서버에서 몬스터 HP에 계산 완료된 최종 피해만 적용하는 기존 호출용 함수.
@@ -191,6 +200,57 @@ public class MonsterNetwork : NetworkUnit
     public void TakeDamageOnServer(float damage)
     {
         TryTakeDamageOnServer(damage, out _);
+    }
+
+    public void BroadcastHealArea(string skillId, Vector3 position, double expiresAt)
+    {
+        if (IsServer && IsSpawned)
+            PlayHealAreaClientRpc(skillId, position, expiresAt);
+    }
+
+    [ClientRpc]
+    private void PlayHealAreaClientRpc(string skillId, Vector3 position, double expiresAt)
+    {
+        if (IsServer)
+            return;
+
+        ShowHealAreaAsync(NetworkManager, skillId, position, expiresAt).Forget();
+    }
+
+    private static async UniTask ShowHealAreaAsync(NetworkManager manager, string skillId, Vector3 position, double expiresAt)
+    {
+        try
+        {
+            if (manager == null || !manager.IsListening || manager.ServerTime.Time >= expiresAt
+                || DataManager.Inst == null || ResourceManager.Inst == null || string.IsNullOrWhiteSpace(skillId))
+                return;
+
+            MonsterSkillData data = DataManager.Inst.GetData<MonsterSkillData>(skillId);
+            if (data == null || string.IsNullOrWhiteSpace(data.SkillPrefabPath))
+            {
+                Debug.LogError($"회복 이펙트의 스킬 데이터를 확인하세요: {skillId}");
+                return;
+            }
+
+            GameObject prefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.SkillPrefabPath);
+            if (manager == null || !manager.IsListening || manager.ServerTime.Time >= expiresAt || prefab == null)
+                return;
+
+            if (!prefab.TryGetComponent(out HealAreaObject healPrefab) || !healPrefab.HasValidSettings())
+            {
+                Debug.LogError($"회복 프리팹의 HealAreaObject 설정을 확인하세요: {skillId}");
+                return;
+            }
+
+            HealAreaObject area = Instantiate(healPrefab, position, Quaternion.identity);
+            area.gameObject.SetActive(true);
+            if (!area.Play(manager, expiresAt, false))
+                Destroy(area.gameObject);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception);
+        }
     }
 
     protected override void OnDiedOnServer()

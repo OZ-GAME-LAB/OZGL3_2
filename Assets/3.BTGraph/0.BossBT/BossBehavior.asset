@@ -38,7 +38,9 @@ MonoBehaviour:
   - rid: 7420511892409417829
   - rid: 7420511892409420011
   - rid: 7420511892409420029
-  m_VersionTimestamp: 639300900260869639
+  - rid: 7420511892409430011
+  - rid: 7420511892409430029
+  m_VersionTimestamp: 639300901580928901
   m_SerializedVersion: 3
   m_DebugInfo: {fileID: -2911504098292322417}
   m_RuntimeGraph: {fileID: 8865009237907185420}
@@ -132,6 +134,21 @@ MonoBehaviour:
     RuntimeTypeID:
       m_Value0: 18323020364959221774
       m_Value1: 11611245046551607441
+    Variables:
+    - Name: Agent
+      Type:
+        m_SerializableType: UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null
+      Tooltip: 
+    NamedChildren: []
+    IsPlaceholder: 0
+  - Name: BossFlowerSummonAction
+    Story: '[Agent] summons a flower'
+    RuntimeTypeString: BossFlowerSummonAction, Assembly-CSharp, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeID:
+      m_Value0: 13060507099524133825
+      m_Value1: 7183809792649447848
     Variables:
     - Name: Agent
       Type:
@@ -358,6 +375,7 @@ MonoBehaviour:
         - rid: 7420511869787701356
         - rid: 7420511892409417830
         - rid: 7420511892409420030
+        - rid: 7420511892409430030
     - rid: 7420511869787701350
       type: {class: RepeatNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
       data:
@@ -662,6 +680,108 @@ MonoBehaviour:
           rid: 7420511892409420029
         m_Connections:
         - rid: 7420511892409420012
+    - rid: 7420511892409430011
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: 800, y: 307.17398}
+        ID:
+          m_Value0: 13950417144373458585
+          m_Value1: 7140943221723516436
+        Parents: []
+        PortModels:
+        - rid: 7420511892409430012
+        - rid: 7420511892409430013
+        NodeType:
+          m_SerializableType: BossFlowerSummonAction, Assembly-CSharp, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 13060507099524133825
+          m_Value1: 7183809792649447848
+        m_FieldValues:
+        - rid: 7420511892409430014
+    - rid: 7420511892409430012
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511892409430011
+        m_Connections:
+        - rid: 7420511892409430031
+    - rid: 7420511892409430013
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511892409430011
+        m_Connections: []
+    - rid: 7420511892409430014
+      type: {class: BehaviorGraphNodeModel/FieldModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        FieldName: Agent
+        Type:
+          m_SerializableType: UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        LocalValue:
+          rid: 7420511892409430015
+        LinkedVariable:
+          rid: 7420511892409417857
+    - rid: 7420511892409430015
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: {fileID: 0}
+    - rid: 7420511892409430029
+      type: {class: RepeatNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: 800, y: 196.59528}
+        ID:
+          m_Value0: 8669395763328647894
+          m_Value1: 11440506110489331503
+        Parents: []
+        PortModels:
+        - rid: 7420511892409430030
+        - rid: 7420511892409430031
+        NodeType:
+          m_SerializableType: Unity.Behavior.RepeaterModifier, Unity.Behavior, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 3696095273264312494
+          m_Value1: 14191201703811421854
+        m_FieldValues: []
+        AllowMultipleRepeatsPerTick: 0
+        <ConditionModels>k__BackingField: []
+        <RequiresAllConditionsTrue>k__BackingField: 0
+        <ShouldTruncateNodeUI>k__BackingField: 0
+        m_RepeatMode: 0
+        <ObserverType>k__BackingField: 0
+        <ReturnFailureOnConditionFail>k__BackingField: 1
+    - rid: 7420511892409430030
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511892409430029
+        m_Connections:
+        - rid: 7420511869787701347
+    - rid: 7420511892409430031
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 7420511892409430029
+        m_Connections:
+        - rid: 7420511892409430012
 --- !u!114 &3155276396224411016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -760,7 +880,7 @@ MonoBehaviour:
         BlackboardGroupReferences: []
         Root:
           rid: 7420511892409417878
-        m_VersionTimestamp: 639300900260869639
+        m_VersionTimestamp: 639300901580928901
     - rid: 7420511855868641367
       type: {class: BlackboardReference, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
