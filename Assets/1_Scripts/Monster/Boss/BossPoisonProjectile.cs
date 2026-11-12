@@ -22,7 +22,7 @@ public class BossPoisonProjectile : MonoBehaviour
     private Vector3 _visualScale;
     private Color _visualColor;
     private double _startTime;
-    private float _damage;
+    private RuneDamageInfo _damageInfo;
     private float _previousFlightTime;
     private bool _serverAttack;
     private bool _flightStarted;
@@ -46,19 +46,19 @@ public class BossPoisonProjectile : MonoBehaviour
             && IsFinite(_flightSeconds) && _flightSeconds > 0f;
     }
 
-    public void Play(BossNetwork owner, bool serverAttack, float damage,
+    public void Play(BossNetwork owner, bool serverAttack, RuneDamageInfo damageInfo,
         Vector3 start, Vector3 control, Vector3 end, double startTime,
         float warningSeconds, float flightSeconds)
     {
         _warningSeconds = warningSeconds;
         _flightSeconds = flightSeconds;
         if (owner == null || !owner.IsSpawned || !HasValidSettings()
-            || (serverAttack && (!owner.IsServer || !IsFinite(damage) || damage <= 0f)))
+            || (serverAttack && (!owner.IsServer || !IsFinite(damageInfo.RawDamage) || damageInfo.RawDamage <= 0f)))
             return;
 
         _owner = owner;
         _serverAttack = serverAttack;
-        _damage = damage;
+        _damageInfo = damageInfo;
         _start = start;
         _control = control;
         _end = end;
@@ -175,12 +175,7 @@ public class BossPoisonProjectile : MonoBehaviour
         transform.position = from + (Vector3)(delta / distance * nearestDistance);
         if (nearestPlayer != null)
         {
-            RuneDamageResult result = nearestPlayer.ReceiveDirectDamageOnServer(new RuneDamageInfo
-            {
-                Attacker = null,
-                RawDamage = _damage,
-                Element = RuneAttackElement.Physical
-            });
+            RuneDamageResult result = nearestPlayer.ReceiveDirectDamageOnServer(_damageInfo);
             if (result.Accepted)
                 Debug.Log($"독액 적중: {nearestPlayer.name}, 실제 피해: {result.ActualDamage}", nearestPlayer);
         }

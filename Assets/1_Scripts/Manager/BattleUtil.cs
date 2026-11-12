@@ -1,36 +1,41 @@
 ﻿using System;
+using System.Collections.Generic;
 
 public static class BattleUtil
 {
     public const int MaxPoisonStacks = 5;
     public const double PoisonDurationSeconds = 10d;
     public const double PoisonTickIntervalSeconds = 1d;
+    public const double PlayerPoisonMaxHpRatio = 0.03d;
+    public const double MonsterPoisonDamageRatio = 0.05d;
     public const int MaxBossPoisonStacks = 3;
     public const double BossPoisonProtectionSeconds = 1d;
+    public const double BossPoisonMaxHpRatio = 0.1d;
+    public const double ProtectedBossPoisonMaxHpRatio = 0.02d;
     public const int BleedBurstStacks = 5;
+    public const double BleedDamageRatio = 0.2d;
     public const double BleedDecayDelaySeconds = 3d;
     public const double BleedDecayIntervalSeconds = 1d;
 
-    public static float CalculateDamage(UnitVM target, float rawDamage, DamageType damageType)
+    // TO USE : 피해 속성에 맞는 저항력을 적용한 수치를 계산할 때 사용. HP는 변경하지 않음.
+    public static float CalculateDamage(float rawDamage, DamageType damageType,
+        float physicalResistance, float fireResistance, float iceResistance, float electricalResistance)
     {
-        if (target == null)
-            return 0f;
-
         float resistance;
 
         switch (damageType)
         {
             case DamageType.Physical:
-                resistance = target.PhysicalResistance;
+                resistance = physicalResistance;
                 break;
             case DamageType.Fire:
-                resistance = target.FireResistance;
+                resistance = fireResistance;
                 break;
             case DamageType.Ice:
-                resistance = target.IceResistance;
+                resistance = iceResistance;
                 break;
             case DamageType.Electric:
-                resistance = target.ElectricalResistance;
+                resistance = electricalResistance;
                 break;
             default:
                 return 0f;
@@ -39,214 +44,267 @@ public static class BattleUtil
         return CalculateResistedDamage(rawDamage, resistance);
     }
 
+    // TO USE : 지정한 저항력 하나로 피해를 계산할 때 사용. HP는 변경하지 않음.
     public static float CalculateResistedDamage(float rawDamage, float resistance)
     {
-        if (!IsFinite(rawDamage) || rawDamage <= 0f || !IsFinite(resistance))
+        return ToDamage(ApplyResistance(rawDamage, resistance));
+    }
+
+    // TO USE : 현재 일반 독 중첩의 1회 피해량을 계산할 때 사용. 피해 발생 시각이나 HP는 변경하지 않음.
+    public static float CalculatePoisonDamage(UnitStatusState state, float maxHp, float poisonResistance)
+    {
+        if (state == null || !IsFinite(maxHp) || maxHp < 0f)
             return 0f;
 
-        return ToDamage((double)rawDamage * Math.Max(0d, 1d - resistance));
+        double damage = Sum(state.PoisonStackValues);
+        if (state.PoisonUsesMaxHp)
+            damage *= maxHp;
+
+        return ToDamage(ApplyResistance(damage, poisonResistance));
     }
 
-    public static float CalculatePoisonDamage(UnitVM target, float baseDamagePerStack)
+    // TO USE : 현재 보스 독 중첩과 부적 여부로 1회 피해량을 계산할 때 사용. HP는 변경하지 않음.
+    public static float CalculateBossPoisonDamage(UnitStatusState state, float maxHp,
+        bool hasPoisonProtectionAmulet)
     {
-        return CalculatePoisonDamage(target, baseDamagePerStack, target == null ? 0 : target.PoisonStackCount);
-    }
-
-    public static float CalculatePlayerPoisonDamage(PlayerStatViewModel target, float maxHpRatio)
-    {
-        if (target == null || !IsFinite(maxHpRatio) || maxHpRatio < 0f)
+        if (state == null || !IsFinite(maxHp) || maxHp < 0f)
             return 0f;
 
-        return CalculatePoisonDamage(target, ToDamage((double)target.MaxHp * maxHpRatio));
+        return ToDamage(GetBossPoisonDamage(state.BossPoisonStackCount, maxHp, hasPoisonProtectionAmulet));
     }
 
-    public static float CalculateMonsterPoisonDamage(MonsterVM target, float fixedDamagePerStack)
+    // TO USE : 플레이어 일반 독 상태를 계산하는 내부 처리용. 실제 게임에서 부여할 때는 NetworkUnit.ApplyPoisonOnServer 사용.
+    public static bool ApplyPlayerPoison(UnitStatusState state, double currentTime)
     {
-        return CalculatePoisonDamage(target, fixedDamagePerStack);
+        return ApplyPoison(state, currentTime, (float)PlayerPoisonMaxHpRatio, true);
     }
 
-    public static float CalculateBossPoisonDamage(UnitVM target, bool hasPoisonProtectionAmulet)
+    // TO USE : 몬스터 일반 독 상태를 계산하는 내부 처리용. 실제 게임에서 부여할 때는 NetworkUnit.ApplyPoisonOnServer 사용.
+    public static bool ApplyMonsterPoison(UnitStatusState state, double currentTime, float rawAttackDamage)
     {
-        return CalculateBossPoisonDamage(target, hasPoisonProtectionAmulet,
-            target == null ? 0 : target.BossPoisonStackCount);
-    }
-
-    public static bool ApplyPoison(UnitVM target, double currentTime)
-    {
-        if (!CanApplyStatus(target, currentTime))
+        if (!IsFinite(rawAttackDamage) || rawAttackDamage < 0f)
             return false;
 
-        AdvancePoison(target, currentTime);
-
-        if (!target.IsPoisoned)
-            target.NextPoisonTickAt = currentTime + PoisonTickIntervalSeconds;
-
-        target.PoisonExpiresAt = currentTime + PoisonDurationSeconds;
-        target.PoisonStackCount = Math.Min(MaxPoisonStacks, target.PoisonStackCount + 1);
-        return true;
+        return ApplyPoison(state, currentTime, ToDamage(rawAttackDamage * MonsterPoisonDamageRatio), false);
     }
 
-    public static bool ApplyBossPoison(UnitVM target, double currentTime)
+    private static bool ApplyPoison(UnitStatusState state, double currentTime, float stackValue, bool usesMaxHp)
     {
-        if (!CanApplyStatus(target, currentTime) || !target.CanReceiveBossPoison)
+        if (!CanUpdate(state, currentTime))
             return false;
 
-        if (currentTime < target.BossPoisonProtectedUntil)
+        AdvancePoison(state, currentTime);
+
+        if (state.PoisonStackCount > 0 && state.PoisonUsesMaxHp != usesMaxHp)
             return false;
 
-        AdvanceBossPoison(target, currentTime);
+        if (state.PoisonStackCount == 0)
+            state.NextPoisonTickAt = currentTime + PoisonTickIntervalSeconds;
 
-        if (!target.IsBossPoisoned)
-            target.NextBossPoisonTickAt = currentTime + PoisonTickIntervalSeconds;
+        state.PoisonUsesMaxHp = usesMaxHp;
+        state.PoisonExpiresAt = currentTime + PoisonDurationSeconds;
 
-        target.BossPoisonProtectedUntil = currentTime + BossPoisonProtectionSeconds;
-        target.BossPoisonStackCount = Math.Min(MaxBossPoisonStacks, target.BossPoisonStackCount + 1);
-        return true;
-    }
-
-    public static float ApplyBleed(UnitVM target, double currentTime, float burstDamage)
-    {
-        if (!CanApplyStatus(target, currentTime) || !target.CanReceiveBleed || !IsFinite(burstDamage) || burstDamage < 0f)
-            return 0f;
-
-        UpdateBleed(target, currentTime);
-
-        if (target.BleedStackCount + 1 >= BleedBurstStacks)
+        List<float> stacks = state.PoisonStackValues;
+        if (stacks.Count < MaxPoisonStacks)
         {
-            ClearBleed(target);
+            stacks.Add(stackValue);
+            return true;
+        }
+
+        int weakestIndex = 0;
+        for (int i = 1; i < stacks.Count; i++)
+        {
+            if (stacks[i] < stacks[weakestIndex])
+                weakestIndex = i;
+        }
+
+        if (stackValue > stacks[weakestIndex])
+            stacks[weakestIndex] = stackValue;
+
+        return true;
+    }
+
+    // TO USE : 보스 독 상태를 계산하는 내부 처리용. 실제 게임에서 부여할 때는 NetworkUnit.ApplyBossPoisonOnServer 사용.
+    public static bool ApplyBossPoison(UnitStatusState state, double currentTime, bool canReceiveBossPoison)
+    {
+        if (!CanUpdate(state, currentTime) || !canReceiveBossPoison)
+            return false;
+
+        if (currentTime < state.BossPoisonProtectedUntil)
+            return false;
+
+        AdvanceBossPoison(state, currentTime);
+
+        if (state.BossPoisonStackCount == 0)
+            state.NextBossPoisonTickAt = currentTime + PoisonTickIntervalSeconds;
+
+        state.BossPoisonProtectedUntil = currentTime + BossPoisonProtectionSeconds;
+        state.BossPoisonStackCount = Math.Min(MaxBossPoisonStacks, state.BossPoisonStackCount + 1);
+        return true;
+    }
+
+    // TO USE : 출혈 상태를 갱신하고 폭발 피해량을 반환하는 내부 처리용. HP는 변경하지 않음.
+    // 실제 게임에서 부여할 때는 NetworkUnit.ApplyBleedOnServer 사용.
+    public static float ApplyBleed(UnitStatusState state, double currentTime,
+        float rawAttackDamage, bool canReceiveBleed)
+    {
+        if (!CanUpdate(state, currentTime) || !canReceiveBleed
+            || !IsFinite(rawAttackDamage) || rawAttackDamage < 0f)
+            return 0f;
+
+        UpdateBleed(state, currentTime);
+        state.BleedStackDamages.Add(ToDamage(rawAttackDamage * BleedDamageRatio));
+
+        if (state.BleedStackCount >= BleedBurstStacks)
+        {
+            float burstDamage = ToDamage(Sum(state.BleedStackDamages));
+            ClearBleed(state);
             return burstDamage;
         }
 
-        target.NextBleedDecayAt = currentTime + BleedDecayDelaySeconds;
-        target.BleedStackCount++;
+        state.NextBleedDecayAt = currentTime + BleedDecayDelaySeconds;
         return 0f;
     }
 
-    public static float UpdateStatusEffects(UnitVM target, double currentTime, float poisonBaseDamagePerStack,
-        bool hasPoisonProtectionAmulet)
+    // TO USE : 서버 내부에서 상태이상 시간을 갱신하고 이번에 적용할 독 피해 합계를 받을 때 사용.
+    // currentTime은 서버의 현재 시각(초). 상태는 갱신하지만 HP와 NetworkVariable은 호출한 쪽에서 반영.
+    public static float UpdateStatusEffects(UnitStatusState state, double currentTime,
+        float maxHp, float poisonResistance, bool hasPoisonProtectionAmulet)
     {
-        if (target == null || !IsFinite(currentTime) || currentTime < 0d)
+        if (!CanUpdate(state, currentTime) || !IsFinite(maxHp) || maxHp < 0f
+            || !IsFinite(poisonResistance))
             return 0f;
 
-        if (target.CurHp <= 0f)
-        {
-            ClearStatusEffects(target);
-            return 0f;
-        }
+        AdvancePoison(state, currentTime);
+        AdvanceBossPoison(state, currentTime);
+        UpdateBleed(state, currentTime);
 
-        AdvancePoison(target, currentTime);
-        AdvanceBossPoison(target, currentTime);
-        UpdateBleed(target, currentTime);
+        double poisonDamage = state.PendingPoisonDamage + maxHp * state.PendingPoisonMaxHpRatio;
+        double damage = ApplyResistance(poisonDamage, poisonResistance);
+        damage += GetBossPoisonDamage(state.PendingBossPoisonStackTicks, maxHp, hasPoisonProtectionAmulet);
 
-        double damage = CalculatePoisonDamage(target, poisonBaseDamagePerStack, target.PendingPoisonStackTicks);
-        damage += CalculateBossPoisonDamage(target, hasPoisonProtectionAmulet, target.PendingBossPoisonStackTicks);
-
-        target.PendingPoisonStackTicks = 0d;
-        target.PendingBossPoisonStackTicks = 0d;
+        state.PendingPoisonDamage = 0d;
+        state.PendingPoisonMaxHpRatio = 0d;
+        state.PendingBossPoisonStackTicks = 0d;
         return ToDamage(damage);
     }
 
-    public static void ClearPoison(UnitVM target)
+    // TO USE : 일반 독의 계산 상태만 초기화할 때 사용. 네트워크 중첩 동기화는 별도 처리 필요.
+    public static void ClearPoison(UnitStatusState state)
     {
-        if (target == null)
+        if (state == null)
             return;
 
-        target.PoisonExpiresAt = 0d;
-        target.NextPoisonTickAt = 0d;
-        target.PendingPoisonStackTicks = 0d;
-        target.PoisonStackCount = 0;
+        state.PoisonStackValues.Clear();
+        state.PoisonUsesMaxHp = false;
+        state.PoisonExpiresAt = 0d;
+        state.NextPoisonTickAt = 0d;
+        state.PendingPoisonDamage = 0d;
+        state.PendingPoisonMaxHpRatio = 0d;
     }
 
-    public static void ClearBossPoison(UnitVM target)
+    // TO USE : 보스 독의 계산 상태만 초기화할 때 사용. 네트워크 중첩 동기화는 별도 처리 필요.
+    public static void ClearBossPoison(UnitStatusState state)
     {
-        if (target == null)
+        if (state == null)
             return;
 
-        target.NextBossPoisonTickAt = 0d;
-        target.PendingBossPoisonStackTicks = 0d;
-        target.BossPoisonProtectedUntil = 0d;
-        target.BossPoisonStackCount = 0;
+        state.BossPoisonStackCount = 0;
+        state.NextBossPoisonTickAt = 0d;
+        state.PendingBossPoisonStackTicks = 0d;
+        state.BossPoisonProtectedUntil = 0d;
     }
 
-    public static void ClearBleed(UnitVM target)
+    // TO USE : 출혈의 계산 상태만 초기화할 때 사용. 네트워크 중첩 동기화는 별도 처리 필요.
+    public static void ClearBleed(UnitStatusState state)
     {
-        if (target == null)
+        if (state == null)
             return;
 
-        target.NextBleedDecayAt = 0d;
-        target.BleedStackCount = 0;
+        state.BleedStackDamages.Clear();
+        state.NextBleedDecayAt = 0d;
     }
 
-    public static void ClearStatusEffects(UnitVM target)
+    // TO USE : 모든 상태이상의 계산 상태만 초기화할 때 사용. 실제 게임의 전체 해제는 NetworkUnit.ClearStatusEffectsOnServer 사용.
+    public static void ClearStatusEffects(UnitStatusState state)
     {
-        ClearPoison(target);
-        ClearBossPoison(target);
-        ClearBleed(target);
+        state?.Clear();
     }
 
-    private static float CalculatePoisonDamage(UnitVM target, float baseDamagePerStack, double stackTicks)
+    private static void AdvancePoison(UnitStatusState state, double currentTime)
     {
-        if (target == null || !IsFinite(baseDamagePerStack) || baseDamagePerStack <= 0f || !IsFinite(target.PoisonResistance))
-            return 0f;
-
-        return ToDamage(baseDamagePerStack * stackTicks * Math.Max(0d, 1d - target.PoisonResistance));
-    }
-
-    private static float CalculateBossPoisonDamage(UnitVM target, bool hasPoisonProtectionAmulet, double stackTicks)
-    {
-        if (target == null || !target.CanReceiveBossPoison)
-            return 0f;
-
-        double ratioPerStack = hasPoisonProtectionAmulet ? 0.02d : 0.1d;
-        return ToDamage(target.MaxHp * ratioPerStack * stackTicks);
-    }
-
-    private static void AdvancePoison(UnitVM target, double currentTime)
-    {
-        if (!target.IsPoisoned)
+        if (state.PoisonStackCount == 0)
             return;
 
-        double endTime = Math.Min(currentTime, target.PoisonExpiresAt);
-        double tickCount = GetDueCount(target.NextPoisonTickAt, endTime, PoisonTickIntervalSeconds);
+        double endTime = Math.Min(currentTime, state.PoisonExpiresAt);
+        double tickCount = GetDueCount(state.NextPoisonTickAt, endTime, PoisonTickIntervalSeconds);
+        double damage = tickCount * Sum(state.PoisonStackValues);
 
-        target.PendingPoisonStackTicks += tickCount * target.PoisonStackCount;
-        target.NextPoisonTickAt += tickCount * PoisonTickIntervalSeconds;
+        if (state.PoisonUsesMaxHp)
+            state.PendingPoisonMaxHpRatio += damage;
+        else
+            state.PendingPoisonDamage += damage;
 
-        if (currentTime >= target.PoisonExpiresAt)
+        state.NextPoisonTickAt += tickCount * PoisonTickIntervalSeconds;
+
+        if (currentTime >= state.PoisonExpiresAt)
         {
-            target.PoisonExpiresAt = 0d;
-            target.NextPoisonTickAt = 0d;
-            target.PoisonStackCount = 0;
+            state.PoisonStackValues.Clear();
+            state.PoisonUsesMaxHp = false;
+            state.PoisonExpiresAt = 0d;
+            state.NextPoisonTickAt = 0d;
         }
     }
 
-    private static void AdvanceBossPoison(UnitVM target, double currentTime)
+    private static void AdvanceBossPoison(UnitStatusState state, double currentTime)
     {
-        if (!target.IsBossPoisoned)
+        if (state.BossPoisonStackCount == 0)
             return;
 
-        double tickCount = GetDueCount(target.NextBossPoisonTickAt, currentTime, PoisonTickIntervalSeconds);
-
-        target.PendingBossPoisonStackTicks += tickCount * target.BossPoisonStackCount;
-        target.NextBossPoisonTickAt += tickCount * PoisonTickIntervalSeconds;
+        double tickCount = GetDueCount(state.NextBossPoisonTickAt, currentTime, PoisonTickIntervalSeconds);
+        state.PendingBossPoisonStackTicks += tickCount * state.BossPoisonStackCount;
+        state.NextBossPoisonTickAt += tickCount * PoisonTickIntervalSeconds;
     }
 
-    private static void UpdateBleed(UnitVM target, double currentTime)
+    private static void UpdateBleed(UnitStatusState state, double currentTime)
     {
-        if (!target.IsBleeding)
+        if (state.BleedStackCount == 0)
             return;
 
-        int count = (int)Math.Min(target.BleedStackCount,
-            GetDueCount(target.NextBleedDecayAt, currentTime, BleedDecayIntervalSeconds));
+        int count = (int)Math.Min(state.BleedStackCount,
+            GetDueCount(state.NextBleedDecayAt, currentTime, BleedDecayIntervalSeconds));
 
         if (count == 0)
             return;
 
-        target.NextBleedDecayAt += count * BleedDecayIntervalSeconds;
-        target.BleedStackCount -= count;
+        state.BleedStackDamages.RemoveRange(0, count);
+        state.NextBleedDecayAt = state.BleedStackCount == 0
+            ? 0d
+            : state.NextBleedDecayAt + count * BleedDecayIntervalSeconds;
+    }
 
-        if (!target.IsBleeding)
-            target.NextBleedDecayAt = 0d;
+    private static double ApplyResistance(double damage, float resistance)
+    {
+        if (!IsFinite(damage) || damage <= 0d || !IsFinite(resistance))
+            return 0d;
+
+        double clampedResistance = Math.Max(-1d, Math.Min(1d, resistance));
+        return damage * (1d - clampedResistance);
+    }
+
+    private static double GetBossPoisonDamage(double stackTicks, float maxHp, bool hasPoisonProtectionAmulet)
+    {
+        double ratio = hasPoisonProtectionAmulet ? ProtectedBossPoisonMaxHpRatio : BossPoisonMaxHpRatio;
+        return maxHp * ratio * stackTicks;
+    }
+
+    private static double Sum(List<float> values)
+    {
+        double total = 0d;
+        for (int i = 0; i < values.Count; i++)
+            total += values[i];
+
+        return total;
     }
 
     private static double GetDueCount(double nextTime, double currentTime, double interval)
@@ -254,9 +312,9 @@ public static class BattleUtil
         return currentTime < nextTime ? 0d : Math.Floor((currentTime - nextTime) / interval) + 1d;
     }
 
-    private static bool CanApplyStatus(UnitVM target, double currentTime)
+    private static bool CanUpdate(UnitStatusState state, double currentTime)
     {
-        return target != null && target.CurHp > 0f && IsFinite(currentTime) && currentTime >= 0d;
+        return state != null && IsFinite(currentTime) && currentTime >= 0d;
     }
 
     private static bool IsFinite(double value)

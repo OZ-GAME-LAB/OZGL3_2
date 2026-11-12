@@ -88,7 +88,7 @@ public class BossPlatformThornSkill : MonsterSkillBase
             instance.gameObject.SetActive(false);
 
             BossThornHitbox hitbox = instance.GetComponentInChildren<BossThornHitbox>(true);
-            hitbox.Initialize(_bossNetwork, atk);
+            hitbox.Initialize(_bossNetwork, CreateDamageInfo(atk));
 
             instance.AttackStarted += OnAttackStarted;
             _attackObjects[i] = instance;

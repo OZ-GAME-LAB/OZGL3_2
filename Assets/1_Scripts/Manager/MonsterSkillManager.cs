@@ -141,6 +141,9 @@ public class MonsterSkillManager : MonoBehaviour
                     return null;
             }
 
+            if (!skill.ConfigureDamage(data))
+                return null;
+
             skill.SetSkillId(skillId);
             skill.InitSkill(owner, bodyHeight, atk, attackPrefab);
             initialized = true;

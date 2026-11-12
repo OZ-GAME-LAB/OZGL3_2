@@ -1,17 +1,9 @@
 ﻿using System.Collections.Generic;
 
-public enum RuneAttackElement
-{
-    Physical,
-    Fire,
-    Cold,
-    Lightning
-}
-
 public class AttackProfile
 {
     public bool _useProjectile;
-    public RuneAttackElement _attackElement = RuneAttackElement.Physical;
+    public DamageType _attackElement = DamageType.Physical;
 
     public float _damageMultiple = 1f;
     public float _attackSpeedMultiple = 1f;

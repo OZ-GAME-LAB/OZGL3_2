@@ -79,7 +79,7 @@ public class MonsterMeleeAtk : MonsterSkillBase
             }
         }
 
-        hitbox.Init(atk);
+        hitbox.Init(CreateDamageInfo(atk));
     }
 
     public override void UseSkill(Transform target, Vector3 attackPosition) 

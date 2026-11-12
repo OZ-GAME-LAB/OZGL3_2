@@ -65,7 +65,7 @@ public class BossPoisonSpraySkill : MonsterSkillBase
 
         _attackId = _bossNetwork.BroadcastPoisonSpray(SkillId, start, control, end, startTime,
             _projectile.WarningSeconds, _projectile.FlightSeconds);
-        _projectile.Play(_bossNetwork, true, _attackPower, start, control, end, startTime,
+        _projectile.Play(_bossNetwork, true, CreateDamageInfo(_attackPower), start, control, end, startTime,
             _projectile.WarningSeconds, _projectile.FlightSeconds);
         if (!_projectile.IsPlaying)
             FinishAttack();

@@ -111,7 +111,7 @@ public class BossDirectionalThornSkill : MonsterSkillBase
             BossThornAttackObject thorn = Instantiate(_attackPrefab, transform.position, Quaternion.identity);
             thorn.transform.localScale = Vector3.one;
             thorn.gameObject.SetActive(false);
-            thorn.GetComponentInChildren<BossThornHitbox>(true).Initialize(_bossNetwork, _attackPower);
+            thorn.GetComponentInChildren<BossThornHitbox>(true).Initialize(_bossNetwork, CreateDamageInfo(_attackPower));
 
             if (i == 0)
                 thorn.AttackStarted += StartCooldown;

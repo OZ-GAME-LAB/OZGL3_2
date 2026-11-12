@@ -5,7 +5,7 @@ using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-public class MonsterNetwork : NetworkBehaviour
+public class MonsterNetwork : NetworkUnit
 {
     private NetworkVariable<FixedString128Bytes> _monsterId = new(
         default,
@@ -17,41 +17,27 @@ public class MonsterNetwork : NetworkBehaviour
     private Rigidbody2D _body;
     private RigidbodyConstraints2D _originalConstraints;
     private float _originalGravityScale;
-    private bool _deathHandled;
 
     public bool IsReady { get; private set; }
+    protected override bool IsReadyForCombat => IsReady;
     public bool CanAttack => IsReady && IsAlive && AttackPower > 0f;
     public event System.Action<MonsterNetwork> Died;
 
-    private NetworkVariable<float> _maxHp = new(
-    0f,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server);
-    private void OnMaxHpChanged(float previousValue, float newValue)
+    private void RefreshViewModel()
     {
-        _monster.ViewModel.MaxHp = newValue;
+        MonsterVM viewModel = _monster.ViewModel;
+        viewModel.MaxHp = MaxHp;
+        viewModel.CurHp = CurrentHp;
+        viewModel.PhysicalResistance = PhysicalResistance;
+        viewModel.FireResistance = FireResistance;
+        viewModel.IceResistance = IceResistance;
+        viewModel.ElectricalResistance = ElectricalResistance;
+        viewModel.PoisonResistance = PoisonResistance;
+        viewModel.BleedAble = CanReceiveBleed;
+        viewModel.PoisonStackCount = PoisonStackCount;
+        viewModel.BossPoisonStackCount = BossPoisonStackCount;
+        viewModel.BleedStackCount = BleedStackCount;
     }
-
-    private NetworkVariable<float> _curHp = new(
-        0f,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
-    private void OnCurHpChanged(float previousValue, float newValue)
-    {
-        _monster.ViewModel.CurHp = newValue;
-    }
-
-    private void ApplyHpToViewModel()
-    {
-        _monster.ViewModel.MaxHp = _maxHp.Value;
-        _monster.ViewModel.CurHp = _curHp.Value;
-    }
-
-    // 퍼블릭으로 사용할 프로퍼티 추가
-    public float CurrentHp => _curHp.Value;
-    public float MaxHp => _maxHp.Value;
-    public bool IsAlive => IsSpawned && _curHp.Value > 0f;
-    public float AttackPower { get; private set; }
 
     private void Awake()
     {
@@ -88,7 +74,6 @@ public class MonsterNetwork : NetworkBehaviour
         base.OnNetworkSpawn();
 
         IsReady = false;
-        _deathHandled = false;
 
         _monster.enabled = false;
         _bt.enabled = false;
@@ -114,15 +99,20 @@ public class MonsterNetwork : NetworkBehaviour
                 return;
             }
 
-            _maxHp.Value = Mathf.Max(0f, data.Hp);
-            _curHp.Value = _maxHp.Value;
-            AttackPower = Mathf.Max(0f, data.Atk);
+            if (!InitializeUnitOnServer(data.Hp, data.Atk, canReceiveBleed: data.BleedAble)
+                || !SetResistancesOnServer(data.PhysicalResistance, data.FireResistance,
+                    data.IceResistance, data.ElectricalResistance, data.PoisonResistance))
+            {
+                Debug.LogError($"몬스터 능력치 초기화 실패: {_monsterId.Value}", this);
+                NetworkObject.Despawn();
+                return;
+            }
         }
 
-        _maxHp.OnValueChanged += OnMaxHpChanged;
-        _curHp.OnValueChanged += OnCurHpChanged;
+        StatsChanged += RefreshViewModel;
+        StatusChanged += RefreshViewModel;
 
-        ApplyHpToViewModel();
+        RefreshViewModel();
 
         InitializeMonster(default).Forget();
     }
@@ -184,8 +174,8 @@ public class MonsterNetwork : NetworkBehaviour
     {
         IsReady = false;
 
-        _maxHp.OnValueChanged -= OnMaxHpChanged;
-        _curHp.OnValueChanged -= OnCurHpChanged;
+        StatsChanged -= RefreshViewModel;
+        StatusChanged -= RefreshViewModel;
 
         _bt.enabled = false;
         _monster.enabled = false;
@@ -196,51 +186,15 @@ public class MonsterNetwork : NetworkBehaviour
         base.OnNetworkDespawn();
     }
 
+    // TO USE : 서버에서 몬스터 HP에 계산 완료된 최종 피해만 적용하는 기존 호출용 함수.
+    // 속성·독·피격 처리가 필요한 공격은 대상 Actor의 ReceiveDirectDamageOnServer를 사용.
     public void TakeDamageOnServer(float damage)
     {
-        /*
-        if (!IsServer || !IsSpawned)
-            return;
-
-        if (float.IsNaN(damage) || float.IsInfinity(damage) || damage <= 0f)
-            return;
-
-        _curHp.Value = Mathf.Max(0f, _curHp.Value - damage);
-        */
-
         TryTakeDamageOnServer(damage, out _);
     }
 
-    public bool TryTakeDamageOnServer(float damage, out float actualDamage)
+    protected override void OnDiedOnServer()
     {
-        actualDamage = 0f;
-
-        if (!IsServer || !IsReady || !IsAlive)
-            return false;
-
-        if (float.IsNaN(damage) || float.IsInfinity(damage) || damage <= 0f)
-            return false;
-
-        float previousHp = _curHp.Value;
-
-        _curHp.Value = Mathf.Max(0f, previousHp - damage);
-
-        actualDamage = previousHp - _curHp.Value;
-
-        if (_curHp.Value <= 0f)
-        {
-            DieOnServer();
-        }
-
-        return true;
-    }
-
-    private void DieOnServer()
-    {
-        if (!IsServer || !IsSpawned || _deathHandled)
-            return;
-
-        _deathHandled = true;
         IsReady = false;
         _bt.enabled = false;
         _monster.enabled = false;
@@ -260,20 +214,4 @@ public class MonsterNetwork : NetworkBehaviour
         }
     }
 
-    public void HealOnServer(float amount)
-    {
-        if (IsServer == false || IsAlive == false)
-        {
-            return;
-        }
-
-        if (float.IsNaN(amount) || float.IsInfinity(amount) || amount <= 0f)
-        {
-            return;
-        }
-
-        float recoverable = Mathf.Max(0f, _maxHp.Value - _curHp.Value);
-
-        _curHp.Value = _curHp.Value + Mathf.Min(amount, recoverable);
-    }
 }

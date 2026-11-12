@@ -80,7 +80,7 @@ public class BossThornSkill : MonsterSkillBase
             return;
         }
 
-        hitbox.Initialize(_bossNetwork, atk);
+        hitbox.Initialize(_bossNetwork, CreateDamageInfo(atk));
 
         _attackObject.AttackStarted += StartCooldown;
     }

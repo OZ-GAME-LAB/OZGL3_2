@@ -4,24 +4,16 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using Unity.Behavior;
 
-public class BossNetwork : NetworkBehaviour
+public class BossNetwork : NetworkUnit
 {
     private bool _statsInitialized;
     private Boss _boss;
     public bool IsReady { get; private set; }
+    protected override bool IsReadyForCombat => IsReady;
     private BehaviorGraphAgent _bt;
     private readonly Dictionary<string, List<BossThornAttackObject>> _thornVisualPools = new();
     private uint _thornVisualVersion;
 
-    private NetworkVariable<float> _maxHp = new(
-        0f,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
-
-    private NetworkVariable<float> _curHp = new(
-        0f,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
 
     private void Awake()
     {
@@ -41,26 +33,26 @@ public class BossNetwork : NetworkBehaviour
         if (_bt != null)
             _bt.enabled = false;
 
-        _maxHp.OnValueChanged += OnMaxHpChanged;
-        _curHp.OnValueChanged += OnCurHpChanged;
+        StatsChanged += RefreshViewModel;
+        StatusChanged += RefreshViewModel;
 
-        ApplyHpToViewModel();
+        RefreshViewModel();
     }
 
-    private void OnMaxHpChanged(float previousValue, float newValue)
+    private void RefreshViewModel()
     {
-        _boss.ViewModel.MaxHp = newValue;
-    }
-
-    private void OnCurHpChanged(float previousValue, float newValue)
-    {
-        _boss.ViewModel.CurHp = newValue;
-    }
-
-    private void ApplyHpToViewModel()
-    {
-        _boss.ViewModel.MaxHp = _maxHp.Value;
-        _boss.ViewModel.CurHp = _curHp.Value;
+        MonsterVM viewModel = _boss.ViewModel;
+        viewModel.MaxHp = MaxHp;
+        viewModel.CurHp = CurrentHp;
+        viewModel.PhysicalResistance = PhysicalResistance;
+        viewModel.FireResistance = FireResistance;
+        viewModel.IceResistance = IceResistance;
+        viewModel.ElectricalResistance = ElectricalResistance;
+        viewModel.PoisonResistance = PoisonResistance;
+        viewModel.BleedAble = CanReceiveBleed;
+        viewModel.PoisonStackCount = PoisonStackCount;
+        viewModel.BossPoisonStackCount = BossPoisonStackCount;
+        viewModel.BleedStackCount = BleedStackCount;
     }
 
     public override void OnNetworkDespawn()
@@ -71,8 +63,8 @@ public class BossNetwork : NetworkBehaviour
         if (_bt != null)
             _bt.enabled = false;
 
-        _maxHp.OnValueChanged -= OnMaxHpChanged;
-        _curHp.OnValueChanged -= OnCurHpChanged;
+        StatsChanged -= RefreshViewModel;
+        StatusChanged -= RefreshViewModel;
 
         _statsInitialized = false;
         IsReady = false;
@@ -118,14 +110,28 @@ public class BossNetwork : NetworkBehaviour
             return false;
         }
 
-        _statsInitialized = true;
+        if (!InitializeUnitOnServer(data.Hp, data.Atk, canReceiveBleed: data.BleedAble)
+            || !SetResistancesOnServer(data.PhysicalResistance, data.FireResistance,
+                data.IceResistance, data.ElectricalResistance, data.PoisonResistance))
+            return false;
 
-        _maxHp.Value = data.Hp;
-        _curHp.Value = data.Hp;
+        _statsInitialized = true;
 
         InitializeSkillsOnServerAsync(data).Forget();
 
         return true;
+    }
+
+    protected override void OnDiedOnServer()
+    {
+        IsReady = false;
+
+        if (_bt != null)
+            _bt.enabled = false;
+
+        // TODO: 보스 소멸 연출이 완료된 뒤 Despawn하도록 연결.
+        if (IsSpawned)
+            NetworkObject.Despawn();
     }
 
     private async UniTask InitializeSkillsOnServerAsync(MonsterData data)
@@ -398,7 +404,7 @@ public class BossNetwork : NetworkBehaviour
             visual = _poisonVisual;
             visual.transform.SetPositionAndRotation(start, Quaternion.identity);
             visual.gameObject.SetActive(true);
-            visual.Play(this, false, 0f, start, control, end, startTime, warningSeconds, flightSeconds);
+            visual.Play(this, false, default, start, control, end, startTime, warningSeconds, flightSeconds);
             await UniTask.WaitUntil(() => this == null || !IsSpawned
                 || _clientPoisonAttackId != attackId || visual == null || !visual.IsPlaying);
         }
