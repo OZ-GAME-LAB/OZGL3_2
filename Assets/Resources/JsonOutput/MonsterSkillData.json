@@ -18,5 +18,10 @@
     "Id": "boss_thorndirection_atk",
     "SkillClassName": "BossDirectionalThornSkill",
     "SkillPrefabPath": "BossThornSkill/BossDirectionalThornAttackObject"
+  },
+  {
+    "Id": "boss_poison_atk",
+    "SkillClassName": "BossPoisonSpraySkill",
+    "SkillPrefabPath": "BossPoisonSpraySkill/BossPoisonProjectile"
   }
 ]

@@ -26,12 +26,26 @@ public class BossDirectionalThornSkill : MonsterSkillBase
     private float _firstThornHeight;
     private float _attackPower;
 
-    private readonly List<BossThornAttackObject> _spawnedThorns = new();
+    private readonly List<BossThornAttackObject> _thornObjects = new();
 
     private void OnDisable()
     {
         StopAllCoroutines();
-        ClearSpawnedThorns();
+        StopThorns();
+    }
+
+    private void OnDestroy()
+    {
+        foreach (BossThornAttackObject thorn in _thornObjects)
+        {
+            if (thorn == null)
+                continue;
+
+            thorn.AttackStarted -= StartCooldown;
+            Destroy(thorn.gameObject);
+        }
+
+        _thornObjects.Clear();
     }
 
     public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
@@ -72,12 +86,46 @@ public class BossDirectionalThornSkill : MonsterSkillBase
         _firstThornHeight = bodyHeight;
         _attackPower = atk;
         _attackPrefab = prefabComponent;
+
+        int count = 0;
+        if (_boss.TryGetDirectionalThornBounds(-1, out Bounds leftBounds))
+            count = GetThornCount(leftBounds);
+        if (_boss.TryGetDirectionalThornBounds(1, out Bounds rightBounds))
+            count = Mathf.Max(count, GetThornCount(rightBounds));
+        EnsureThornObjects(count);
+    }
+
+    private int GetThornCount(Bounds attackBounds)
+    {
+        float targetWidth = Mathf.Max(0.01f, _targetThornWidth);
+        return Mathf.Max(1, Mathf.CeilToInt(attackBounds.size.x / targetWidth));
+    }
+
+    private void EnsureThornObjects(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (i < _thornObjects.Count && _thornObjects[i] != null)
+                continue;
+
+            BossThornAttackObject thorn = Instantiate(_attackPrefab, transform.position, Quaternion.identity);
+            thorn.transform.localScale = Vector3.one;
+            thorn.gameObject.SetActive(false);
+            thorn.GetComponentInChildren<BossThornHitbox>(true).Initialize(_bossNetwork, _attackPower);
+
+            if (i == 0)
+                thorn.AttackStarted += StartCooldown;
+
+            if (i < _thornObjects.Count)
+                _thornObjects[i] = thorn;
+            else
+                _thornObjects.Add(thorn);
+        }
     }
 
     private void CalculateThornLayout(Bounds attackBounds, int direction, out Vector3[] positions, out float[] heights, out float thornWidth)
     {
-        float targetWidth = Mathf.Max(0.01f, _targetThornWidth);
-        int count = Mathf.Max(1, Mathf.CeilToInt(attackBounds.size.x / targetWidth));
+        int count = GetThornCount(attackBounds);
 
         thornWidth = attackBounds.size.x / count;
 
@@ -119,6 +167,7 @@ public class BossDirectionalThornSkill : MonsterSkillBase
             return;
 
         CalculateThornLayout(attackBounds, direction, out Vector3[] positions, out float[] heights, out float thornWidth);
+        EnsureThornObjects(positions.Length);
 
         IsAttacking = true;
         StartCoroutine(PlayThornSequence(positions, heights, thornWidth));
@@ -143,20 +192,12 @@ public class BossDirectionalThornSkill : MonsterSkillBase
 
             float warningSeconds = i == 0 ? _firstWarningSeconds : holdSeconds;
 
-            BossThornAttackObject thorn = Instantiate(_attackPrefab, positions[i], Quaternion.identity);
-            thorn.transform.localScale = Vector3.one;
+            BossThornAttackObject thorn = _thornObjects[i];
+            thorn.transform.SetPositionAndRotation(positions[i], Quaternion.identity);
             thorn.gameObject.SetActive(false);
-
-            _spawnedThorns.Add(thorn);
 
             if (!thorn.Initialize(thornWidth, heights[i], holdSeconds, warningSeconds))
                 break;
-
-            BossThornHitbox hitbox = thorn.GetComponentInChildren<BossThornHitbox>(true);
-            hitbox.Initialize(_bossNetwork, _attackPower);
-
-            if (i == 0)
-                thorn.AttackStarted += StartCooldown;
 
             thorn.gameObject.SetActive(true);
             thorn.Play(startTime);
@@ -173,24 +214,17 @@ public class BossDirectionalThornSkill : MonsterSkillBase
         while (lastThorn != null && lastThorn.IsPlaying)
             yield return null;
 
-        ClearSpawnedThorns();
+        StopThorns();
     }
 
-    private void ClearSpawnedThorns()
+    private void StopThorns()
     {
-        foreach (BossThornAttackObject thorn in _spawnedThorns)
+        foreach (BossThornAttackObject thorn in _thornObjects)
         {
-            if (thorn == null)
-                continue;
-
-            thorn.AttackStarted -= StartCooldown;
-            thorn.gameObject.SetActive(false);
-            Destroy(thorn.gameObject);
+            if (thorn != null)
+                thorn.gameObject.SetActive(false);
         }
 
-        _spawnedThorns.Clear();
         IsAttacking = false;
     }
-
-
 }

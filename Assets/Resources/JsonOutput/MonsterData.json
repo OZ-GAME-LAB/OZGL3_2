@@ -40,12 +40,14 @@
     "HaveSkillIdList": [
       "boss_thornground_atk",
       "boss_thornplatform_atk",
-      "boss_thorndirection_atk"
+      "boss_thorndirection_atk",
+      "boss_poison_atk"
     ],
     "MonsterSkillCollTime": [
       2,
       5,
-      6
+      6,
+      4
     ],
     "MonsterType": null,
     "IsMandatoryDropItem": false,
