@@ -70,6 +70,15 @@ public enum ValueOperation
     MultiplePercent = 2
 }
 
+public enum DamageType
+{
+    Physical,
+    Fire,
+    Ice,
+    Electric,
+}
+
+
 
 
 [Serializable]
@@ -196,5 +205,23 @@ public class MonsterData : GameDataBase
 public class MonsterSkillData : GameDataBase
 {
     public string SkillClassName;
+    public string DamageType;
+    public bool isPoison;
+    public bool isBossPoison;
     public string SkillPrefabPath;
+
+    public bool TryGetDamageType(out DamageType damageType)
+    {
+        damageType = global::DamageType.Physical;
+
+        if (string.IsNullOrWhiteSpace(DamageType))
+            return true;
+
+        if (!Enum.TryParse(DamageType, out DamageType parsedType)
+            || !Enum.IsDefined(typeof(DamageType), parsedType))
+            return false;
+
+        damageType = parsedType;
+        return true;
+    }
 }

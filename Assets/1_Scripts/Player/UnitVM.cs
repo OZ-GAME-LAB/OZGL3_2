@@ -1,13 +1,33 @@
-﻿using UnityEngine;
-
-public class UnitVM : ViewModelBase
+﻿public class UnitVM : ViewModelBase
 {
     public virtual void InvokeOnceOnInit()
     {
         OnPropertyChanged(nameof(MaxHp));
         OnPropertyChanged(nameof(CurHp));
+        OnPropertyChanged(nameof(PoisonStackCount));
         OnPropertyChanged(nameof(IsPoisoned));
+        OnPropertyChanged(nameof(BossPoisonStackCount));
+        OnPropertyChanged(nameof(IsBossPoisoned));
+        OnPropertyChanged(nameof(BleedStackCount));
+        OnPropertyChanged(nameof(IsBleeding));
     }
+
+    public float PhysicalResistance { get; set; }
+    public float FireResistance { get; set; }
+    public float IceResistance { get; set; }
+    public float ElectricalResistance { get; set; }
+    public float PoisonResistance { get; set; }
+
+    public virtual bool CanReceiveBleed => false;
+    public virtual bool CanReceiveBossPoison => false;
+
+    internal double PoisonExpiresAt { get; set; }
+    internal double NextPoisonTickAt { get; set; }
+    internal double PendingPoisonStackTicks { get; set; }
+    internal double NextBossPoisonTickAt { get; set; }
+    internal double PendingBossPoisonStackTicks { get; set; }
+    internal double BossPoisonProtectedUntil { get; set; }
+    internal double NextBleedDecayAt { get; set; }
 
     protected float _maxHp;
     public float MaxHp
@@ -37,45 +57,54 @@ public class UnitVM : ViewModelBase
         }
     }
 
-    protected bool _isPoisoned;
-    public bool IsPoisoned
+    private int _poisonStackCount;
+    public int PoisonStackCount
     {
-        get => _isPoisoned;
-        set
+        get => _poisonStackCount;
+        internal set
         {
-            if (_isPoisoned != value)
+            if (_poisonStackCount != value)
             {
-                _isPoisoned = value;
+                _poisonStackCount = value;
+                OnPropertyChanged(nameof(PoisonStackCount));
                 OnPropertyChanged(nameof(IsPoisoned));
             }
         }
     }
 
-    protected bool _isBossPoisoned;
-    public bool IsBossPoisoned
+    public bool IsPoisoned => PoisonStackCount > 0;
+
+    private int _bossPoisonStackCount;
+    public int BossPoisonStackCount
     {
-        get => _isBossPoisoned;
-        set
+        get => _bossPoisonStackCount;
+        internal set
         {
-            if (_isBossPoisoned != value)
+            if (_bossPoisonStackCount != value)
             {
-                _isBossPoisoned = value;
+                _bossPoisonStackCount = value;
+                OnPropertyChanged(nameof(BossPoisonStackCount));
                 OnPropertyChanged(nameof(IsBossPoisoned));
             }
         }
     }
 
-    protected bool _isBleeding;
-    public bool IsBleeding
+    public bool IsBossPoisoned => BossPoisonStackCount > 0;
+
+    private int _bleedStackCount;
+    public int BleedStackCount
     {
-        get => _isBleeding;
-        set
+        get => _bleedStackCount;
+        internal set
         {
-            if (_isBleeding != value)
+            if (_bleedStackCount != value)
             {
-                _isBleeding = value;
+                _bleedStackCount = value;
+                OnPropertyChanged(nameof(BleedStackCount));
                 OnPropertyChanged(nameof(IsBleeding));
             }
         }
     }
+
+    public bool IsBleeding => BleedStackCount > 0;
 }

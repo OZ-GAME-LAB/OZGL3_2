@@ -15,6 +15,13 @@ public class MonsterNetwork : NetworkBehaviour
     private Monster _monster;
     private BehaviorGraphAgent _bt;
     private Rigidbody2D _body;
+    private RigidbodyConstraints2D _originalConstraints;
+    private float _originalGravityScale;
+    private bool _deathHandled;
+
+    public bool IsReady { get; private set; }
+    public bool CanAttack => IsReady && IsAlive && AttackPower > 0f;
+    public event System.Action<MonsterNetwork> Died;
 
     private NetworkVariable<float> _maxHp = new(
     0f,
@@ -52,6 +59,12 @@ public class MonsterNetwork : NetworkBehaviour
         _bt = GetComponent<BehaviorGraphAgent>();
         _body = GetComponent<Rigidbody2D>();
 
+        if (_body != null)
+        {
+            _originalConstraints = _body.constraints;
+            _originalGravityScale = _body.gravityScale;
+        }
+
         _monster.enabled = false;
         _bt.enabled = false;
     }
@@ -73,6 +86,9 @@ public class MonsterNetwork : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
+        IsReady = false;
+        _deathHandled = false;
 
         _monster.enabled = false;
         _bt.enabled = false;
@@ -129,7 +145,16 @@ public class MonsterNetwork : NetworkBehaviour
         }
 
         if (_body != null)
+        {
+            bool fixedPosition = _monster.MovementType == MoveType.Fix;
+            _body.constraints = fixedPosition
+                ? _originalConstraints | RigidbodyConstraints2D.FreezePosition
+                : _originalConstraints;
+            _body.gravityScale = fixedPosition ? 0f : _originalGravityScale;
+            _body.linearVelocity = Vector2.zero;
+            _body.angularVelocity = 0f;
             _body.simulated = true;
+        }
 
         if (IsServer)
         {
@@ -144,7 +169,12 @@ public class MonsterNetwork : NetworkBehaviour
                 NetworkObject.Despawn();
                 return;
             }
+        }
 
+        IsReady = true;
+
+        if (IsServer)
+        {
             _monster.enabled = true;
             _bt.enabled = true;
         }
@@ -152,6 +182,8 @@ public class MonsterNetwork : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        IsReady = false;
+
         _maxHp.OnValueChanged -= OnMaxHpChanged;
         _curHp.OnValueChanged -= OnCurHpChanged;
 
@@ -183,7 +215,7 @@ public class MonsterNetwork : NetworkBehaviour
     {
         actualDamage = 0f;
 
-        if (!IsServer || !IsAlive)
+        if (!IsServer || !IsReady || !IsAlive)
             return false;
 
         if (float.IsNaN(damage) || float.IsInfinity(damage) || damage <= 0f)
@@ -205,12 +237,27 @@ public class MonsterNetwork : NetworkBehaviour
 
     private void DieOnServer()
     {
-        if (!IsServer || !IsSpawned)
+        if (!IsServer || !IsSpawned || _deathHandled)
             return;
+
+        _deathHandled = true;
+        IsReady = false;
+        _bt.enabled = false;
+        _monster.enabled = false;
+        _monster.MonsterStopMove();
 
         Debug.Log($"몬스터 사망: {_monsterId.Value}", this);
 
-        NetworkObject.Despawn();
+        try
+        {
+            _monster.ExecuteDeathSkills();
+            Died?.Invoke(this);
+        }
+        finally
+        {
+            if (this != null && IsSpawned)
+                NetworkObject.Despawn();
+        }
     }
 
     public void HealOnServer(float amount)

@@ -2,26 +2,41 @@
   {
     "Id": "monster_melee_01",
     "SkillClassName": "MonsterMeleeAtk",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": false,
     "SkillPrefabPath": "MonsterMeleeAtk/MonsterMeleeAtkSkill"
   },
   {
     "Id": "boss_thornground_atk",
     "SkillClassName": "BossThornSkill",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": false,
     "SkillPrefabPath": "BossThornSkill/BossThornAttackObject"
   },
   {
     "Id": "boss_thornplatform_atk",
     "SkillClassName": "BossPlatformThornSkill",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": false,
     "SkillPrefabPath": "BossThornSkill/BossThornAttackObject"
   },
   {
     "Id": "boss_thorndirection_atk",
     "SkillClassName": "BossDirectionalThornSkill",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": false,
     "SkillPrefabPath": "BossThornSkill/BossDirectionalThornAttackObject"
   },
   {
     "Id": "boss_poison_atk",
     "SkillClassName": "BossPoisonSpraySkill",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": true,
     "SkillPrefabPath": "BossPoisonSpraySkill/BossPoisonProjectile"
   }
 ]

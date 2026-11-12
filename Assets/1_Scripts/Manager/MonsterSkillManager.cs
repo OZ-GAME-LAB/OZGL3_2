@@ -101,26 +101,7 @@ public class MonsterSkillManager : MonoBehaviour
             return null;
         }
 
-        string address = data.SkillPrefabPath;
-
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            Debug.LogError($"스킬 프리팹 경로가 비어 있습니다: {skillId}", this);
-            return null;
-        }
-
         if (!TryGetSkillType(data.SkillClassName, out Type skillType))
-            return null;
-
-        if (ResourceManager.Inst == null)
-        {
-            Debug.LogError("ResourceManager가 준비되지 않았습니다.", this);
-            return null;
-        }
-
-        GameObject attackPrefab = await ResourceManager.Inst.LoadAsset<GameObject>(address);
-
-        if (attackPrefab == null || owner == null)
             return null;
 
         MonsterSkillBase skill = owner.gameObject.AddComponent(skillType) as MonsterSkillBase;
@@ -131,10 +112,50 @@ public class MonsterSkillManager : MonoBehaviour
             return null;
         }
 
-        skill.SetSkillId(skillId);
-        skill.InitSkill(owner, bodyHeight, atk, attackPrefab);
+        bool initialized = false;
 
-        return skill;
+        try
+        {
+            string address = data.SkillPrefabPath;
+            GameObject attackPrefab = null;
+
+            if (string.IsNullOrWhiteSpace(address))
+            {
+                if (skill.RequiresAttackPrefab)
+                {
+                    Debug.LogError($"스킬 프리팹 경로가 비어 있습니다: {skillId}", this);
+                    return null;
+                }
+            }
+            else
+            {
+                if (ResourceManager.Inst == null)
+                {
+                    Debug.LogError("ResourceManager가 준비되지 않았습니다.", this);
+                    return null;
+                }
+
+                attackPrefab = await ResourceManager.Inst.LoadAsset<GameObject>(address);
+
+                if (attackPrefab == null || owner == null || skill == null)
+                    return null;
+            }
+
+            skill.SetSkillId(skillId);
+            skill.InitSkill(owner, bodyHeight, atk, attackPrefab);
+            initialized = true;
+            return skill;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            return null;
+        }
+        finally
+        {
+            if (!initialized && skill != null)
+                Destroy(skill);
+        }
     }
 
 

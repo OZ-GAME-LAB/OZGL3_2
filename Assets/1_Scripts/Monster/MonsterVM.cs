@@ -1,9 +1,12 @@
 ﻿
 public class MonsterVM : UnitVM
 {
+    public bool BleedAble { get; set; }
+    public override bool CanReceiveBleed => BleedAble;
+
     public override void InvokeOnceOnInit()
     {
-        OnPropertyChanged(nameof(IsBleeding));
+        base.InvokeOnceOnInit();
     }
 
     public void InitMonsterStatus(string id)

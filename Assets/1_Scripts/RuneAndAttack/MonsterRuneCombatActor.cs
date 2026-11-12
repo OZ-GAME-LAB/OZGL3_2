@@ -13,16 +13,14 @@ public class MonsterRuneCombatActor : RuneCombatActor
 
     public override bool IsAlive => IsSpawned && _monsterNetwork != null && _monsterNetwork.IsAlive;
 
-    // 현재는 생존 여부만 반영.
-    // 이후 기절 등 공격 금지 상태를 함께 검사.
-    public override bool CanAttack => IsAlive;
+    public override bool CanAttack => IsAlive && _monsterNetwork.CanAttack;
 
     // 현재 MonsterNetwork.AttackPower는 서버에서 초기화한 값.
     public override float AttackPower => _monsterNetwork != null ? _monsterNetwork.AttackPower : 0f;
 
     public override bool CanHit(RuneCombatActor target)
     {
-        if (IsAlive == false || target == null || target == this || target.IsAlive == false)
+        if (CanAttack == false || target == null || target == this || target.IsAlive == false)
         {
             return false;
         }

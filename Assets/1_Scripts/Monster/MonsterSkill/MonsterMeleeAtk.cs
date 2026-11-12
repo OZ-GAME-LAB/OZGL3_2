@@ -14,6 +14,7 @@ public class MonsterMeleeAtk : MonsterSkillBase
 
     private GameObject _attackObject;
     private Rigidbody2D _ownerBody;
+    private Monster _ownerMonster;
 
 
     public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab) 
@@ -23,6 +24,8 @@ public class MonsterMeleeAtk : MonsterSkillBase
             Debug.LogError("몬스터 본체, 공격 프리팹, 몸 높이를 확인하세요.", this);
             return;
         }
+
+        _ownerMonster = owner.GetComponent<Monster>();
 
         float ownerScaleY = Mathf.Abs(owner.lossyScale.y);
 
@@ -81,7 +84,7 @@ public class MonsterMeleeAtk : MonsterSkillBase
 
     public override void UseSkill(Transform target, Vector3 attackPosition) 
     {
-        if (IsAttacking || !isActiveAndEnabled)
+        if (IsAttacking || !isActiveAndEnabled || _ownerMonster == null || !_ownerMonster.CanAttack || !IsCooldownComplete)
             return;
 
         if (target == null || _ownerBody == null || _attackObject == null)
@@ -110,7 +113,8 @@ public class MonsterMeleeAtk : MonsterSkillBase
         velocity.x = 0f;
         _ownerBody.linearVelocity = velocity;
 
-        _ownerBody.AddForce(Vector2.right * direction * _dashPower, ForceMode2D.Impulse);
+        if (_ownerMonster.CanMove)
+            _ownerBody.AddForce(Vector2.right * direction * _dashPower, ForceMode2D.Impulse);
 
         yield return new WaitForSeconds(_attackDuration);
 
@@ -128,8 +132,6 @@ public class MonsterMeleeAtk : MonsterSkillBase
             velocity.x = 0f;
             _ownerBody.linearVelocity = velocity;
         }
-
-        IsAttacking = false;
 
         IsAttacking = false;
         StartCooldown();

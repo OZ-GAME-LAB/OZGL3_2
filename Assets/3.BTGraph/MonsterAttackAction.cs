@@ -28,12 +28,7 @@ public partial class MonsterAttackAction : Action
         if (!monster.IsTargetInAttackRange())
             return Status.Failure;
 
-        if (monster.Skills.Count == 0)
-            return Status.Failure;
-
-        _skill = monster.Skills[0];
-
-        if (_skill == null || _skill.IsAttacking)
+        if (!monster.TryGetAttackSkill(out _skill) || _skill.IsAttacking || !_skill.IsCooldownComplete)
             return Status.Failure;
 
         Transform target = monster.VisibleTarget.transform;

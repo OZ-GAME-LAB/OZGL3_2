@@ -1,12 +1,13 @@
 ﻿public class PlayerStatViewModel : UnitVM
 {
+    public override bool CanReceiveBossPoison => true;
+
     public override void InvokeOnceOnInit()
     {
+        base.InvokeOnceOnInit();
         OnPropertyChanged(nameof(MoveSpeed));
         OnPropertyChanged(nameof(JumpForce));
         OnPropertyChanged(nameof(AttackPower));
-        OnPropertyChanged(nameof(IsPoisoned));
-        OnPropertyChanged(nameof(IsBossPoisoned));
     }
 
     private float _moveSpeed;
