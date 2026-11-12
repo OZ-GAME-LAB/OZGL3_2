@@ -22,11 +22,17 @@ public class Boss : MonoBehaviour
     [Header("전체 발판 — 침식 및 하얀 꽃")]
     [SerializeField] private Transform[] _platformPoints;
 
+    [SerializeField] private SpriteRenderer _bodyRenderer;
+
     public IReadOnlyList<Transform> PlatformPoints => _platformPoints;
 
     private readonly List<PlayerNetworkStats> _detectedPlayers = new();
 
     private readonly List<PlayerNetworkStats> _groundPlayers = new();
+
+    private readonly List<PlayerNetworkStats> _nearPlayers = new();
+
+    private readonly List<PlayerNetworkStats> _firstPlatformPlayers = new();
 
     private readonly List<BossDetector> _groundAttackCandidates = new();
 
@@ -165,6 +171,14 @@ public class Boss : MonoBehaviour
             return false;
         }
 
+        if (_bodyRenderer == null)
+        {
+            Debug.LogError("보스의 몸체 SpriteRenderer가 연결되지 않았습니다.", this);
+            return false;
+        }
+
+        float bodyHeight = _bodyRenderer.bounds.size.y;
+
         for (int i = 0; i < skillIds.Length; i++)
         {
             float cooldown = cooldowns[i];
@@ -175,7 +189,7 @@ public class Boss : MonoBehaviour
                 return false;
             }
 
-            MonsterSkillBase skill = await MonsterSkillManager.Inst.CreateSkillAsync(skillIds[i], transform, 0f, data.Atk);
+            MonsterSkillBase skill = await MonsterSkillManager.Inst.CreateSkillAsync(skillIds[i], transform, bodyHeight, data.Atk);
 
             if (this == null)
                 return false;
@@ -257,5 +271,133 @@ public class Boss : MonoBehaviour
             return;
 
         _reservedPlatforms.Remove(platform);
+    }
+
+    public bool TrySelectNearAttackDirection(out int direction)
+    {
+        direction = 0;
+
+        GetNearPlayers(_nearPlayers);
+
+        if (_nearPlayers.Count == 0)
+            return false;
+
+        bool hasLeftPlayer = false;
+        bool hasRightPlayer = false;
+
+        float bossX = transform.position.x;
+
+        foreach (PlayerNetworkStats player in _nearPlayers)
+        {
+            if (player.transform.position.x < bossX)
+            {
+                hasLeftPlayer = true;
+            }
+            else
+            {
+                hasRightPlayer = true;
+            }
+        }
+
+        if (hasLeftPlayer && hasRightPlayer)
+        {
+            direction = Random.Range(0, 2) == 0 ? -1 : 1;
+        }
+        else if (hasLeftPlayer)
+        {
+            direction = -1;
+        }
+        else
+        {
+            direction = 1;
+        }
+
+        return true;
+    }
+
+    public bool TryGetDirectionalThornBounds(int direction, out Bounds attackBounds)
+    {
+        attackBounds = default;
+
+        if (direction != -1 && direction != 1)
+            return false;
+
+        if (_groundDetectors == null || _bodyRenderer == null)
+            return false;
+
+        Bounds bodyBounds = _bodyRenderer.bounds;
+
+        foreach (BossDetector detector in _groundDetectors)
+        {
+            if (detector == null || !detector.isActiveAndEnabled)
+                continue;
+
+            if (!detector.TryGetComponent(out BoxCollider2D area) || !area.enabled)
+                continue;
+
+            Bounds groundBounds = area.bounds;
+
+            Vector3 min = groundBounds.min;
+            Vector3 max = groundBounds.max;
+
+            if (direction > 0)
+            {
+                min.x = Mathf.Max(min.x, bodyBounds.max.x);
+            }
+            else
+            {
+                max.x = Mathf.Min(max.x, bodyBounds.min.x);
+            }
+
+            if (max.x <= min.x)
+                continue;
+
+            attackBounds.SetMinMax(min, max);
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool TrySelectPoisonSprayDirection(out int direction)
+    {
+        direction = 0;
+
+        GetFirstPlatformPlayers(_firstPlatformPlayers);
+
+        if (_firstPlatformPlayers.Count == 0)
+            return false;
+
+        bool hasLeftPlayer = false;
+        bool hasRightPlayer = false;
+
+        float bossX = transform.position.x;
+
+        foreach (PlayerNetworkStats player in _firstPlatformPlayers)
+        {
+            if (player.transform.position.x < bossX)
+            {
+                hasLeftPlayer = true;
+            }
+            else
+            {
+                hasRightPlayer = true;
+            }
+        }
+
+        if (hasLeftPlayer && hasRightPlayer)
+        {
+            direction = Random.Range(0, 2) == 0 ? -1 : 1;
+        }
+        else if (hasLeftPlayer)
+        {
+            direction = -1;
+        }
+        else
+        {
+            direction = 1;
+        }
+
+        return true;
     }
 }

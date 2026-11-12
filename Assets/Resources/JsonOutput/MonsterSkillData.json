@@ -13,5 +13,10 @@
     "Id": "boss_thornplatform_atk",
     "SkillClassName": "BossPlatformThornSkill",
     "SkillPrefabPath": "BossThornSkill/BossThornAttackObject"
+  },
+  {
+    "Id": "boss_thorndirection_atk",
+    "SkillClassName": "BossDirectionalThornSkill",
+    "SkillPrefabPath": "BossThornSkill/BossDirectionalThornAttackObject"
   }
 ]

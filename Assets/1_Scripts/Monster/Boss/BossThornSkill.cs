@@ -1,6 +1,7 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;
-using System.Collections;
 
 [Preserve]
 public class BossThornSkill : MonsterSkillBase
@@ -132,7 +133,7 @@ public class BossThornSkill : MonsterSkillBase
 
         IsAttacking = true;
 
-        _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime, _holdSeconds);
+        _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime, _holdSeconds, _attackObject.WarningSeconds);
 
         StartCoroutine(WaitForAttackEnd());
     }

@@ -165,7 +165,7 @@ public class BossPlatformThornSkill : MonsterSkillBase
 
             Debug.Log($"침식 발판: {platform.name}, 위치: {position}, 너비: {bounds.size.x}", attackObject);
 
-            _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime, _holdSeconds);
+            _bossNetwork.BroadcastThornAttack(SkillId, position, bounds.size.x, _thornHeight, startTime, _holdSeconds, attackObject.WarningSeconds);
         }
 
         StartCoroutine(WaitForAttacksEnd());
