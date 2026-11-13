@@ -10,6 +10,7 @@ public class BossNetwork : NetworkUnit
     private MonsterData _monsterData;
     private Boss _boss;
     public bool IsReady { get; private set; }
+    public event System.Action Despawned;
     protected override bool IsReadyForCombat => IsReady;
     private BehaviorGraphAgent _bt;
     private readonly Dictionary<string, List<BossThornAttackObject>> _thornVisualPools = new();
@@ -72,6 +73,7 @@ public class BossNetwork : NetworkUnit
         IsReady = false;
 
         base.OnNetworkDespawn();
+        Despawned?.Invoke();
     }
 
     public bool InitializeStatsOnServer(string id)
