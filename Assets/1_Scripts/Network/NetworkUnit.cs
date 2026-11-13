@@ -257,6 +257,24 @@ public abstract class NetworkUnit : NetworkBehaviour
         return applied;
     }
 
+    // TO USE : 서버에서 보스 독 중첩만 줄일 때 사용. 일반 독은 유지하며 감소 결과를 동기화.
+    public bool RemoveBossPoisonStacksOnServer(int amount = 1)
+    {
+        if (!CanProcessCombat || amount <= 0 || StatusState.BossPoisonStackCount == 0)
+            return false;
+
+        UpdateStatusEffectsOnServer();
+        if (!CanProcessCombat)
+            return false;
+
+        int previousStacks = StatusState.BossPoisonStackCount;
+        bool removed = BattleUtil.RemoveBossPoisonStacks(StatusState, NetworkManager.ServerTime.Time, amount);
+        SynchronizeStatusOnServer();
+        if (removed)
+            Debug.Log($"[보스 독 감소] 대상: {name}, 중첩: {previousStacks} → {BossPoisonStackCount}", this);
+        return removed;
+    }
+
     // TO USE : 서버에서 출혈을 부여할 때 사용. rawAttackDamage는 저항력 적용 전 타격 피해.
     // 출혈을 받을 수 있는 대상만 적용되며, 5중첩 폭발 피해와 중첩 초기화까지 처리.
     public bool ApplyBleedOnServer(float rawAttackDamage)

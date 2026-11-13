@@ -1,4 +1,4 @@
-ï»¿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using static UnityEngine.UI.GridLayoutGroup;
 
@@ -9,7 +9,6 @@ public class MonsterMeleeAtk : MonsterSkillBase
 
     [SerializeField, Min(0.01f)]
     private float _attackDuration = 0.3f;
-
     [SerializeField, Min(0f)]
     private float _dashPower = 5f;
 
@@ -18,31 +17,29 @@ public class MonsterMeleeAtk : MonsterSkillBase
     private Monster _ownerMonster;
 
 
-    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab) 
+    public override bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
     {
         if (owner == null || attackPrefab == null || bodyHeight <= 0f)
         {
-            Debug.LogError("ëª¬ìŠ¤í„° ë³¸ì²´, ê³µê²© í”„ë¦¬íŒ¹, ëª¸ ë†’ì´ë¥¼ í™•ì¸í•˜ì„¸ìš”.", this);
-            return;
+            return FailInitialization("¸ó½ºÅÍ º»Ã¼, °ø°İ ÇÁ¸®ÆÕ, ¸ö ³ôÀÌ¸¦ È®ÀÎÇÏ¼¼¿ä.");
         }
 
-        _ownerMonster = owner.GetComponent<Monster>();
+        if (!owner.TryGetComponent(out _ownerMonster))
+            return FailInitialization("¸ó½ºÅÍ º»Ã¼¿¡ Monster°¡ ÇÊ¿äÇÕ´Ï´Ù.");
 
         float ownerScaleY = Mathf.Abs(owner.lossyScale.y);
 
         if (ownerScaleY <= 0f)
-            return;
+            return FailInitialization("¸ó½ºÅÍ º»Ã¼ÀÇ Y Å©±â´Â 0º¸´Ù Ä¿¾ß ÇÕ´Ï´Ù.");
 
         if (!owner.TryGetComponent(out _ownerBody))
         {
-            Debug.LogError("ëª¬ìŠ¤í„° ë³¸ì²´ì— Rigidbody2Dê°€ í•„ìš”í•©ë‹ˆë‹¤.", this);
-            return;
+            return FailInitialization("¸ó½ºÅÍ º»Ã¼¿¡ Rigidbody2D°¡ ÇÊ¿äÇÕ´Ï´Ù.");
         }
 
         if (!attackPrefab.TryGetComponent<BoxCollider2D>(out _) || !attackPrefab.TryGetComponent<MonsterMeleeAtkObj>(out _))
         {
-            Debug.LogError("ê³µê²© í”„ë¦¬íŒ¹ ë£¨íŠ¸ì— BoxCollider2Dì™€ MonsterMeleeAtkObjê°€ í•„ìš”í•©ë‹ˆë‹¤.", this);
-            return;
+            return FailInitialization("°ø°İ ÇÁ¸®ÆÕ ·çÆ®¿¡ BoxCollider2D¿Í MonsterMeleeAtkObj°¡ ÇÊ¿äÇÕ´Ï´Ù.");
         }
 
         _attackObject = Instantiate(attackPrefab, owner, false);
@@ -81,6 +78,7 @@ public class MonsterMeleeAtk : MonsterSkillBase
         }
 
         hitbox.Init(CreateDamageInfo(atk));
+        return true;
     }
 
     public override void UseSkill(Transform target, Vector3 attackPosition) 

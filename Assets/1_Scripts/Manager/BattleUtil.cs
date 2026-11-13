@@ -143,6 +143,19 @@ public static class BattleUtil
         return true;
     }
 
+    // TO USE : 보스 독 중첩을 줄이는 내부 처리용. 실제 게임에서는 NetworkUnit.RemoveBossPoisonStacksOnServer 사용.
+    public static bool RemoveBossPoisonStacks(UnitStatusState state, double currentTime, int amount)
+    {
+        if (!CanUpdate(state, currentTime) || amount <= 0 || state.BossPoisonStackCount == 0)
+            return false;
+
+        AdvanceBossPoison(state, currentTime);
+        state.BossPoisonStackCount = Math.Max(0, state.BossPoisonStackCount - amount);
+        if (state.BossPoisonStackCount == 0)
+            state.NextBossPoisonTickAt = 0d;
+        return true;
+    }
+
     // TO USE : 출혈 상태를 갱신하고 폭발 피해량을 반환하는 내부 처리용. HP는 변경하지 않음.
     // 실제 게임에서 부여할 때는 NetworkUnit.ApplyBleedOnServer 사용.
     public static float ApplyBleed(UnitStatusState state, double currentTime,

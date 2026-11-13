@@ -18,8 +18,7 @@ public class MonsterSkillBase : MonoBehaviour
     {
         if (data == null || !data.TryGetDamageType(out _damageType))
         {
-            Debug.LogError("스킬의 피해 속성이 올바르지 않습니다.", this);
-            return false;
+            return FailInitialization("스킬의 피해 속성이 올바르지 않습니다.");
         }
 
         _applyPoison = data.isPoison;
@@ -41,7 +40,17 @@ public class MonsterSkillBase : MonoBehaviour
         };
     }
 
-    public virtual void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab) { }
+    public virtual bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
+    {
+        return FailInitialization("InitSkill이 구현되지 않았습니다.");
+    }
+
+    protected bool FailInitialization(string reason)
+    {
+        Debug.LogError($"[스킬 초기화 실패] ID: {SkillId}, 클래스: {GetType().Name}, 원인: {reason}", this);
+        return false;
+    }
+
     public virtual void UseSkill(Transform target, Vector3 attackPosition) { }
 
     public bool IsCooldownComplete => Time.time >= _nextUseTime;
