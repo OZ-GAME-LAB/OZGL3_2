@@ -5,6 +5,7 @@ public class MonsterSkillBase : MonoBehaviour
     public bool IsAttacking { get; protected set; }
     public string SkillId { get; private set; }
     public virtual bool IsDeathSkill => false;
+    public virtual bool IsDashing => false;
     public virtual bool RequiresAttackPrefab => true;
 
     private float _cooldownSeconds;

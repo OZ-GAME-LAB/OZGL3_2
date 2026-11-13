@@ -38,7 +38,9 @@ public class BossThornHitbox : MonoBehaviour
         if (!_hitPlayers.Add(player))
             return;
 
-        RuneDamageResult result = player.ReceiveDirectDamageOnServer(_damageInfo);
+        RuneDamageInfo damageInfo = _damageInfo;
+        damageInfo.HitDirection = Vector2.up;
+        RuneDamageResult result = player.ReceiveDirectDamageOnServer(damageInfo);
 
         if (result.Accepted)
         {

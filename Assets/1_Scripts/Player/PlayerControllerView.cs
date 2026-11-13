@@ -12,6 +12,9 @@ public class PlayerControllerView : MonoBehaviour
     [SerializeField] private PlayerInput _playerInput;
     [SerializeField] private Rigidbody2D _rigidbody2D;
     private float _moveInput;
+    private float _hitControlLockRemaining;
+    private bool _restoreInputAfterHit;
+    public bool IsHitControlLocked => _hitControlLockRemaining > 0f;
 
     [Header("점프 비거리")]
     [SerializeField, Min(0f)] private float _normalJumpDistanceMultiplier = 0.85f;
@@ -215,6 +218,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnDisable()
     {
+        EndHitControlLock();
         RestoreThinPlatformCollisions();
         // Awake에서 필수 참조를 찾지 못해 비활성화된 경우에는 구독한 입력이 없습니다.
         if (!_inputActionsInitialized)
@@ -269,6 +273,9 @@ public class PlayerControllerView : MonoBehaviour
         {
             return;
         }
+
+        if (IsHitControlLocked)
+            return;
 
         if (_isMiniGameMode || _fieldInteractAction.IsPressed())
         {
@@ -359,6 +366,13 @@ public class PlayerControllerView : MonoBehaviour
     {
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
+
+        if (UpdateHitControlLock())
+        {
+            UpdateThinPlatformCollisions();
+            UpdateGroundStateAndAnimation();
+            return;
+        }
 
         if (_isMiniGameMode)
         {
@@ -882,9 +896,70 @@ public class PlayerControllerView : MonoBehaviour
         _sidePassThinPlatforms.Clear();
     }
 
+    public void ApplyHitReaction(Vector2 direction, float impulse, float controlLockDuration)
+    {
+        if (!isActiveAndEnabled || _networkObject == null || !_networkObject.IsSpawned
+            || !_networkObject.IsOwner || _rigidbody2D == null)
+            return;
+
+        _hitControlLockRemaining = controlLockDuration;
+        _interactionController?.CancelRequestedInteraction();
+        ExitMiniGameMode();
+
+        if (_playerInput != null && _playerInput.inputIsActive)
+        {
+            _restoreInputAfterHit = true;
+            _playerInput.DeactivateInput();
+        }
+
+        if (_isSpectatorMode)
+            SetSpectatorMode(false);
+
+        SetMoveInput(0f);
+        ResetAirborneStateAndAnimation();
+        _jumpInProgress = true;
+        _wasGroundedForAnimation = false;
+        _rigidbody2D.linearVelocity = Vector2.zero;
+        _rigidbody2D.AddForce(direction * impulse, ForceMode2D.Impulse);
+
+        if (!IsHitControlLocked)
+            EndHitControlLock();
+    }
+
+    private bool UpdateHitControlLock()
+    {
+        if (!IsHitControlLocked)
+            return false;
+
+        _hitControlLockRemaining = Mathf.Max(0f, _hitControlLockRemaining - Time.fixedDeltaTime);
+        if (!IsHitControlLocked)
+            EndHitControlLock();
+
+        return true;
+    }
+
+    public void EndHitControlLock()
+    {
+        _hitControlLockRemaining = 0f;
+        if (!_restoreInputAfterHit)
+            return;
+
+        _restoreInputAfterHit = false;
+        if (_playerInput == null || !_playerInput.isActiveAndEnabled
+            || _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
+            return;
+
+        _playerInput.ActivateInput();
+        if (isActiveAndEnabled && _moveAction != null && _moveAction.enabled)
+        {
+            SetMoveInput(_moveAction.ReadValue<Vector2>().x);
+            UpdateMovementAnimation();
+        }
+    }
+
     private void OnMove(InputAction.CallbackContext context)
     {
-        if (_isSpectatorMode)
+        if (_isSpectatorMode || IsHitControlLocked)
             return;
 
         SetMoveInput(context.ReadValue<Vector2>().x);
@@ -1153,7 +1228,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (_isSpectatorMode)
+        if (_isSpectatorMode || IsHitControlLocked)
             return;
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
@@ -1252,6 +1327,9 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnFieldInteract(InputAction.CallbackContext context)
     {
+        if (IsHitControlLocked)
+            return;
+
         Debug.Log($"{nameof(OnFieldInteract)} 실행");
 
         if (_interactionController == null)
@@ -1275,7 +1353,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnAttack(InputAction.CallbackContext context)
     {
-        if (_isSpectatorMode || _networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false || _runeAttackController == null)
+        if (IsHitControlLocked || _isSpectatorMode || _networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false || _runeAttackController == null)
         {
             return;
         }

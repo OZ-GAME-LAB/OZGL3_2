@@ -430,6 +430,18 @@ public class PlayerInteractionController : NetworkBehaviour
         ReleaseTarget();
     }
 
+    public void CancelInteractionOnServer()
+    {
+        if (!IsServer || !IsSpawned)
+            return;
+
+        if (_serverTarget != null)
+            _serverTarget.TryCancelOnServer(OwnerClientId, _serverRequestId);
+
+        _serverTarget = null;
+        _serverRequestId = 0;
+    }
+
     private void ClearLocalRequest()
     {
         bool hadRequest = _hasLocalRequest;
@@ -505,7 +517,8 @@ public class PlayerInteractionController : NetworkBehaviour
         ulong senderId = rpcParams.Receive.SenderClientId;
         bool approved = false;
 
-        if (targetReference.TryGet(
+        PlayerRuneCombatActor actor = GetComponent<PlayerRuneCombatActor>();
+        if ((actor == null || !actor.IsHitControlLocked) && targetReference.TryGet(
                 out NetworkObject targetObject, NetworkManager) &&
             targetObject.IsSpawned &&
             targetObject.TryGetComponent(out InteractionNetwork target))

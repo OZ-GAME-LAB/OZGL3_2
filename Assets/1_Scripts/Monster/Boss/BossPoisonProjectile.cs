@@ -175,7 +175,9 @@ public class BossPoisonProjectile : MonoBehaviour
         transform.position = from + (Vector3)(delta / distance * nearestDistance);
         if (nearestPlayer != null)
         {
-            RuneDamageResult result = nearestPlayer.ReceiveDirectDamageOnServer(_damageInfo);
+            RuneDamageInfo damageInfo = _damageInfo;
+            damageInfo.HitDirection = delta / distance;
+            RuneDamageResult result = nearestPlayer.ReceiveDirectDamageOnServer(damageInfo);
             if (result.Accepted)
                 Debug.Log($"독액 적중: {nearestPlayer.name}, 실제 피해: {result.ActualDamage}", nearestPlayer);
         }

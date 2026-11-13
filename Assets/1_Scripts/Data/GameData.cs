@@ -198,6 +198,10 @@ public class MonsterData : GameDataBase
     public string[] HaveSkillIdList;
     public float[] MonsterSkillCollTime;
     public MoveType MonsterType;
+    public float MonsterSpeed;
+    public bool IsMandatoryDropItem;
+    public string MandatoryDropGroupId;
+    public string ProbabilityDropGroupId;
     public string MonsterAddressableId;
 }
 

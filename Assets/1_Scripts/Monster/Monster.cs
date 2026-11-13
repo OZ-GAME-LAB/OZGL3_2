@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -11,14 +12,34 @@ public class Monster : MonoBehaviour
     [SerializeField] private Transform _leftWallCheck;
     [SerializeField] private LayerMask _groundLayer;
     [SerializeField] private float _groundCheckRadius = 0.1f;
+    [SerializeField, Min(0.01f)] private float _wallCheckDistance = 0.1f;
     [SerializeField] private float _jumpForce = 5f;
+    private readonly RaycastHit2D[] _wallCheckHits = new RaycastHit2D[1];
     private float _attackRange;
     private readonly List<MonsterSkillBase> _skills = new();
     public IReadOnlyList<MonsterSkillBase> Skills => _skills;
     private MonsterNetwork _network;
+    private MonsterRuneCombatActor _combatActor;
+    private Coroutine _contactDamageRoutine;
+    private readonly List<Collider2D> _bodyContacts = new();
+    private readonly HashSet<PlayerRuneCombatActor> _contactDamageTargets = new();
     public MoveType MovementType { get; private set; }
     public bool CanMove => MovementType == MoveType.Move;
     public bool CanAttack => _network != null && _network.CanAttack;
+    public bool IsStaggered => _network != null && _network.IsStaggered;
+    public bool IsDashing
+    {
+        get
+        {
+            foreach (MonsterSkillBase skill in _skills)
+            {
+                if (skill != null && skill.isActiveAndEnabled && skill.IsDashing)
+                    return true;
+            }
+
+            return false;
+        }
+    }
     public bool HasPatrolPoints => _patricListCount > 0;
 
     [SerializeField] private Collider2D _monsterCollider;
@@ -37,15 +58,66 @@ public class Monster : MonoBehaviour
 
     public MonsterVM ViewModel { get; } = new MonsterVM();
 
-    // test 속도 추후 데이터 반영 시 해당 변수 삭제
     private float _moveSpeed = 3f;
-    /////////////////////////////////////////////////////
 
     private void Awake()
     {
         _network = GetComponent<MonsterNetwork>();
+        _combatActor = GetComponent<MonsterRuneCombatActor>();
         if (_rigidbody2D == null)
             _rigidbody2D = GetComponent<Rigidbody2D>();
+    }
+
+    private void OnEnable()
+    {
+        _contactDamageRoutine = StartCoroutine(ContactDamageRoutine());
+    }
+
+    private void OnDisable()
+    {
+        if (_contactDamageRoutine != null)
+        {
+            StopCoroutine(_contactDamageRoutine);
+            _contactDamageRoutine = null;
+        }
+
+        _bodyContacts.Clear();
+        _contactDamageTargets.Clear();
+    }
+
+    private IEnumerator ContactDamageRoutine()
+    {
+        WaitForFixedUpdate wait = new WaitForFixedUpdate();
+        while (true)
+        {
+            yield return wait;
+            ApplyContactDamageOnServer();
+        }
+    }
+
+    private void ApplyContactDamageOnServer()
+    {
+        if (_network == null || !_network.IsServer || !_network.IsSpawned || !_network.IsReady
+            || _combatActor == null || !_combatActor.CanAttack
+            || _monsterCollider == null || !_monsterCollider.isActiveAndEnabled)
+            return;
+
+        _bodyContacts.Clear();
+        _contactDamageTargets.Clear();
+        _monsterCollider.GetContacts(new ContactFilter2D { useTriggers = false }, _bodyContacts);
+
+        foreach (Collider2D contact in _bodyContacts)
+        {
+            if (contact == null)
+                continue;
+
+            PlayerRuneCombatActor player = contact.GetComponentInParent<PlayerRuneCombatActor>();
+            if (player == null || !_combatActor.CanHit(player) || !_contactDamageTargets.Add(player))
+                continue;
+
+            Vector2 hitDirection = contact.bounds.center - _monsterCollider.bounds.center;
+            player.ReceiveContactDamageOnServer(_combatActor, hitDirection);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -121,6 +193,17 @@ public class Monster : MonoBehaviour
         _eyePosition = visual.EyePositionReturn();
         _monsterCollider = visual.MonsterColliderReturn();
         _attackRange = data.AtkDistance;
+        if (CanMove)
+        {
+            _moveSpeed = data.MonsterSpeed;
+
+            if (float.IsNaN(_moveSpeed) || float.IsInfinity(_moveSpeed) || _moveSpeed <= 0f)
+            {
+                Debug.LogWarning($"몬스터 이동 속도가 올바르지 않아 3을 사용합니다: {id}, 값: {data.MonsterSpeed}", this);
+                _moveSpeed = 3f;
+            }
+
+        }
 
         return true;
     }
@@ -163,8 +246,19 @@ public class Monster : MonoBehaviour
 
     public bool MonsterPatricMoveAndCheck(Vector3 targetPosition)
     {
+        return MoveAndCheck(targetPosition, _moveSpeed);
+    }
+
+    private bool MoveAndCheck(Vector3 targetPosition, float moveSpeed)
+    {
         if (!CanMove || _rigidbody2D == null)
             return false;
+
+        if (IsStaggered)
+        {
+            MonsterStopMove();
+            return false;
+        }
 
         // TODO : 몬스터 애니메이션 연결 부분 필요(이동 애니메이션 관련 메서드 호출)
 
@@ -178,17 +272,30 @@ public class Monster : MonoBehaviour
             return true;
         }
 
-        velocity.x = Mathf.Clamp(distanceX / Time.fixedDeltaTime, -_moveSpeed, _moveSpeed);
+        velocity.x = Mathf.Clamp(distanceX / Time.fixedDeltaTime, -moveSpeed, moveSpeed);
 
         UpdateSightDirection(velocity.x);
 
         _rigidbody2D.linearVelocity = velocity;
+
+        Transform wallCheck = distanceX > 0f ? _rightWallCheck : _leftWallCheck;
+
+        if (wallCheck != null)
+        {
+            Vector2 direction = distanceX > 0f ? Vector2.right : Vector2.left;
+            ContactFilter2D wallFilter = new ContactFilter2D { useTriggers = false };
+            wallFilter.SetLayerMask(_groundLayer);
+
+            if (Physics2D.Raycast(wallCheck.position, direction, wallFilter, _wallCheckHits, _wallCheckDistance) > 0)
+                MonsterJump();
+        }
+
         return false;
     }
 
     public void MonsterJump()
     {
-        if (!CanMove || _rigidbody2D == null || _groundCheck == null)
+        if (!CanMove || IsStaggered || _rigidbody2D == null || _groundCheck == null)
             return;
 
         bool isGrounded = Physics2D.OverlapCircle(
@@ -227,7 +334,7 @@ public class Monster : MonoBehaviour
             return;
         }
 
-        MonsterPatricMoveAndCheck(VisibleTarget.bounds.center);
+        MoveAndCheck(VisibleTarget.bounds.center, _moveSpeed * 1.2f);
     }
 
     public bool IsTargetInAttackRange()
