@@ -48,39 +48,34 @@ public class BossDirectionalThornSkill : MonsterSkillBase
         _thornObjects.Clear();
     }
 
-    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
+    public override bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
     {
         if (_attackPrefab != null)
-            return;
+            return true;
 
         if (owner == null || attackPrefab == null)
         {
-            Debug.LogError("보스 또는 기둥 공격 프리팹이 없습니다.", this);
-            return;
+            return FailInitialization("보스 또는 기둥 공격 프리팹이 없습니다.");
         }
 
         if (!owner.TryGetComponent(out _boss) || !owner.TryGetComponent(out _bossNetwork))
         {
-            Debug.LogError("스킬 소유 오브젝트에 Boss와 BossNetwork가 필요합니다.", this);
-            return;
+            return FailInitialization("스킬 소유 오브젝트에 Boss와 BossNetwork가 필요합니다.");
         }
 
         if (float.IsNaN(bodyHeight) || float.IsInfinity(bodyHeight) || bodyHeight <= 0f)
         {
-            Debug.LogError("보스의 높이가 올바르지 않습니다.", this);
-            return;
+            return FailInitialization("보스의 높이가 올바르지 않습니다.");
         }
 
         if (!attackPrefab.TryGetComponent(out BossThornAttackObject prefabComponent))
         {
-            Debug.LogError("기둥 프리팹 루트에 BossThornAttackObject가 필요합니다.", this);
-            return;
+            return FailInitialization("기둥 프리팹 루트에 BossThornAttackObject가 필요합니다.");
         }
 
         if (attackPrefab.GetComponentInChildren<BossThornHitbox>(true) == null)
         {
-            Debug.LogError("기둥 프리팹에 BossThornHitbox가 필요합니다.", this);
-            return;
+            return FailInitialization("기둥 프리팹에 BossThornHitbox가 필요합니다.");
         }
 
         _firstThornHeight = bodyHeight;
@@ -93,6 +88,7 @@ public class BossDirectionalThornSkill : MonsterSkillBase
         if (_boss.TryGetDirectionalThornBounds(1, out Bounds rightBounds))
             count = Mathf.Max(count, GetThornCount(rightBounds));
         EnsureThornObjects(count);
+        return true;
     }
 
     private int GetThornCount(Bounds attackBounds)

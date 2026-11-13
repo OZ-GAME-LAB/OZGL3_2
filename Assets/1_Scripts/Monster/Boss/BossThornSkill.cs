@@ -35,33 +35,29 @@ public class BossThornSkill : MonsterSkillBase
         IsAttacking = false;
     }
 
-    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
+    public override bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
     {
         if (_attackObject != null)
-            return;
+            return true;
 
         if (owner == null || attackPrefab == null)
         {
-            Debug.LogError("보스 또는 가시 공격 프리팹이 없습니다.", this);
-            return;
+            return FailInitialization("보스 또는 가시 공격 프리팹이 없습니다.");
         }
 
         if (!owner.TryGetComponent(out _bossNetwork))
         {
-            Debug.LogError("보스에 BossNetwork가 필요합니다.", this);
-            return;
+            return FailInitialization("보스에 BossNetwork가 필요합니다.");
         }
 
         if (!owner.TryGetComponent(out _boss))
         {
-            Debug.LogError("스킬 소유 오브젝트에 Boss가 필요합니다.", this);
-            return;
+            return FailInitialization("스킬 소유 오브젝트에 Boss가 필요합니다.");
         }
 
         if (!attackPrefab.TryGetComponent(out BossThornAttackObject prefabComponent))
         {
-            Debug.LogError("공격 프리팹 루트에 BossThornAttackObject가 필요합니다.", this);
-            return;
+            return FailInitialization("공격 프리팹 루트에 BossThornAttackObject가 필요합니다.");
         }
 
         _attackObject = Instantiate(prefabComponent, owner.position, Quaternion.identity);
@@ -73,16 +69,15 @@ public class BossThornSkill : MonsterSkillBase
 
         if (hitbox == null)
         {
-            Debug.LogError("가시 프리팹의 Hitbox에 BossThornHitbox가 필요합니다.", this);
-
             Destroy(_attackObject.gameObject);
             _attackObject = null;
-            return;
+            return FailInitialization("가시 프리팹의 Hitbox에 BossThornHitbox가 필요합니다.");
         }
 
         hitbox.Initialize(_bossNetwork, CreateDamageInfo(atk));
 
         _attackObject.AttackStarted += StartCooldown;
+        return true;
     }
 
     public override void UseSkill(Transform target, Vector3 attackPosition)

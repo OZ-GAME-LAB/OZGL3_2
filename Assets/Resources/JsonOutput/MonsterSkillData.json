@@ -38,5 +38,29 @@
     "isPoison": false,
     "isBossPoison": true,
     "SkillPrefabPath": "BossPoisonSpraySkill/BossPoisonProjectile"
+  },
+  {
+    "Id": "boss_flower_summon",
+    "SkillClassName": "BossFlowerSummonSkill",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": false,
+    "SkillPrefabPath": null
+  },
+  {
+    "Id": "flower_death_heal",
+    "SkillClassName": "FlowerDeathHealSkill",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": false,
+    "SkillPrefabPath": "BossSkill/BossHealEffect"
+  },
+  {
+    "Id": "boss_poison_mist",
+    "SkillClassName": "BossPoisonMistSkill",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": true,
+    "SkillPrefabPath": "BossSkill/BossPoisonMistObject"
   }
 ]
