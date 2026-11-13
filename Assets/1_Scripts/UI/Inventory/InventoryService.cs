@@ -279,7 +279,18 @@ public class InventoryService
         return itemViewModel;
     }
 
-   
+    public bool IsEquippedItem(InventoryItemViewModel item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.Id))
+            return false;
+
+        var inventory = GetInvantoryViewModel();
+
+        return ReferenceEquals(inventory.TalismanItemViewModel, item)
+            || ReferenceEquals(inventory.FishingItemViewModel, item)
+            || ReferenceEquals(inventory.LoggingItemViewModel, item)
+            || ReferenceEquals(inventory.MiningItemViewModel, item);
+    }
 
     //인벤토리 아이템들을 반환하는 메서드 추가
     public IEnumerable<InventoryItemViewModel> GetInventoryItems()
