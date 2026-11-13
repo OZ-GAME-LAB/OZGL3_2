@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Cysharp.Threading.Tasks;
 
 public class NetworkSelectUI : UIBase
 {
@@ -17,6 +18,10 @@ public class NetworkSelectUI : UIBase
     [Header("안내")]
     [SerializeField] private TMP_Text Text_Message;
 
+    [SerializeField] private Button Button_BackToLobby;
+
+    private bool _returningToLobby;
+
     private NetCodeNetworkManager _boundManager;
 
     private void Awake()
@@ -24,6 +29,7 @@ public class NetworkSelectUI : UIBase
         Button_CreateRoom.onClick.AddListener(OnCreateRoom);
         Button_JoinRoom.onClick.AddListener(OnJoinRoom);
         Button_CancelConnection.onClick.AddListener(OnCancelConnection);
+        Button_BackToLobby.onClick.AddListener(OnBackToLobby);
 
         if (string.IsNullOrWhiteSpace(Input_HostPort.text))
         {
@@ -76,6 +82,11 @@ public class NetworkSelectUI : UIBase
         {
             Button_CancelConnection.onClick.RemoveListener(OnCancelConnection);
         }
+
+        if (Button_BackToLobby != null)
+        {
+            Button_BackToLobby.onClick.RemoveListener(OnBackToLobby);
+        }
     }
 
     private void TryBindManager()
@@ -118,15 +129,24 @@ public class NetworkSelectUI : UIBase
 
     private void RefreshInteractable()
     {
-        bool canStart = (_boundManager != null) && (_boundManager.CanStartConnection);
+        bool canStart = (_boundManager != null) && (_boundManager.CanStartConnection) && (_returningToLobby == false);
 
         Button_CreateRoom.interactable = canStart;
         Button_JoinRoom.interactable = canStart;
-        Button_CancelConnection.interactable = _boundManager != null && _boundManager.IsConnecting; //canCancel/isCancelable로 빼면 가독성이 괜찮을지 고민중
 
         Input_HostPort.interactable = canStart;
         Input_HostAddress.interactable = canStart;
         Input_JoinPort.interactable = canStart;
+
+        if (Button_CancelConnection != null)
+        {
+            Button_CancelConnection.interactable = _returningToLobby == false && _boundManager != null && _boundManager.IsConnecting;
+        }
+
+        if (Button_BackToLobby != null)
+        {
+            Button_BackToLobby.interactable = canStart;
+        }
     }
 
     private void OnCreateRoom()
@@ -207,5 +227,51 @@ public class NetworkSelectUI : UIBase
         }
 
         _boundManager.StartAsServer();
+    }
+
+    private void OnBackToLobby()
+    {
+        ReturnToLobbyAsync().Forget();
+    }
+
+    private async UniTask ReturnToLobbyAsync()
+    {
+        if (_returningToLobby || UIManager.Inst == null)
+        {
+            return;
+        }
+
+        TryBindManager();
+
+        if (_boundManager == null || _boundManager.CanStartConnection == false)
+        {
+            SetMessage("네트워크가 실행 중이거나 종료 처리 중입니다.");
+            return;
+        }
+
+        _returningToLobby = true;
+        RefreshInteractable();
+
+        UIManager uiManager = UIManager.Inst;
+
+        try
+        {
+            LobbyUI lobby = await uiManager.OpenLobbyUIAsync();
+
+            if (this == null || uiManager == null | lobby == null)
+            {
+                return;
+            }
+
+            uiManager.CloseNetworkUI();
+        }
+        finally
+        {
+            if (this != null)
+            {
+                _returningToLobby = false;
+                RefreshInteractable();
+            }
+        }
     }
 }
