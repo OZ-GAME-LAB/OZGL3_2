@@ -70,5 +70,21 @@
     "isPoison": false,
     "isBossPoison": false,
     "SkillPrefabPath": "MonsterMeleeAtk/MonsterMeleeAtkSkill"
+  },
+  {
+    "Id": "monster_range_01",
+    "SkillClassName": "MonsterRangedAtk",
+    "DamageType": null,
+    "isPoison": true,
+    "isBossPoison": false,
+    "SkillPrefabPath": "Monster/MonsterRangedProjectile"
+  },
+  {
+    "Id": "monster_mist_01",
+    "SkillClassName": "MonsterPoisonMistSkill",
+    "DamageType": null,
+    "isPoison": true,
+    "isBossPoison": false,
+    "SkillPrefabPath": "Monster/MonsterPoisonMistObject"
   }
 ]

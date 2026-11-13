@@ -7,6 +7,7 @@ public class MonsterSkillBase : MonoBehaviour
     public virtual bool IsDeathSkill => false;
     public virtual bool IsDashing => false;
     public virtual bool RequiresAttackPrefab => true;
+    public virtual bool StopAtAttackRange => false;
 
     private float _cooldownSeconds;
     private float _nextUseTime;

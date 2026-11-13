@@ -53,7 +53,8 @@ public enum MoveType
 {
     None = 0,
     Fix = 1,
-    Move = 2
+    Move = 2,
+    Fly = 3
 }
 
 public enum ValueBasis

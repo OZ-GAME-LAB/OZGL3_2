@@ -13,7 +13,7 @@
     "PoisonResistance": 0.1,
     "BleedAble": true,
     "HaveSkillIdList": [
-      "monster_melee_01"
+      "monster_melee_02"
     ],
     "MonsterSkillCollTime": [
       3
@@ -101,13 +101,65 @@
     "PoisonResistance": 0.1,
     "BleedAble": true,
     "HaveSkillIdList": [
-      "monster_melee_02"
+      "monster_melee_01"
     ],
     "MonsterSkillCollTime": [
       3
     ],
     "MonsterType": 2,
     "MonsterSpeed": 3,
+    "IsMandatoryDropItem": false,
+    "MandatoryDropGroupId": null,
+    "ProbabilityDropGroupId": null,
+    "MonsterAddressableId": "Monster/TestMonsterVisualPrefab"
+  },
+  {
+    "Id": "monster_test_range_01",
+    "Name": "테스트 몬스터(원거리)",
+    "Description": "테스트 몬스터다",
+    "Hp": 10,
+    "Atk": 10,
+    "AtkDistance": 5,
+    "PhysicalResistance": 0.1,
+    "FireResistance": 0.1,
+    "IceResistance": 0.1,
+    "ElectricalResistance": 0.1,
+    "PoisonResistance": 0.1,
+    "BleedAble": true,
+    "HaveSkillIdList": [
+      "monster_range_01"
+    ],
+    "MonsterSkillCollTime": [
+      2
+    ],
+    "MonsterType": 3,
+    "MonsterSpeed": 3,
+    "IsMandatoryDropItem": false,
+    "MandatoryDropGroupId": null,
+    "ProbabilityDropGroupId": null,
+    "MonsterAddressableId": "Monster/TestMonsterVisualPrefab"
+  },
+  {
+    "Id": "monster_test_fix_01",
+    "Name": "테스트 몬스터(고정형)",
+    "Description": "테스트 몬스터다",
+    "Hp": 10,
+    "Atk": 10,
+    "AtkDistance": 3,
+    "PhysicalResistance": 0.1,
+    "FireResistance": 0.1,
+    "IceResistance": 0.1,
+    "ElectricalResistance": 0.1,
+    "PoisonResistance": 0.1,
+    "BleedAble": false,
+    "HaveSkillIdList": [
+      "monster_mist_01"
+    ],
+    "MonsterSkillCollTime": [
+      4
+    ],
+    "MonsterType": 1,
+    "MonsterSpeed": null,
     "IsMandatoryDropItem": false,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": null,

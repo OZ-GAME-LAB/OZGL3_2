@@ -175,8 +175,6 @@ public class PlayerRuneCombatActor : RuneCombatActor
                 _attackController.TryInterruptOnServer();
         }
 
-        }
-
         return result;
     }
 
@@ -194,8 +192,7 @@ public class PlayerRuneCombatActor : RuneCombatActor
     }
 
     [ClientRpc]
-    private void ApplyHitReactionClientRpc(Vector2 direction, float impulse, float controlLockDuration,
-        ClientRpcParams rpcParams = default)
+    private void ApplyHitReactionClientRpc(Vector2 direction, float impulse, float controlLockDuration, ClientRpcParams rpcParams = default)
     {
         if (!IsOwner || !IsSpawned || !IsAlive || _playerController == null)
             return;

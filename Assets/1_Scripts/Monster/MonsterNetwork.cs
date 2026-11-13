@@ -169,10 +169,11 @@ public partial class MonsterNetwork : NetworkUnit
         if (_body != null)
         {
             bool fixedPosition = _monster.MovementType == MoveType.Fix;
+            bool flying = _monster.MovementType == MoveType.Fly;
             _body.constraints = fixedPosition
                 ? _originalConstraints | RigidbodyConstraints2D.FreezePosition
-                : _originalConstraints;
-            _body.gravityScale = fixedPosition ? 0f : _originalGravityScale;
+                : flying ? _originalConstraints | RigidbodyConstraints2D.FreezePositionY : _originalConstraints;
+            _body.gravityScale = fixedPosition || flying ? 0f : _originalGravityScale;
             _body.linearVelocity = Vector2.zero;
             _body.angularVelocity = 0f;
             _body.simulated = true;
@@ -196,6 +197,8 @@ public partial class MonsterNetwork : NetworkUnit
         if (!IsServer)
         {
             bool visualsPrepared = await PrepareMeleeVisualsAsync(_monsterId.Value.ToString());
+            if (visualsPrepared && this != null && IsSpawned)
+                visualsPrepared = await PrepareTimedAttackVisualsAsync(_monsterId.Value.ToString());
             if (this == null || !IsSpawned || !visualsPrepared)
                 return;
         }
@@ -212,6 +215,7 @@ public partial class MonsterNetwork : NetworkUnit
     public override void OnNetworkDespawn()
     {
         DestroyMeleeVisuals();
+        DestroyTimedAttacks();
         _staggerRemaining = 0f;
         IsReady = false;
 

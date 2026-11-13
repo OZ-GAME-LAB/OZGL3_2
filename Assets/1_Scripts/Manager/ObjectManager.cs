@@ -204,7 +204,7 @@ public class ObjectManager : MonoBehaviour
 
         MonsterData data = DataManager.Inst.GetData<MonsterData>(id);
 
-        if (data == null || (data.MonsterType != MoveType.Fix && data.MonsterType != MoveType.Move))
+        if (data == null || (data.MonsterType != MoveType.Fix && data.MonsterType != MoveType.Move && data.MonsterType != MoveType.Fly))
         {
             Debug.LogError($"몬스터 데이터와 이동 유형을 확인하세요: {id}");
             return null;
@@ -212,7 +212,7 @@ public class ObjectManager : MonoBehaviour
 
         GameObject[] patrolSpots = null;
 
-        if (data.MonsterType == MoveType.Move)
+        if (data.MonsterType == MoveType.Move || data.MonsterType == MoveType.Fly)
         {
             if (patrolObject == null)
             {
