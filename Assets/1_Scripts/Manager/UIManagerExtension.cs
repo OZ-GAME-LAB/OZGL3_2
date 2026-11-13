@@ -28,6 +28,8 @@ public enum UIType
     RuneInventoryUI,
     LoggingMiningUI,
     FishingUI,
+    LobbyUI,
+    SettingUI,
 }
 
 
@@ -100,6 +102,28 @@ public static class UIManagerExtension
     public static void CloseRuneInventoryUI(this UIManager uiManager)
     {
         uiManager.Close(UIType.RuneInventoryUI);
+    }
+
+    public static async UniTask<LobbyUI> OpenLobbyUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        UIBase uiBase = await uiManager.OpenMainRootAsync(UIType.LobbyUI, cancellationToken);
+        return GetView<LobbyUI>(uiBase, UIType.LobbyUI);
+    }
+
+    public static void CloseLobbyUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.LobbyUI);
+    }
+
+    public static async UniTask<SettingUI> OpenSettingUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        UIBase uiBase = await uiManager.OpenPopupRootAsync(UIType.SettingUI, cancellationToken);
+        return GetView<SettingUI>(uiBase, UIType.SettingUI);
+    }
+
+    public static void CloseSettingUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.SettingUI);
     }
 
     //UI를 생성하고 View를 가져오고 싶을 때 사용

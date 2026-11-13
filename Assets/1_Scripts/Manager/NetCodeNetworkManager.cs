@@ -45,7 +45,13 @@ public class NetCodeNetworkManager : MonoBehaviour
 
     private void Start()
     {
-        UIManager.Inst.OpenNetworkUI().Forget();
+        if (UIManager.Inst == null)
+        {
+            Debug.LogError("UIManager가 없습니다.", this);
+            return;
+        }
+
+        UIManager.Inst.OpenLobbyUIAsync().Forget();
     }
 
     private void OnDestroy()
