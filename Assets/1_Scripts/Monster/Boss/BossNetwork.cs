@@ -59,6 +59,7 @@ public class BossNetwork : NetworkUnit
     {
         DestroyThornVisuals();
         DestroyPoisonVisual();
+        DestroyPoisonMistVisual();
 
         if (_bt != null)
             _bt.enabled = false;
@@ -145,7 +146,7 @@ public class BossNetwork : NetworkUnit
 
             if (!success)
             {
-                Debug.LogError("보스 스킬 초기화에 실패했습니다.", this);
+                Debug.LogError($"[보스 생성 취소] 보스 ID: {data.Id}. 스킬 초기화에 실패하여 Despawn합니다. 실패한 스킬과 원인은 앞선 [스킬 초기화 실패] 로그를 확인하세요.", this);
                 NetworkObject.Despawn();
                 return;
             }
@@ -295,6 +296,81 @@ public class BossNetwork : NetworkUnit
         {
             if (visual != null)
                 visual.gameObject.SetActive(false);
+        }
+    }
+
+    private BossPoisonMistObject _poisonMistVisual;
+    private uint _poisonMistVisualVersion;
+
+    public void BroadcastPoisonMist(string skillId, Vector3 position, double startTime, float durationSeconds)
+    {
+        if (IsServer && IsSpawned)
+            PlayPoisonMistClientRpc(skillId, position, startTime, durationSeconds);
+    }
+
+    [ClientRpc]
+    private void PlayPoisonMistClientRpc(string skillId, Vector3 position, double startTime, float durationSeconds)
+    {
+        if (IsServer)
+            return;
+
+        ShowPoisonMistAsync(skillId, position, startTime, durationSeconds).Forget();
+    }
+
+    private void DestroyPoisonMistVisual()
+    {
+        _poisonMistVisualVersion++;
+        if (_poisonMistVisual != null)
+        {
+            _poisonMistVisual.Stop();
+            Destroy(_poisonMistVisual.gameObject);
+        }
+        _poisonMistVisual = null;
+    }
+
+    private async UniTask ShowPoisonMistAsync(string skillId, Vector3 position, double startTime, float durationSeconds)
+    {
+        uint version = ++_poisonMistVisualVersion;
+        try
+        {
+            if (this == null || !IsSpawned || !IsAlive || NetworkManager == null
+                || !NetworkManager.IsListening || string.IsNullOrWhiteSpace(skillId)
+                || float.IsNaN(durationSeconds) || float.IsInfinity(durationSeconds) || durationSeconds <= 0f
+                || double.IsNaN(startTime) || double.IsInfinity(startTime)
+                || NetworkManager.ServerTime.Time >= startTime + durationSeconds)
+                return;
+
+            if (_poisonMistVisual == null)
+            {
+                if (DataManager.Inst == null || ResourceManager.Inst == null)
+                    return;
+
+                MonsterSkillData data = DataManager.Inst.GetData<MonsterSkillData>(skillId);
+                if (data == null || string.IsNullOrWhiteSpace(data.SkillPrefabPath))
+                    return;
+
+                GameObject prefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.SkillPrefabPath);
+                if (this == null || !IsSpawned || !IsAlive || _poisonMistVisualVersion != version
+                    || prefab == null || NetworkManager == null || !NetworkManager.IsListening
+                    || NetworkManager.ServerTime.Time >= startTime + durationSeconds)
+                    return;
+
+                if (!prefab.TryGetComponent(out BossPoisonMistObject mistPrefab))
+                {
+                    Debug.LogError($"안개 프리팹에 BossPoisonMistObject가 없습니다: {skillId}", this);
+                    return;
+                }
+
+                _poisonMistVisual = Instantiate(mistPrefab, position, Quaternion.identity);
+                _poisonMistVisual.gameObject.SetActive(false);
+            }
+
+            _poisonMistVisual.transform.SetPositionAndRotation(position, Quaternion.identity);
+            _poisonMistVisual.Play(this, startTime, durationSeconds);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception);
         }
     }
 

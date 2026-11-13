@@ -42,14 +42,16 @@
       "boss_thornplatform_atk",
       "boss_thorndirection_atk",
       "boss_poison_atk",
-      "boss_flower_summon"
+      "boss_flower_summon",
+      "boss_poison_mist"
     ],
     "MonsterSkillCollTime": [
       2,
       5,
       6,
       4,
-      2
+      2,
+      0
     ],
     "MonsterType": null,
     "IsMandatoryDropItem": false,

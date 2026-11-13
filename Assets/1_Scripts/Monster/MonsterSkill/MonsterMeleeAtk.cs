@@ -17,31 +17,29 @@ public class MonsterMeleeAtk : MonsterSkillBase
     private Monster _ownerMonster;
 
 
-    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab) 
+    public override bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
     {
         if (owner == null || attackPrefab == null || bodyHeight <= 0f)
         {
-            Debug.LogError("몬스터 본체, 공격 프리팹, 몸 높이를 확인하세요.", this);
-            return;
+            return FailInitialization("몬스터 본체, 공격 프리팹, 몸 높이를 확인하세요.");
         }
 
-        _ownerMonster = owner.GetComponent<Monster>();
+        if (!owner.TryGetComponent(out _ownerMonster))
+            return FailInitialization("몬스터 본체에 Monster가 필요합니다.");
 
         float ownerScaleY = Mathf.Abs(owner.lossyScale.y);
 
         if (ownerScaleY <= 0f)
-            return;
+            return FailInitialization("몬스터 본체의 Y 크기는 0보다 커야 합니다.");
 
         if (!owner.TryGetComponent(out _ownerBody))
         {
-            Debug.LogError("몬스터 본체에 Rigidbody2D가 필요합니다.", this);
-            return;
+            return FailInitialization("몬스터 본체에 Rigidbody2D가 필요합니다.");
         }
 
         if (!attackPrefab.TryGetComponent<BoxCollider2D>(out _) || !attackPrefab.TryGetComponent<MonsterMeleeAtkObj>(out _))
         {
-            Debug.LogError("공격 프리팹 루트에 BoxCollider2D와 MonsterMeleeAtkObj가 필요합니다.", this);
-            return;
+            return FailInitialization("공격 프리팹 루트에 BoxCollider2D와 MonsterMeleeAtkObj가 필요합니다.");
         }
 
         _attackObject = Instantiate(attackPrefab, owner, false);
@@ -80,6 +78,7 @@ public class MonsterMeleeAtk : MonsterSkillBase
         }
 
         hitbox.Init(CreateDamageInfo(atk));
+        return true;
     }
 
     public override void UseSkill(Transform target, Vector3 attackPosition) 

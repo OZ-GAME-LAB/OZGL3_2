@@ -11,7 +11,7 @@ public class FlowerDeathHealSkill : MonsterSkillBase
 
     public override bool IsDeathSkill => true;
 
-    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
+    public override bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
     {
         _ownerNetwork = null;
         _healPrefab = null;
@@ -19,18 +19,17 @@ public class FlowerDeathHealSkill : MonsterSkillBase
 
         if (owner == null || !owner.TryGetComponent(out _ownerNetwork))
         {
-            Debug.LogError("꽃 회복 스킬의 소유 오브젝트에 MonsterNetwork가 필요합니다.", this);
-            return;
+            return FailInitialization("꽃 회복 스킬의 소유 오브젝트에 MonsterNetwork가 필요합니다.");
         }
 
         if (attackPrefab == null || !attackPrefab.TryGetComponent(out HealAreaObject healPrefab)
             || !healPrefab.HasValidSettings())
         {
-            Debug.LogError("회복 프리팹의 HealAreaObject, Trigger, Rigidbody2D와 회복 설정을 확인하세요.", this);
-            return;
+            return FailInitialization("회복 프리팹의 HealAreaObject, Trigger, Rigidbody2D와 회복 설정을 확인하세요.");
         }
 
         _healPrefab = healPrefab;
+        return true;
     }
 
     public override void UseSkill(Transform target, Vector3 attackPosition)

@@ -15,31 +15,29 @@ public class BossFlowerSummonSkill : MonsterSkillBase
 
     public override bool RequiresAttackPrefab => false;
 
-    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
+    public override bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
     {
         _initialized = false;
 
         if (owner == null || !owner.TryGetComponent(out _boss)
             || !owner.TryGetComponent(out _bossNetwork))
         {
-            Debug.LogError("꽃 소환 스킬의 소유 오브젝트에 Boss와 BossNetwork가 필요합니다.", this);
-            return;
+            return FailInitialization("꽃 소환 스킬의 소유 오브젝트에 Boss와 BossNetwork가 필요합니다.");
         }
 
         if (DataManager.Inst == null || string.IsNullOrWhiteSpace(_flowerMonsterId))
         {
-            Debug.LogError("꽃 소환에 필요한 DataManager와 몬스터 ID를 확인하세요.", this);
-            return;
+            return FailInitialization("꽃 소환에 필요한 DataManager와 몬스터 ID를 확인하세요.");
         }
 
         MonsterData data = DataManager.Inst.GetData<MonsterData>(_flowerMonsterId);
         if (data == null || data.MonsterType != MoveType.Fix)
         {
-            Debug.LogError($"고정형 꽃 몬스터 데이터가 필요합니다: {_flowerMonsterId}", this);
-            return;
+            return FailInitialization($"고정형 꽃 몬스터 데이터가 필요합니다: {_flowerMonsterId}");
         }
 
         _initialized = true;
+        return true;
     }
 
     public override void UseSkill(Transform target, Vector3 attackPosition)

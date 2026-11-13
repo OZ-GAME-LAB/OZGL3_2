@@ -51,33 +51,29 @@ public class BossPlatformThornSkill : MonsterSkillBase
         }
     }
 
-    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
+    public override bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
     {
         if (_initialized)
-            return;
+            return true;
 
         if (owner == null || attackPrefab == null)
         {
-            Debug.LogError("보스 또는 발판 침식 프리팹이 없습니다.", this);
-            return;
+            return FailInitialization("보스 또는 발판 침식 프리팹이 없습니다.");
         }
 
         if (!owner.TryGetComponent(out _boss) || !owner.TryGetComponent(out _bossNetwork))
         {
-            Debug.LogError("스킬 소유 오브젝트에 Boss와 BossNetwork가 필요합니다.", this);
-            return;
+            return FailInitialization("스킬 소유 오브젝트에 Boss와 BossNetwork가 필요합니다.");
         }
 
         if (!attackPrefab.TryGetComponent(out BossThornAttackObject prefabComponent))
         {
-            Debug.LogError("공격 프리팹 루트에 BossThornAttackObject가 필요합니다.", this);
-            return;
+            return FailInitialization("공격 프리팹 루트에 BossThornAttackObject가 필요합니다.");
         }
 
         if (attackPrefab.GetComponentInChildren<BossThornHitbox>(true) == null)
         {
-            Debug.LogError("공격 프리팹의 Hitbox에 BossThornHitbox가 필요합니다.", this);
-            return;
+            return FailInitialization("공격 프리팹의 Hitbox에 BossThornHitbox가 필요합니다.");
         }
 
         for (int i = 0; i < _attackObjects.Length; i++)
@@ -95,6 +91,7 @@ public class BossPlatformThornSkill : MonsterSkillBase
         }
 
         _initialized = true;
+        return true;
     }
 
     private void OnAttackStarted()

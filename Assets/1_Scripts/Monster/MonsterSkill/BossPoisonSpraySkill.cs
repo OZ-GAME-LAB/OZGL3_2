@@ -11,32 +11,29 @@ public class BossPoisonSpraySkill : MonsterSkillBase
     private float _attackPower;
     private uint _attackId;
 
-    public override void InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
+    public override bool InitSkill(Transform owner, float bodyHeight, float atk, GameObject attackPrefab)
     {
         if (_projectile != null)
-            return;
+            return true;
 
         if (owner == null || attackPrefab == null
             || !owner.TryGetComponent(out _boss)
             || !owner.TryGetComponent(out _bossNetwork)
             || !owner.TryGetComponent(out _path))
         {
-            Debug.LogError("독액 스킬에는 Boss, BossNetwork, BossPoisonPath와 공격 프리팹이 필요합니다.", this);
-            return;
+            return FailInitialization("독액 스킬에는 Boss, BossNetwork, BossPoisonPath와 공격 프리팹이 필요합니다.");
         }
 
         if (!_path.TryGetTrajectory(-1, out _, out _, out _)
             || !_path.TryGetTrajectory(1, out _, out _, out _))
         {
-            Debug.LogError("좌우 독액 경로의 시작·통과·도착 기준점을 확인해 주세요.", this);
-            return;
+            return FailInitialization("좌우 독액 경로의 시작·통과·도착 기준점을 확인해 주세요.");
         }
 
         if (!attackPrefab.TryGetComponent(out BossPoisonProjectile projectile)
             || !projectile.HasValidSettings() || float.IsNaN(atk) || float.IsInfinity(atk) || atk <= 0f)
         {
-            Debug.LogError("독액 프리팹의 외형·시간·반경과 보스 공격력을 확인해 주세요.", this);
-            return;
+            return FailInitialization("독액 프리팹의 외형·시간·반경과 보스 공격력을 확인해 주세요.");
         }
 
         _attackPower = atk;
@@ -45,6 +42,7 @@ public class BossPoisonSpraySkill : MonsterSkillBase
         _projectile.gameObject.SetActive(false);
         _projectile.FlightStarted += StartCooldown;
         _projectile.Finished += FinishAttack;
+        return true;
     }
 
     public override void UseSkill(Transform target, Vector3 attackPosition)

@@ -54,5 +54,13 @@
     "isPoison": false,
     "isBossPoison": false,
     "SkillPrefabPath": "BossSkill/BossHealEffect"
+  },
+  {
+    "Id": "boss_poison_mist",
+    "SkillClassName": "BossPoisonMistSkill",
+    "DamageType": null,
+    "isPoison": false,
+    "isBossPoison": true,
+    "SkillPrefabPath": "BossSkill/BossPoisonMistObject"
   }
 ]
