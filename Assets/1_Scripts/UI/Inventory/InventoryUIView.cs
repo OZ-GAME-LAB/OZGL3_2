@@ -1,6 +1,7 @@
 using ObservableCollections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,22 +13,72 @@ public class InventoryUIView : UIBase
 
     [SerializeField] private Transform _EquipmentSlotRoot;
 
+    [SerializeField] private GameObject _itemPopupUI;
+
+    [SerializeField] private Button _ItemUseButton;
+    [SerializeField] private Button _ItemAddQuickSlotButton;
+    [SerializeField] private Button _ItemRemoveButton;
+
+    [SerializeField] private TMP_Text _ItemUseText;
+    [SerializeField] private TMP_Text _ItemAddQuickSlotText;
+    [SerializeField] private TMP_Text _ItemRemoveText;
+
+    [SerializeField] private TMP_Text _nameText;
+    [SerializeField] private TMP_Text _descriptionText;
+
+
     InventoryUIViewModel _InventoryUIViewModel;
     private readonly Dictionary<InventorySlotUIView, InventoryItemViewModel> _inventorySlots = new();
 
     private readonly List<InventorySlotUIView> _equipmentSlots = new();
 
+    private InventoryItemViewModel _selectedItem;
 
     private void OnEnable()
     {
         if (_closeButton != null)
+        {
             _closeButton.onClick.AddListener(OnClickCloseButton);
+
+        }
+
+        if (_ItemUseButton!= null)
+        {
+        _ItemUseButton.onClick.AddListener(OnClickItemUseButton);
+        }
+        if (_ItemAddQuickSlotButton != null)
+        {
+            _ItemAddQuickSlotButton.onClick.AddListener(OnClickItemAddQuickSlotButton);
+        }
+        if (_ItemRemoveButton != null)
+        {
+            _ItemRemoveButton.onClick.AddListener(OnClickItemRemoveButton);
+        }
+
+        CloseItemPopup();
     }
 
     private void OnDisable()
     {
         if (_closeButton != null)
+        {
             _closeButton.onClick.RemoveListener(OnClickCloseButton);
+        }
+
+        if (_ItemUseButton != null)
+        {
+            _ItemUseButton.onClick.RemoveListener(OnClickItemUseButton);
+        }
+        if (_ItemAddQuickSlotButton != null)
+        {
+            _ItemAddQuickSlotButton.onClick.RemoveListener(OnClickItemAddQuickSlotButton);
+        }
+        if (_ItemRemoveButton != null)
+        {
+            _ItemRemoveButton.onClick.RemoveListener(OnClickItemRemoveButton);
+        }
+
+        CloseItemPopup();
     }
 
     public void Bind(InventoryUIViewModel inventory)
@@ -112,22 +163,100 @@ public class InventoryUIView : UIBase
 
     private void ItemOnClick(InventorySlotUIView slot, InventoryItemViewModel item)
     {
-        if (slot == null || item == null)
+        if (slot == null || item == null || item.Name == null)
+        {
+            CloseItemPopup();
             return;
+
+        }
+
+        OpenItemPopup(slot, item);
+    }
+
+    private void OpenItemPopup(InventorySlotUIView slot, InventoryItemViewModel item)
+    {
+        _selectedItem = item;
+
+        // 아이템 정보 표시
+        _nameText.text = item.Name;
+        _descriptionText.text = item.Description;
+
+        // 아이템 타입에 따른 사용 버튼 텍스트 설정
+        if (item.ItemType == nameof(ItemType.Equipment))
+        {
+            if (ServiceManager.Inst.InventoryService.IsEquippedItem(item))
+            {
+                _ItemUseText.text = "장비 해제";
+            }
+            else
+            {
+                _ItemUseText.text = "장비 장착";
+            }
+        }
+        else
+        {
+            _ItemUseText.text = "아이템 사용";
+        }
+
+        _ItemAddQuickSlotText.text = "아이템 퀵슬롯 등록";
+        _ItemRemoveText.text = "아이템 제거";
+
+
+        _itemPopupUI.SetActive(true);
+    }
+
+    private void CloseItemPopup()
+    {
+        _selectedItem = null;
+
+        if (_itemPopupUI != null)
+            _itemPopupUI.SetActive(false);
+    }
+
+    // 아이템 사용 / 장착 버튼
+    private void OnClickItemUseButton()
+    {
+        if (_selectedItem == null)
+            return;
+
+        InventoryItemViewModel item = _selectedItem;
 
         if (item.ItemType == nameof(ItemType.Equipment))
         {
+            // 장비 아이템 장착
             if (!ServiceManager.Inst.InventoryService.TryEquipItem(item))
             {
                 Debug.LogWarning($"{item.Name} 은 장착 아이템이 아닙니다");
+                return;
             }
-            RemoveItemRequest(item);
-            return;
         }
-        ServiceManager.Inst.InventoryService.UseItem(item);
+        else
+        {
+            // 일반 아이템 사용
+            ServiceManager.Inst.InventoryService.UseItem(item);
+        }
+
+        CloseItemPopup();
         RemoveItemRequest(item);
     }
 
+    // 아이템 퀵슬롯 등록 버튼
+    private void OnClickItemAddQuickSlotButton()
+    {
+        if (_selectedItem == null)
+            return;
+
+        // TODO: 아이템 퀵슬롯 등록 로직
+    }
+
+    // 아이템 제거 버튼
+    private void OnClickItemRemoveButton()
+    {
+        if (_selectedItem == null)
+            return;
+
+        // TODO: 아이템 제거 로직
+    }
     private void RemoveItemRequest(InventoryItemViewModel item)
     {
         ServiceManager.Inst.InventoryService.RemoveItem(item);

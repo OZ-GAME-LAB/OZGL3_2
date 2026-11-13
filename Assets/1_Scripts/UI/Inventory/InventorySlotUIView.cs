@@ -64,8 +64,6 @@ public class InventorySlotUIView : MonoBehaviour
         
     }
 
-    
-
 
 
     private void OnEnable()
@@ -100,20 +98,11 @@ public class InventorySlotUIView : MonoBehaviour
             ItemOnClickEvent?.Invoke(this, _viewModel);
     }
 
+
+
     private async UniTaskVoid LoadItemIconAsync(string iconPath)
     {
-        if (ResourceManager.Inst == null)
-        {
-            return;
-        }
+        await GameUtil.LoadAndSetSpriteImage(Image_ItemIcon, _viewModel.IconPath);
 
-        Sprite loadedSprite = await ResourceManager.Inst.LoadSprite(iconPath);
-
-        if (loadedSprite == null || Image_ItemIcon == null)
-        {
-            return;
-        }
-
-        Image_ItemIcon.sprite = loadedSprite;
     }
 }
