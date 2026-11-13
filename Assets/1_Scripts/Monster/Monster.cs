@@ -15,6 +15,11 @@ public class Monster : MonoBehaviour
     private float _attackRange;
     private readonly List<MonsterSkillBase> _skills = new();
     public IReadOnlyList<MonsterSkillBase> Skills => _skills;
+    private MonsterNetwork _network;
+    public MoveType MovementType { get; private set; }
+    public bool CanMove => MovementType == MoveType.Move;
+    public bool CanAttack => _network != null && _network.CanAttack;
+    public bool HasPatrolPoints => _patricListCount > 0;
 
     [SerializeField] private Collider2D _monsterCollider;
     [SerializeField] private Collider2D _monsterSight;
@@ -35,6 +40,13 @@ public class Monster : MonoBehaviour
     // test 속도 추후 데이터 반영 시 해당 변수 삭제
     private float _moveSpeed = 3f;
     /////////////////////////////////////////////////////
+
+    private void Awake()
+    {
+        _network = GetComponent<MonsterNetwork>();
+        if (_rigidbody2D == null)
+            _rigidbody2D = GetComponent<Rigidbody2D>();
+    }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -85,16 +97,18 @@ public class Monster : MonoBehaviour
             return false;
         }
 
+        MovementType = data.MonsterType;
+
         GameObject visualPrefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.MonsterAddressableId);
 
-        if (visualPrefab == null)
+        if (this == null || cancellationToken.IsCancellationRequested || _network == null || !_network.IsSpawned || visualPrefab == null)
             return false;
 
         GameObject visualObject = Instantiate(visualPrefab, transform, false);
 
         visualObject.transform.localPosition = Vector3.zero;
 
-        if (!visualObject.TryGetComponent<MonsterVisual>(out var visual) || !visual.CheckMonsterVisualReady())
+        if (!visualObject.TryGetComponent<MonsterVisual>(out var visual) || !visual.CheckMonsterVisualReady(MovementType, data.Atk > 0f))
         {
             Debug.LogError($"MonsterVisual의 참조가 준비되지 않았습니다: {id}");
             Destroy(visualObject);
@@ -114,7 +128,7 @@ public class Monster : MonoBehaviour
     public void InitPatrolArea(GameObject[] patrolSpots)
     {
         _patricList = patrolSpots;
-        _patricListCount = patrolSpots.Length;
+        _patricListCount = patrolSpots == null ? 0 : patrolSpots.Length;
         _patricCurIndexNo = 0;
     }
 
@@ -149,6 +163,9 @@ public class Monster : MonoBehaviour
 
     public bool MonsterPatricMoveAndCheck(Vector3 targetPosition)
     {
+        if (!CanMove || _rigidbody2D == null)
+            return false;
+
         // TODO : 몬스터 애니메이션 연결 부분 필요(이동 애니메이션 관련 메서드 호출)
 
         float distanceX = targetPosition.x - _rigidbody2D.position.x;
@@ -171,6 +188,9 @@ public class Monster : MonoBehaviour
 
     public void MonsterJump()
     {
+        if (!CanMove || _rigidbody2D == null || _groundCheck == null)
+            return;
+
         bool isGrounded = Physics2D.OverlapCircle(
         _groundCheck.position,
         _groundCheckRadius,
@@ -184,6 +204,9 @@ public class Monster : MonoBehaviour
 
     public Vector3 MonsterPatricPositionSelect()
     {
+        if (!CanMove || !HasPatrolPoints)
+            return transform.position;
+
         if (_patricCurIndexNo >= _patricListCount)
         {
             _patricCurIndexNo = 0;
@@ -198,7 +221,7 @@ public class Monster : MonoBehaviour
 
     public void MonsterChaisingTarget()
     {
-        if (VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
+        if (!CanMove || VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
         {
             MonsterStopMove();
             return;
@@ -209,19 +232,24 @@ public class Monster : MonoBehaviour
 
     public bool IsTargetInAttackRange()
     {
-        if (VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
+        if (_monsterCollider == null || !_monsterCollider.isActiveAndEnabled || VisibleTarget == null || !VisibleTarget.isActiveAndEnabled)
             return false;
 
-        Vector2 monsterPosition = transform.position;
-        Vector2 targetPosition = VisibleTarget.bounds.center;
+        ColliderDistance2D result = _monsterCollider.Distance(VisibleTarget);
 
-        float distance = Vector2.Distance(monsterPosition, targetPosition);
+        if (!result.isValid)
+            return false;
+
+        float distance = Mathf.Max(0f, result.distance);
 
         return distance <= _attackRange;
     }
 
     public void MonsterStopMove()
     {
+        if (_rigidbody2D == null)
+            return;
+
         Vector2 velocity = _rigidbody2D.linearVelocity;
         velocity.x = 0f;
         _rigidbody2D.linearVelocity = velocity;
@@ -255,7 +283,7 @@ public class Monster : MonoBehaviour
         if (data.HaveSkillIdList == null || data.HaveSkillIdList.Length == 0)
             return true;
 
-        if (data.AtkCollTime == null || data.AtkCollTime.Length != data.HaveSkillIdList.Length)
+        if (data.MonsterSkillCollTime == null || data.MonsterSkillCollTime.Length != data.HaveSkillIdList.Length)
         {
             Debug.LogError($"스킬과 쿨타임 배열의 개수가 다릅니다: {id}", this);
             return false;
@@ -282,7 +310,7 @@ public class Monster : MonoBehaviour
 
         for (int i = 0; i < data.HaveSkillIdList.Length; i++)
         {
-            float cooldown = data.AtkCollTime[i];
+            float cooldown = data.MonsterSkillCollTime[i];
 
             if (float.IsNaN(cooldown) || float.IsInfinity(cooldown) || cooldown < 0f)
             {
@@ -296,7 +324,7 @@ public class Monster : MonoBehaviour
                     bodyHeight,
                     data.Atk);
 
-            if (this == null || skill == null)
+            if (this == null || _network == null || !_network.IsSpawned || skill == null)
                 return false;
 
             skill.InitCooldown(cooldown);
@@ -304,6 +332,52 @@ public class Monster : MonoBehaviour
         }
 
         return true;
+    }
+
+    public bool TryGetAttackSkill(out MonsterSkillBase skill)
+    {
+        skill = null;
+
+        if (!CanAttack)
+            return false;
+
+        foreach (MonsterSkillBase candidate in _skills)
+        {
+            if (candidate == null || !candidate.isActiveAndEnabled || candidate.IsDeathSkill)
+                continue;
+
+            skill = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
+    public void ExecuteDeathSkills()
+    {
+        if (_network == null || !_network.IsServer || !_network.IsSpawned || _network.IsAlive)
+            return;
+
+        foreach (MonsterSkillBase skill in _skills)
+        {
+            if (skill != null && !skill.IsDeathSkill)
+                skill.enabled = false;
+        }
+
+        foreach (MonsterSkillBase skill in _skills)
+        {
+            if (skill == null || !skill.isActiveAndEnabled || !skill.IsDeathSkill)
+                continue;
+
+            try
+            {
+                skill.UseSkill(null, transform.position);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception, skill);
+            }
+        }
     }
 
     public Transform GetAttackPoint(Transform target)

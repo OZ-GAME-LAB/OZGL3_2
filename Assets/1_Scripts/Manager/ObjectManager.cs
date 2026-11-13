@@ -26,6 +26,9 @@ public class ObjectManager : MonoBehaviour
     [Header("필드 드롭 아이템 프리팹")]
     [SerializeField] private FieldItemObject Prefab_FieldDropItem;
 
+    [Header("보스 프리팹")]
+    [SerializeField] private Boss Prefab_Boss;
+
     private void Awake()
     {
         if (Inst != null && Inst != this)
@@ -182,39 +185,56 @@ public class ObjectManager : MonoBehaviour
         return instance;
     }
 
-    public void SpawnMonster(string id, PatrolArea patrolObject, Vector3 spawnPosition)
+    public Monster SpawnMonster(string id, PatrolArea patrolObject, Vector3 spawnPosition)
     {
         if (!CanSpawn())
-            return;
+            return null;
 
-        if(Prefab_Monster == null)
+        if (Prefab_Monster == null)
         {
             Debug.LogError("ObjectManager의 몬스터 프리팹이 할당되지 않음");
-            return;
+            return null;
         }
 
-
-        if (patrolObject == null || string.IsNullOrWhiteSpace(id) || ResourceManager.Inst == null)
+        if (string.IsNullOrWhiteSpace(id) || DataManager.Inst == null || ResourceManager.Inst == null)
         {
             Debug.LogError("몬스터 스폰에 필요한 값이 준비되지 않았습니다.");
-            return;
+            return null;
         }
 
-        GameObject[] patrolSpots = patrolObject.PatrolSpotList;
+        MonsterData data = DataManager.Inst.GetData<MonsterData>(id);
 
-        if (patrolSpots == null)
-            return;
+        if (data == null || (data.MonsterType != MoveType.Fix && data.MonsterType != MoveType.Move))
+        {
+            Debug.LogError($"몬스터 데이터와 이동 유형을 확인하세요: {id}");
+            return null;
+        }
+
+        GameObject[] patrolSpots = null;
+
+        if (data.MonsterType == MoveType.Move)
+        {
+            if (patrolObject == null)
+            {
+                Debug.LogError($"이동형 몬스터의 순찰 구역을 연결하세요: {id}");
+                return null;
+            }
+
+            patrolSpots = patrolObject.PatrolSpotList;
+
+            if (patrolSpots == null)
+                return null;
+        }
 
         if (!Prefab_Monster.TryGetComponent<NetworkObject>(out _) ||
-        !Prefab_Monster.TryGetComponent<MonsterNetwork>(out _) ||
-        !Prefab_Monster.TryGetComponent<Unity.Behavior.BehaviorGraphAgent>(out _))
+            !Prefab_Monster.TryGetComponent<MonsterNetwork>(out _) ||
+            !Prefab_Monster.TryGetComponent<Unity.Behavior.BehaviorGraphAgent>(out _))
         {
             Debug.LogError("몬스터 본체에 NetworkObject, MonsterNetwork, BehaviorGraphAgent가 필요합니다.");
-            return;
+            return null;
         }
 
         Monster instance = Instantiate(Prefab_Monster, spawnPosition, Quaternion.identity);
-
         instance.InitPatrolArea(patrolSpots);
 
         MonsterNetwork monsterNetwork = instance.GetComponent<MonsterNetwork>();
@@ -223,11 +243,13 @@ public class ObjectManager : MonoBehaviour
         {
             Debug.LogError($"몬스터 ID 설정 실패: {id}");
             Destroy(instance.gameObject);
-            return;
+            return null;
         }
 
         instance.GetComponent<NetworkObject>().Spawn();
+        return instance;
     }
+
 
     public FieldItemObject SpawnItem(string itemDataId, int count, Vector3 position)
     {
@@ -274,5 +296,48 @@ public class ObjectManager : MonoBehaviour
         item.Init(itemDataId, count);
         item.NetworkObject.Spawn(destroyWithScene: true);
         return item;
+    }
+
+    public Boss SpawnBoss(string id, Vector3 position)
+    {
+        if (!CanSpawn())
+            return null;
+
+        if (Prefab_Boss == null)
+        {
+            Debug.LogError("보스 프리팹이 연결되지 않았습니다.", this);
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            Debug.LogError("보스 데이터 ID가 비어 있습니다.", this);
+            return null;
+        }
+
+        if (!Prefab_Boss.TryGetComponent<NetworkObject>(out _) || !Prefab_Boss.TryGetComponent<BossNetwork>(out _))
+        {
+            Debug.LogError("보스 프리팹의 루트에 NetworkObject와 BossNetwork가 필요합니다.", this);
+
+            return null;
+        }
+
+        Boss instance = Instantiate(Prefab_Boss, position, Quaternion.identity);
+
+        NetworkObject networkObject = instance.GetComponent<NetworkObject>();
+
+        BossNetwork bossNetwork = instance.GetComponent<BossNetwork>();
+
+        networkObject.Spawn();
+
+        if (!bossNetwork.InitializeStatsOnServer(id))
+        {
+            Debug.LogError($"보스 초기화에 실패했습니다: {id}", instance);
+
+            networkObject.Despawn();
+            return null;
+        }
+
+        return instance;
     }
 }

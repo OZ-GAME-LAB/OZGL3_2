@@ -42,7 +42,7 @@ public class SimplePopupUI : UIBase
         }
 
         _cancelToken = new CancellationTokenSource();
-        Debug.Log("코루틴처럼 대기 상태에서 해야하는 일이 있다면 여기서 먼저 진행");
+        //코루틴처럼 대기 상태에서 해야하는 일이 있다면 여기서 먼저 진행
 
         // 비활성화가 아니라 파괴형태로 사라진다면 ->>> this.GetCancellationTokenOnDestroy();
         await UniTask.Delay(TimeSpan.FromSeconds(1.5), cancellationToken: _cancelToken.Token);

@@ -21,10 +21,10 @@ public enum EquipmentSlot
 
 public enum ToolAction
 {
-    None = 1,
-    Logging = 2,
-    Fishing = 3,
-    Mining = 4
+    None = 0,
+    Logging = 1,
+    Fishing = 2,
+    Mining = 3
 }
 
 public enum EquipmentEffectType
@@ -69,6 +69,15 @@ public enum ValueOperation
     AddPercent = 1,
     MultiplePercent = 2
 }
+
+public enum DamageType
+{
+    Physical,
+    Fire,
+    Ice,
+    Electric,
+}
+
 
 
 
@@ -179,7 +188,6 @@ public class MonsterData : GameDataBase
     public string Description;
     public float Hp;
     public float Atk;
-    public float[] AtkCollTime;
     public float AtkDistance;
     public float PhysicalResistance;
     public float FireResistance;
@@ -188,6 +196,32 @@ public class MonsterData : GameDataBase
     public float PoisonResistance;
     public bool BleedAble;
     public string[] HaveSkillIdList;
+    public float[] MonsterSkillCollTime;
     public MoveType MonsterType;
     public string MonsterAddressableId;
+}
+
+[Serializable]
+public class MonsterSkillData : GameDataBase
+{
+    public string SkillClassName;
+    public string DamageType;
+    public bool isPoison;
+    public bool isBossPoison;
+    public string SkillPrefabPath;
+
+    public bool TryGetDamageType(out DamageType damageType)
+    {
+        damageType = global::DamageType.Physical;
+
+        if (string.IsNullOrWhiteSpace(DamageType))
+            return true;
+
+        if (!Enum.TryParse(DamageType, out DamageType parsedType)
+            || !Enum.IsDefined(typeof(DamageType), parsedType))
+            return false;
+
+        damageType = parsedType;
+        return true;
+    }
 }

@@ -38,7 +38,7 @@ public class RuneInventoryUI : UIBase
             Debug.LogError("NetworkRuneService가 없습니다.", this);
             return;
         }
-
+        
         if (_equipmentSlots == null || _equipmentSlots.Length != PlayerRuneEquipmentController.SlotCount)
         {
             Debug.LogError("장착 슬롯 3개를 순서대로 연결하세요.", this);
