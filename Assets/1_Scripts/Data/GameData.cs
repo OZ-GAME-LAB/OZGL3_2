@@ -53,7 +53,8 @@ public enum MoveType
 {
     None = 0,
     Fix = 1,
-    Move = 2
+    Move = 2,
+    Fly = 3
 }
 
 public enum ValueBasis
@@ -198,6 +199,10 @@ public class MonsterData : GameDataBase
     public string[] HaveSkillIdList;
     public float[] MonsterSkillCollTime;
     public MoveType MonsterType;
+    public float MonsterSpeed;
+    public bool IsMandatoryDropItem;
+    public string MandatoryDropGroupId;
+    public string ProbabilityDropGroupId;
     public string MonsterAddressableId;
 }
 

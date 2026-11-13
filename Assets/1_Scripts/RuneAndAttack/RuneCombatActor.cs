@@ -5,6 +5,7 @@ public struct RuneDamageInfo
 {
     public RuneCombatActor Attacker;
     public float RawDamage;
+    public Vector2 HitDirection;
     public DamageType Element;
     public bool ApplyPoison;
     public bool ApplyBossPoison;

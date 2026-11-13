@@ -5,14 +5,18 @@ using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-public class MonsterNetwork : NetworkUnit
+public partial class MonsterNetwork : NetworkUnit
 {
     private NetworkVariable<FixedString128Bytes> _monsterId = new(
         default,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
+    [SerializeField, Min(0f)] private float _staggerDuration = 0.3f;
+    private float _staggerRemaining;
+
     private Monster _monster;
+    private MonsterData _monsterData;
     private BehaviorGraphAgent _bt;
     private Rigidbody2D _body;
     private RigidbodyConstraints2D _originalConstraints;
@@ -20,7 +24,8 @@ public class MonsterNetwork : NetworkUnit
 
     public bool IsReady { get; private set; }
     protected override bool IsReadyForCombat => IsReady;
-    public bool CanAttack => IsReady && IsAlive && AttackPower > 0f;
+    public bool IsStaggered => _staggerRemaining > 0f;
+    public bool CanAttack => IsReady && IsAlive && !IsStaggered && AttackPower > 0f;
     public event System.Action<MonsterNetwork> Died;
     public event System.Action<MonsterNetwork> Despawned;
 
@@ -56,6 +61,27 @@ public class MonsterNetwork : NetworkUnit
         _bt.enabled = false;
     }
 
+    public void ApplyHitStaggerOnServer()
+    {
+        if (!IsServer || !IsSpawned || !IsReady || !IsAlive || _monster == null || _monster.IsDashing)
+            return;
+
+        if (float.IsNaN(_staggerDuration) || float.IsInfinity(_staggerDuration) || _staggerDuration <= 0f)
+            return;
+
+        _staggerRemaining = _staggerDuration;
+        _monster.MonsterStopMove();
+    }
+
+    private void FixedUpdate()
+    {
+        if (!IsServer || !IsSpawned || !IsReady || !IsAlive || !IsStaggered)
+            return;
+
+        _staggerRemaining = Mathf.Max(0f, _staggerRemaining - Time.fixedDeltaTime);
+        _monster.MonsterStopMove();
+    }
+
     public bool SetMonsterId(string id)
     {
         if (Unity.Netcode.NetworkManager.Singleton == null ||
@@ -74,6 +100,9 @@ public class MonsterNetwork : NetworkUnit
     {
         base.OnNetworkSpawn();
 
+        _staggerRemaining = 0f;
+        _nextMeleeAttackId = 0;
+        _lastMeleeAttackId = 0;
         IsReady = false;
 
         _monster.enabled = false;
@@ -99,6 +128,8 @@ public class MonsterNetwork : NetworkUnit
                 NetworkObject.Despawn();
                 return;
             }
+
+            _monsterData = data;
 
             if (!InitializeUnitOnServer(data.Hp, data.Atk, canReceiveBleed: data.BleedAble)
                 || !SetResistancesOnServer(data.PhysicalResistance, data.FireResistance,
@@ -138,10 +169,11 @@ public class MonsterNetwork : NetworkUnit
         if (_body != null)
         {
             bool fixedPosition = _monster.MovementType == MoveType.Fix;
+            bool flying = _monster.MovementType == MoveType.Fly;
             _body.constraints = fixedPosition
                 ? _originalConstraints | RigidbodyConstraints2D.FreezePosition
-                : _originalConstraints;
-            _body.gravityScale = fixedPosition ? 0f : _originalGravityScale;
+                : flying ? _originalConstraints | RigidbodyConstraints2D.FreezePositionY : _originalConstraints;
+            _body.gravityScale = fixedPosition || flying ? 0f : _originalGravityScale;
             _body.linearVelocity = Vector2.zero;
             _body.angularVelocity = 0f;
             _body.simulated = true;
@@ -162,6 +194,15 @@ public class MonsterNetwork : NetworkUnit
             }
         }
 
+        if (!IsServer)
+        {
+            bool visualsPrepared = await PrepareMeleeVisualsAsync(_monsterId.Value.ToString());
+            if (visualsPrepared && this != null && IsSpawned)
+                visualsPrepared = await PrepareTimedAttackVisualsAsync(_monsterId.Value.ToString());
+            if (this == null || !IsSpawned || !visualsPrepared)
+                return;
+        }
+
         IsReady = true;
 
         if (IsServer)
@@ -173,6 +214,9 @@ public class MonsterNetwork : NetworkUnit
 
     public override void OnNetworkDespawn()
     {
+        DestroyMeleeVisuals();
+        DestroyTimedAttacks();
+        _staggerRemaining = 0f;
         IsReady = false;
 
         StatsChanged -= RefreshViewModel;
@@ -255,12 +299,17 @@ public class MonsterNetwork : NetworkUnit
 
     protected override void OnDiedOnServer()
     {
+        _staggerRemaining = 0f;
         IsReady = false;
         _bt.enabled = false;
         _monster.enabled = false;
         _monster.MonsterStopMove();
 
         Debug.Log($"몬스터 사망: {_monsterId.Value}", this);
+
+        int playerCount = NetworkManager.ConnectedClientsList.Count;
+        Vector3 deathPosition = transform.position;
+        MonsterData rewardData = _monsterData;
 
         try
         {
@@ -269,8 +318,15 @@ public class MonsterNetwork : NetworkUnit
         }
         finally
         {
-            if (this != null && IsSpawned)
-                NetworkObject.Despawn();
+            try
+            {
+                DropRewardUtil.SpawnMonsterRewardsOnServer(rewardData, deathPosition, playerCount, this);
+            }
+            finally
+            {
+                if (this != null && IsSpawned)
+                    NetworkObject.Despawn();
+            }
         }
     }
 

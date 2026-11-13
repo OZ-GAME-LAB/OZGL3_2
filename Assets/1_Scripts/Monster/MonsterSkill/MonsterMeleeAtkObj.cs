@@ -16,6 +16,26 @@ public class MonsterMeleeAtkObj : MonoBehaviour
             Debug.LogError("몬스터 본체에 MonsterRuneCombatActor가 필요합니다.", this);
     }
 
+    public void SetSize(Vector2 size)
+    {
+        BoxCollider2D attackCollider = GetComponent<BoxCollider2D>();
+        attackCollider.isTrigger = true;
+        attackCollider.offset = Vector2.zero;
+        attackCollider.size = size;
+
+        SpriteRenderer visual = GetComponentInChildren<SpriteRenderer>(true);
+        if (visual == null || visual.sprite == null)
+            return;
+
+        Vector2 spriteSize = visual.sprite.bounds.size;
+        if (spriteSize.x <= 0f || spriteSize.y <= 0f)
+            return;
+
+        visual.transform.localScale = new Vector3(size.x / spriteSize.x, size.y / spriteSize.y, 1f);
+        visual.transform.localPosition = (Vector3)attackCollider.offset
+            - Vector3.Scale(visual.sprite.bounds.center, visual.transform.localScale);
+    }
+
     private void OnEnable()
     {
         _hitPlayers.Clear();
@@ -34,6 +54,8 @@ public class MonsterMeleeAtkObj : MonoBehaviour
         if (target == null || !_attacker.CanHit(target) || !_hitPlayers.Add(target))
             return;
 
-        target.ReceiveDirectDamageOnServer(_damageInfo);
+        RuneDamageInfo damageInfo = _damageInfo;
+        damageInfo.HitDirection = ((Vector2)(other.bounds.center - transform.position)).normalized;
+        target.ReceiveDirectDamageOnServer(damageInfo);
     }
 }

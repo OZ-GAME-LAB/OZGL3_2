@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -11,14 +12,34 @@ public class Monster : MonoBehaviour
     [SerializeField] private Transform _leftWallCheck;
     [SerializeField] private LayerMask _groundLayer;
     [SerializeField] private float _groundCheckRadius = 0.1f;
+    [SerializeField, Min(0.01f)] private float _wallCheckDistance = 0.1f;
     [SerializeField] private float _jumpForce = 5f;
+    private readonly RaycastHit2D[] _wallCheckHits = new RaycastHit2D[1];
     private float _attackRange;
     private readonly List<MonsterSkillBase> _skills = new();
     public IReadOnlyList<MonsterSkillBase> Skills => _skills;
     private MonsterNetwork _network;
+    private MonsterRuneCombatActor _combatActor;
+    private Coroutine _contactDamageRoutine;
+    private readonly List<Collider2D> _bodyContacts = new();
+    private readonly HashSet<PlayerRuneCombatActor> _contactDamageTargets = new();
     public MoveType MovementType { get; private set; }
-    public bool CanMove => MovementType == MoveType.Move;
+    public bool CanMove => MovementType == MoveType.Move || MovementType == MoveType.Fly;
     public bool CanAttack => _network != null && _network.CanAttack;
+    public bool IsStaggered => _network != null && _network.IsStaggered;
+    public bool IsDashing
+    {
+        get
+        {
+            foreach (MonsterSkillBase skill in _skills)
+            {
+                if (skill != null && skill.isActiveAndEnabled && skill.IsDashing)
+                    return true;
+            }
+
+            return false;
+        }
+    }
     public bool HasPatrolPoints => _patricListCount > 0;
 
     [SerializeField] private Collider2D _monsterCollider;
@@ -37,15 +58,67 @@ public class Monster : MonoBehaviour
 
     public MonsterVM ViewModel { get; } = new MonsterVM();
 
-    // test 속도 추후 데이터 반영 시 해당 변수 삭제
     private float _moveSpeed = 3f;
-    /////////////////////////////////////////////////////
+    private bool _isChasing;
 
     private void Awake()
     {
         _network = GetComponent<MonsterNetwork>();
+        _combatActor = GetComponent<MonsterRuneCombatActor>();
         if (_rigidbody2D == null)
             _rigidbody2D = GetComponent<Rigidbody2D>();
+    }
+
+    private void OnEnable()
+    {
+        _contactDamageRoutine = StartCoroutine(ContactDamageRoutine());
+    }
+
+    private void OnDisable()
+    {
+        if (_contactDamageRoutine != null)
+        {
+            StopCoroutine(_contactDamageRoutine);
+            _contactDamageRoutine = null;
+        }
+
+        _bodyContacts.Clear();
+        _contactDamageTargets.Clear();
+    }
+
+    private IEnumerator ContactDamageRoutine()
+    {
+        WaitForFixedUpdate wait = new WaitForFixedUpdate();
+        while (true)
+        {
+            yield return wait;
+            ApplyContactDamageOnServer();
+        }
+    }
+
+    private void ApplyContactDamageOnServer()
+    {
+        if (_network == null || !_network.IsServer || !_network.IsSpawned || !_network.IsReady
+            || _combatActor == null || !_combatActor.CanAttack
+            || _monsterCollider == null || !_monsterCollider.isActiveAndEnabled)
+            return;
+
+        _bodyContacts.Clear();
+        _contactDamageTargets.Clear();
+        _monsterCollider.GetContacts(new ContactFilter2D { useTriggers = false }, _bodyContacts);
+
+        foreach (Collider2D contact in _bodyContacts)
+        {
+            if (contact == null)
+                continue;
+
+            PlayerRuneCombatActor player = contact.GetComponentInParent<PlayerRuneCombatActor>();
+            if (player == null || !_combatActor.CanHit(player) || !_contactDamageTargets.Add(player))
+                continue;
+
+            Vector2 hitDirection = contact.bounds.center - _monsterCollider.bounds.center;
+            player.ReceiveContactDamageOnServer(_combatActor, hitDirection);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -122,6 +195,21 @@ public class Monster : MonoBehaviour
         _monsterCollider = visual.MonsterColliderReturn();
         _attackRange = data.AtkDistance;
 
+        if (MovementType == MoveType.Fix && _monsterSight != null)
+            _monsterSight.offset = Vector2.zero;
+
+        if (CanMove)
+        {
+            _moveSpeed = data.MonsterSpeed;
+
+            if (float.IsNaN(_moveSpeed) || float.IsInfinity(_moveSpeed) || _moveSpeed <= 0f)
+            {
+                Debug.LogWarning($"몬스터 이동 속도가 올바르지 않아 3을 사용합니다: {id}, 값: {data.MonsterSpeed}", this);
+                _moveSpeed = 3f;
+            }
+
+        }
+
         return true;
     }
 
@@ -146,6 +234,10 @@ public class Monster : MonoBehaviour
 
         foreach (Collider2D candidate in _playerCandidates)
         {
+            PlayerNetworkStats player = candidate.GetComponentInParent<PlayerNetworkStats>();
+            if (player == null || !player.IsAlive)
+                continue;
+
             Vector3 targetPosition = candidate.bounds.center;
 
             if (!HasClearSight(targetPosition))
@@ -163,8 +255,20 @@ public class Monster : MonoBehaviour
 
     public bool MonsterPatricMoveAndCheck(Vector3 targetPosition)
     {
+        _isChasing = false;
+        return MoveAndCheck(targetPosition, _moveSpeed);
+    }
+
+    private bool MoveAndCheck(Vector3 targetPosition, float moveSpeed)
+    {
         if (!CanMove || _rigidbody2D == null)
             return false;
+
+        if (IsStaggered)
+        {
+            MonsterStopMove();
+            return false;
+        }
 
         // TODO : 몬스터 애니메이션 연결 부분 필요(이동 애니메이션 관련 메서드 호출)
 
@@ -178,17 +282,30 @@ public class Monster : MonoBehaviour
             return true;
         }
 
-        velocity.x = Mathf.Clamp(distanceX / Time.fixedDeltaTime, -_moveSpeed, _moveSpeed);
+        velocity.x = Mathf.Clamp(distanceX / Time.fixedDeltaTime, -moveSpeed, moveSpeed);
 
         UpdateSightDirection(velocity.x);
 
         _rigidbody2D.linearVelocity = velocity;
+
+        Transform wallCheck = distanceX > 0f ? _rightWallCheck : _leftWallCheck;
+
+        if (MovementType == MoveType.Move && wallCheck != null)
+        {
+            Vector2 direction = distanceX > 0f ? Vector2.right : Vector2.left;
+            ContactFilter2D wallFilter = new ContactFilter2D { useTriggers = false };
+            wallFilter.SetLayerMask(_groundLayer);
+
+            if (Physics2D.Raycast(wallCheck.position, direction, wallFilter, _wallCheckHits, _wallCheckDistance) > 0)
+                MonsterJump();
+        }
+
         return false;
     }
 
     public void MonsterJump()
     {
-        if (!CanMove || _rigidbody2D == null || _groundCheck == null)
+        if (MovementType != MoveType.Move || IsStaggered || _rigidbody2D == null || _groundCheck == null)
             return;
 
         bool isGrounded = Physics2D.OverlapCircle(
@@ -227,7 +344,44 @@ public class Monster : MonoBehaviour
             return;
         }
 
-        MonsterPatricMoveAndCheck(VisibleTarget.bounds.center);
+        if (TryGetAttackSkill(out MonsterSkillBase skill) && skill.StopAtAttackRange && skill.IsAttacking)
+        {
+            MonsterStopMove();
+            return;
+        }
+
+        _isChasing = true;
+        MoveAndCheck(VisibleTarget.bounds.center, _moveSpeed * 1.2f);
+        LimitRangedChaseMovement();
+    }
+
+    private void FixedUpdate()
+    {
+        if (_isChasing)
+            LimitRangedChaseMovement();
+    }
+
+    private void LimitRangedChaseMovement()
+    {
+        if (_rigidbody2D == null || _monsterCollider == null || VisibleTarget == null
+            || !VisibleTarget.isActiveAndEnabled || !TryGetAttackSkill(out MonsterSkillBase skill)
+            || !skill.StopAtAttackRange)
+            return;
+
+        ColliderDistance2D result = _monsterCollider.Distance(VisibleTarget);
+        if (!result.isValid)
+            return;
+
+        if (result.distance <= _attackRange)
+        {
+            MonsterStopMove();
+            return;
+        }
+
+        float maxSpeed = (result.distance - _attackRange + 0.001f) / Time.fixedDeltaTime;
+        Vector2 velocity = _rigidbody2D.linearVelocity;
+        velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
+        _rigidbody2D.linearVelocity = velocity;
     }
 
     public bool IsTargetInAttackRange()
@@ -247,6 +401,7 @@ public class Monster : MonoBehaviour
 
     public void MonsterStopMove()
     {
+        _isChasing = false;
         if (_rigidbody2D == null)
             return;
 
@@ -387,6 +542,61 @@ public class Monster : MonoBehaviour
 
         return target.position.x >= transform.position.x ? _rightWallCheck : _leftWallCheck;
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("진단/몬스터 공격 상태 확인")]
+    private void LogAttackDiagnostics()
+    {
+        var message = new System.Text.StringBuilder();
+        message.AppendLine($"[몬스터 공격 진단] {name}, 위치: {transform.position}, 유형: {MovementType}");
+        message.AppendLine($"Monster 활성: {isActiveAndEnabled}, 공격 가능: {CanAttack}, 사거리: {_attackRange}, 감지 후보: {_playerCandidates.Count}");
+        message.AppendLine($"현재 감지 대상: {(VisibleTarget != null ? VisibleTarget.name : "없음")}");
+
+        if (_network != null)
+            message.AppendLine($"서버: {_network.IsServer}, Spawn: {_network.IsSpawned}, 초기화 완료: {_network.IsReady}, 생존: {_network.IsAlive}, 공격력: {_network.AttackPower}, 경직: {_network.IsStaggered}");
+
+        var bt = GetComponent<Unity.Behavior.BehaviorGraphAgent>();
+        message.AppendLine($"BT 활성: {bt != null && bt.isActiveAndEnabled}, 그래프 연결: {bt != null && bt.Graph != null}");
+        message.AppendLine($"감지 Collider 활성: {_monsterSight != null && _monsterSight.isActiveAndEnabled}, 몸 Collider 활성: {_monsterCollider != null && _monsterCollider.isActiveAndEnabled}");
+        if (_rigidbody2D != null)
+            message.AppendLine($"물리 활성: {_rigidbody2D.simulated}, Body Type: {_rigidbody2D.bodyType}");
+
+        foreach (MonsterSkillBase skill in _skills)
+        {
+            if (skill != null)
+                message.AppendLine($"스킬: {skill.SkillId}, 클래스: {skill.GetType().Name}, 활성: {skill.isActiveAndEnabled}, 사망 스킬: {skill.IsDeathSkill}, 실행 중: {skill.IsAttacking}, 쿨타임 완료: {skill.IsCooldownComplete}");
+        }
+
+        foreach (PlayerRuneCombatActor player in FindObjectsByType<PlayerRuneCombatActor>(FindObjectsSortMode.None))
+        {
+            foreach (Collider2D other in player.GetComponentsInChildren<Collider2D>())
+            {
+                if (other.isTrigger || !other.isActiveAndEnabled)
+                    continue;
+
+                bool layerMatches = (_playerLayer.value & (1 << other.gameObject.layer)) != 0;
+                bool touching = _monsterSight != null && _monsterSight.IsTouching(other);
+                bool overlaps = _monsterSight != null && _monsterSight.Distance(other).isOverlapped;
+                message.AppendLine($"플레이어 Collider: {other.name}, 위치: {other.bounds.center}, 레이어 일치: {layerMatches}, 감지 원 겹침: {overlaps}, 물리 접촉: {touching}, 후보 등록: {_playerCandidates.Contains(other)}");
+
+                if (_monsterCollider != null)
+                {
+                    ColliderDistance2D distance = _monsterCollider.Distance(other);
+                    message.AppendLine($"거리 계산 유효: {distance.isValid}, 몸 사이 거리: {Mathf.Max(0f, distance.distance):F3}, 사거리 안: {distance.isValid && Mathf.Max(0f, distance.distance) <= _attackRange}");
+                }
+
+                if (_eyePosition != null)
+                {
+                    Vector2 direction = other.bounds.center - _eyePosition.position;
+                    RaycastHit2D obstruction = Physics2D.Raycast(_eyePosition.position, direction.normalized, direction.magnitude, _sightBlockLayer);
+                    message.AppendLine($"눈 위치: {_eyePosition.position}, 시야를 막은 Collider: {(obstruction.collider != null ? obstruction.collider.name : "없음")}, 공격 위치 연결: {GetAttackPoint(other.transform) != null}");
+                }
+            }
+        }
+
+        Debug.Log(message.ToString(), this);
+    }
+#endif
 
     private void UpdateSightDirection(float directionX)
     {
