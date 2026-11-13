@@ -163,8 +163,12 @@ public class InventoryUIView : UIBase
 
     private void ItemOnClick(InventorySlotUIView slot, InventoryItemViewModel item)
     {
-        if (slot == null || item == null)
+        if (slot == null || item == null || item.Name == null)
+        {
+            CloseItemPopup();
             return;
+
+        }
 
         OpenItemPopup(slot, item);
     }
