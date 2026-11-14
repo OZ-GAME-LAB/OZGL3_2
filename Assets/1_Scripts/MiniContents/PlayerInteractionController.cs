@@ -216,6 +216,9 @@ public class PlayerInteractionController : NetworkBehaviour
     {
         InteractableObject nextInfoTarget = ReferenceEquals(_lockedTarget, null) ? _selectedTarget : null;
 
+        if (nextInfoTarget != null)
+            nextInfoTarget.ViewModel.HasRequiredTool = CanInteractWithTool(nextInfoTarget, out _, false);
+
         if (ReferenceEquals(_infoTarget, nextInfoTarget))
             return;
 
@@ -516,6 +519,7 @@ public class PlayerInteractionController : NetworkBehaviour
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
         bool approved = false;
+        string fishId = string.Empty;
 
         PlayerRuneCombatActor actor = GetComponent<PlayerRuneCombatActor>();
         if ((actor == null || !actor.IsHitControlLocked) && targetReference.TryGet(
@@ -526,7 +530,7 @@ public class PlayerInteractionController : NetworkBehaviour
             // 이 플레이어에게 이미 진행 중인 다른 요청이 있는지 확인
             if (_serverTarget == null)
             {
-                approved = target.TryBeginOnServer(senderId, requestId);
+                approved = target.TryBeginOnServer(senderId, requestId, out fishId);
 
                 if (approved)
                 {
@@ -537,7 +541,7 @@ public class PlayerInteractionController : NetworkBehaviour
             else if (_serverTarget == target &&
                      _serverRequestId == requestId)
             {
-                approved = target.TryBeginOnServer(senderId, requestId);
+                approved = target.TryBeginOnServer(senderId, requestId, out fishId);
             }
         }
 
@@ -548,9 +552,6 @@ public class PlayerInteractionController : NetworkBehaviour
                 TargetClientIds = new ulong[] { senderId }
             }
         };
-
-        string fishId = approved && _serverTarget != null 
-            ? _serverTarget.SelectedFishId ?? string.Empty : string.Empty;
 
         ReceiveStartResultClientRpc(
             requestId,
@@ -662,7 +663,7 @@ public class PlayerInteractionController : NetworkBehaviour
         _requestedTarget.ConfirmInteraction();
     }
 
-    private bool CanInteractWithTool(InteractableObject target, out string equipmentId)
+    private bool CanInteractWithTool(InteractableObject target, out string equipmentId, bool logFailure = true)
     {
         equipmentId = null;
 
@@ -673,7 +674,8 @@ public class PlayerInteractionController : NetworkBehaviour
 
         if (!Enum.TryParse(requiredAction, out ToolAction toolAction) || !Enum.IsDefined(typeof(ToolAction), toolAction))
         {
-            Debug.LogWarning($"필요한 도구 설정을 확인해 주세요: {requiredAction}", target);
+            if (logFailure)
+                Debug.LogWarning($"필요한 도구 설정을 확인해 주세요: {requiredAction}", target);
 
             return false;
         }
@@ -681,16 +683,58 @@ public class PlayerInteractionController : NetworkBehaviour
         if (toolAction == ToolAction.None)
             return true;
 
-        return TryGetQuickSlotToolId(toolAction, out equipmentId);
+        return TryGetQuickSlotToolId(toolAction, out equipmentId, logFailure);
     }
 
-    private bool TryGetQuickSlotToolId(ToolAction requiredAction, out string equipmentId)
+    private bool TryGetQuickSlotToolId(ToolAction requiredAction, out string equipmentId, bool logFailure)
     {
         equipmentId = null;
 
-        // TODO: 인벤토리 담당자가 실제 퀵슬롯 조회로 교체.
-        Debug.LogWarning($"퀵슬롯 도구 조회가 아직 연결되지 않았습니다: {requiredAction}", this);
+        EquipmentSlot requiredSlot;
+        switch (requiredAction)
+        {
+            case ToolAction.Logging:
+                requiredSlot = EquipmentSlot.Axe;
+                break;
+            case ToolAction.Fishing:
+                requiredSlot = EquipmentSlot.FishingRod;
+                break;
+            case ToolAction.Mining:
+                requiredSlot = EquipmentSlot.PickAxe;
+                break;
+            default:
+                return false;
+        }
 
-        return false;
+        InventoryService inventoryService = ServiceManager.Inst != null
+            ? ServiceManager.Inst.InventoryService
+            : null;
+
+        if (inventoryService == null || DataManager.Inst == null)
+        {
+            if (logFailure)
+                Debug.LogWarning("장비 확인에 필요한 인벤토리 또는 데이터 매니저가 준비되지 않았습니다.", this);
+            return false;
+        }
+
+        string equippedItemId = inventoryService.GetEquipmentItemId(requiredSlot);
+        if (string.IsNullOrWhiteSpace(equippedItemId))
+        {
+            if (logFailure)
+                Debug.Log($"{requiredAction}에 필요한 도구를 장비 슬롯에 등록해 주세요.", this);
+            return false;
+        }
+
+        if (!DataManager.Inst.ReadData<EquipmentData>().TryGetValue(equippedItemId, out EquipmentData equipmentData)
+            || equipmentData == null || equipmentData.EquipmentSlot != requiredSlot
+            || equipmentData.ToolAction != requiredAction)
+        {
+            if (logFailure)
+                Debug.LogWarning($"슬롯에 등록된 장비의 도구 설정을 확인해 주세요: {equippedItemId}", this);
+            return false;
+        }
+
+        equipmentId = equippedItemId;
+        return true;
     }
 }
