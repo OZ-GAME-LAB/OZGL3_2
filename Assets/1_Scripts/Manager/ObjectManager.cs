@@ -18,7 +18,7 @@ public class ObjectManager : MonoBehaviour
     [Header("상호작용 오브젝트 프리팹")]
     [SerializeField] private InteractableObject Prefab_InteractionObject;
     [SerializeField] private InteractableObject Prefab_LoggingMiningObject;
-    // [SerializeField] private InteractableObject Prefab_FishingObject;
+    [SerializeField] private InteractableObject Prefab_FishingObject;
 
     [Header("몬스터 프리팹")]
     [SerializeField] private Monster Prefab_Monster;
@@ -155,11 +155,11 @@ public class ObjectManager : MonoBehaviour
             case "Mining":
                 prefab = Prefab_LoggingMiningObject;
                 break;
-                /*
+
             case "Fishing":
                 prefab = Prefab_FishingObject;
                 break;
-                */
+
             default:
                 Debug.LogError($"지원하지 않는 상호작용 종류입니다: {data.InteractionType}");
                 return null;
