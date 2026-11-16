@@ -6,11 +6,29 @@ public class InventoryUIViewModel : ViewModelBase
 
     public void InvokeOnceOnInit()
     {
+        OnPropertyChanged(nameof(InventoryMaxSlotNumber));
         OnPropertyChanged(nameof(TalismanItemViewModel));
         OnPropertyChanged(nameof(FishingItemViewModel));
         OnPropertyChanged(nameof(LoggingItemViewModel));
         OnPropertyChanged(nameof(MiningItemViewModel));
         OnPropertyChanged(nameof(InventoryItemViewModelDictionary));
+    }
+
+
+    private int _inventoryMaxSlotNumber;
+
+
+    public int InventoryMaxSlotNumber
+    {
+        get => _inventoryMaxSlotNumber;
+        set
+        {
+            if (_inventoryMaxSlotNumber != value)
+            {
+                _inventoryMaxSlotNumber = value;
+                OnPropertyChanged(nameof(InventoryMaxSlotNumber));
+            }
+        }
     }
 
 

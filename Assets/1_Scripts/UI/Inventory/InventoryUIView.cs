@@ -25,7 +25,13 @@ public class InventoryUIView : UIBase
 
     [SerializeField] private TMP_Text _nameText;
     [SerializeField] private TMP_Text _descriptionText;
+    [SerializeField] private Button _popupCloseButton;
 
+    [Header("장비 슬롯 배경")]
+    [SerializeField] private Sprite _talismanSlotBackground;
+    [SerializeField] private Sprite _loggingSlotBackground;
+    [SerializeField] private Sprite _fishingSlotBackground;
+    [SerializeField] private Sprite _miningSlotBackground;
 
     InventoryUIViewModel _InventoryUIViewModel;
     private readonly Dictionary<InventorySlotUIView, InventoryItemViewModel> _inventorySlots = new();
@@ -41,6 +47,12 @@ public class InventoryUIView : UIBase
             _closeButton.onClick.AddListener(OnClickCloseButton);
 
         }
+        if (_popupCloseButton != null)
+        {
+            _popupCloseButton.onClick.AddListener(OnClickPopupCloseButton);
+
+        }
+
 
         if (_ItemUseButton!= null)
         {
@@ -63,6 +75,11 @@ public class InventoryUIView : UIBase
         if (_closeButton != null)
         {
             _closeButton.onClick.RemoveListener(OnClickCloseButton);
+        }
+        if (_popupCloseButton != null)
+        {
+            _popupCloseButton.onClick.RemoveListener(OnClickPopupCloseButton);
+
         }
 
         if (_ItemUseButton != null)
@@ -146,6 +163,12 @@ public class InventoryUIView : UIBase
 
     private void MakeItemSlot(InventoryItemViewModel item)
     {
+        if(_inventorySlots.Count > _InventoryUIViewModel.InventoryMaxSlotNumber)
+        {
+            Debug.Log($"인벤토리 갯수가 {_InventoryUIViewModel.InventoryMaxSlotNumber}개를 초과했습니다");
+            return;
+        }
+
         var slotObject = Instantiate(_inventorySlotPrefab, _inventorySlotRoot);
         var slotView = slotObject.GetComponent<InventorySlotUIView>();
 
@@ -181,28 +204,36 @@ public class InventoryUIView : UIBase
         _nameText.text = item.Name;
         _descriptionText.text = item.Description;
 
+        _ItemUseButton.gameObject.SetActive(false);
+        _ItemAddQuickSlotButton.gameObject.SetActive(false);
         // 아이템 타입에 따른 사용 버튼 텍스트 설정
-        if (item.ItemType == nameof(ItemType.Equipment))
+
+        switch (item.ItemType)
         {
-            if (ServiceManager.Inst.InventoryService.IsEquippedItem(item))
-            {
-                _ItemUseText.text = "장비 해제";
-            }
-            else
-            {
-                _ItemUseText.text = "장비 장착";
-            }
-        }
-        else
-        {
-            _ItemUseText.text = "아이템 사용";
+            case nameof(ItemType.Equipment):
+                _ItemUseButton.gameObject.SetActive(true);
+
+                bool isEquipped =
+                    ServiceManager.Inst.InventoryService.IsEquippedItem(item);
+
+                _ItemUseText.text = isEquipped ? "장비 해제" : "장비 장착";
+                break;
+
+            case nameof(ItemType.Consumable):
+                _ItemUseButton.gameObject.SetActive(true);
+                _ItemAddQuickSlotButton.gameObject.SetActive(true);
+
+                _ItemUseText.text = "아이템 사용";
+                _ItemAddQuickSlotText.text = "아이템 퀵슬롯 등록";
+                break;
         }
 
-        _ItemAddQuickSlotText.text = "아이템 퀵슬롯 등록";
         _ItemRemoveText.text = "아이템 제거";
 
-
         _itemPopupUI.SetActive(true);
+
+        _itemPopupUI.transform.position =
+            UnityEngine.InputSystem.Mouse.current.position.ReadValue();
     }
 
     private void CloseItemPopup()
@@ -255,7 +286,10 @@ public class InventoryUIView : UIBase
         if (_selectedItem == null)
             return;
 
-        // TODO: 아이템 제거 로직
+        InventoryItemViewModel item = _selectedItem;
+
+        CloseItemPopup();
+        RemoveItemRequest(item);
     }
     private void RemoveItemRequest(InventoryItemViewModel item)
     {
@@ -279,13 +313,32 @@ public class InventoryUIView : UIBase
     private void RebuildEquipmentSlots()
     {
         ClearEquipmentSlots();
-        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.TalismanItemViewModel);
-        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.LoggingItemViewModel);
-        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.FishingItemViewModel);
-        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.MiningItemViewModel);
+
+        CreateEquipmentSlot(
+            _EquipmentSlotRoot,
+            _InventoryUIViewModel.TalismanItemViewModel,
+            _talismanSlotBackground);
+
+        CreateEquipmentSlot(
+            _EquipmentSlotRoot,
+            _InventoryUIViewModel.LoggingItemViewModel,
+            _loggingSlotBackground);
+
+        CreateEquipmentSlot(
+            _EquipmentSlotRoot,
+            _InventoryUIViewModel.FishingItemViewModel,
+            _fishingSlotBackground);
+
+        CreateEquipmentSlot(
+            _EquipmentSlotRoot,
+            _InventoryUIViewModel.MiningItemViewModel,
+            _miningSlotBackground);
     }
 
-    private void CreateEquipmentSlot(Transform root, InventoryItemViewModel inventoryItemViewModel)
+    private void CreateEquipmentSlot(
+        Transform root,
+        InventoryItemViewModel inventoryItemViewModel,
+        Sprite background)
     {
         if (root == null)
             return;
@@ -296,11 +349,15 @@ public class InventoryUIView : UIBase
         if (slotView == null)
         {
             Destroy(slotObject);
-            Debug.LogError("InventorySlotUIView가 프리팹에 없습니다.", _inventorySlotPrefab);
+            Debug.LogError(
+                "InventorySlotUIView가 프리팹에 없습니다.",
+                _inventorySlotPrefab);
             return;
         }
 
         slotView.Bind(inventoryItemViewModel);
+        slotView.SetBackground(background);
+
         slotView.ItemOnClickEvent += ItemOnClick;
         _equipmentSlots.Add(slotView);
     }
@@ -322,5 +379,10 @@ public class InventoryUIView : UIBase
     private void OnClickCloseButton()
     {
         UIManager.Inst.CloseInventoryUI();
+    }
+
+    private void OnClickPopupCloseButton()
+    {
+        CloseItemPopup();
     }
 }
