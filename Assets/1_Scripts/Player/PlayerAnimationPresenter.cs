@@ -20,6 +20,40 @@ public sealed class PlayerAnimationPresenter
     private readonly Vector3 _spriteRestLocalPosition;
     private bool _hasDiagnosticState;
     private AnimatorStateInfo _lastDiagnosticState;
+    private static readonly int IsAttackingHash = Animator.StringToHash("IsAttacking");
+    private static readonly int AttackPlaybackRateHash = Animator.StringToHash("AttackPlaybackRate");
+    private static readonly int Attack1Hash = Animator.StringToHash("Base Layer.Attack1");
+    private static readonly int Attack2Hash = Animator.StringToHash("Base Layer.Attack2");
+    private static readonly int Attack3Hash = Animator.StringToHash("Base Layer.Attack3");
+    private static readonly int IdleStateHash = Animator.StringToHash("Base Layer.Idle");
+    private static readonly int FallStateHash = Animator.StringToHash("Base Layer.Fall");
+    private bool _playingAttack;
+    private int _attackSequence;
+
+    public void UpdateAttack(PlayerAttackState attack, double now, bool grounded)
+    {
+        if (_animator == null) return;
+        if (attack.Step == 0)
+        {
+            if (!_playingAttack) return;
+            _playingAttack = false;
+            _animator.SetBool(IsAttackingHash, false);
+            _animator.Play(grounded ? IdleStateHash : FallStateHash, 0, 0f);
+            return;
+        }
+        if (_playingAttack && _attackSequence == attack.Sequence) return;
+        _playingAttack = true;
+        _attackSequence = attack.Sequence;
+        float duration = Mathf.Max(0.01f, attack.AnimationDuration);
+        _animator.SetBool(IsAttackingHash, true);
+        _animator.SetBool(IsMovingHash, false);
+        _animator.ResetTrigger(RunningJumpHash);
+        _animator.ResetTrigger(IdleJumpHash);
+        _animator.SetFloat(AttackPlaybackRateHash, 1f / duration);
+        int stateHash = attack.Step == 1 ? Attack1Hash : attack.Step == 2 ? Attack2Hash : Attack3Hash;
+        // 다단히트 후딜레이와 별개로, 타별 모션 재생 시간에 맞춥니다.
+        _animator.Play(stateHash, 0, Mathf.Clamp01((float)((now - attack.StartTime) / duration)));
+    }
 
     // 진단용 조회입니다. 실제 접지나 점프 가능 여부를 판정하는 데 사용하지 않습니다.
     public bool DisplayedGrounded => _animator != null && _animator.GetBool(IsGroundedHash);
