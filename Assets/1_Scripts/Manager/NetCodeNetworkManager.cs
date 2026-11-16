@@ -284,43 +284,4 @@ public class NetCodeNetworkManager : MonoBehaviour
 
         return true;
     }
-
-    public void StartAsHost()
-    {
-        if (_netCodeNetworkManager == null)
-        {
-            UIManager.Inst.OpenSimplePopup("네트워크 매니저가 존재하지 않습니다!").Forget();
-            return;
-        }
-
-        _serverSideService.InitServerService();
-        _clientSideService.InitClientService();
-        _netCodeNetworkManager.StartHost();
-    }
-
-    public void StartAsServer()
-    {
-        if (_netCodeNetworkManager == null)
-        {
-            UIManager.Inst.OpenSimplePopup("네트워크 매니저가 존재하지 않습니다!").Forget();
-            return;
-        }
-
-        // 여러곳에서 이렇게 Singleton으로 받아와도 된다 : 다만 역할을 이 컴포넌트로 한정하기 위해
-        // 멤버변수로 접근할 것임 (NetworkManager.Singleton.StartServer();)
-        _serverSideService.InitServerService();
-        _netCodeNetworkManager.StartServer();
-    }
-
-    public void StartAsClient()
-    {
-        if (_netCodeNetworkManager == null)
-        {
-            UIManager.Inst.OpenSimplePopup("네트워크 매니저가 존재하지 않습니다!").Forget();
-            return;
-        }
-
-        _clientSideService.InitClientService();
-        _netCodeNetworkManager.StartClient();
-    }
 }

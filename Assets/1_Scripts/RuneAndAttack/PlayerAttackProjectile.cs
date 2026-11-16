@@ -1,6 +1,7 @@
 ﻿using System;
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class PlayerAttackProjectile : NetworkBehaviour
 {
@@ -12,12 +13,31 @@ public class PlayerAttackProjectile : NetworkBehaviour
 
     private float _speed;
     private float _remainingDistance;
-    private float _radius;
+
+    private Rigidbody2D _body;
+    private CapsuleCollider2D _hitbox;
+    private ContactFilter2D _hitFilter;
 
     private LayerMask _targetLayer;
     private LayerMask _wallLayer;
 
     private bool _initialized;
+
+    private readonly List<RaycastHit2D> _castHits = new();
+
+    private void Awake()
+    {
+        _body = GetComponent<Rigidbody2D>();
+        _hitbox = GetComponent<CapsuleCollider2D>();
+
+        _body.bodyType = RigidbodyType2D.Kinematic;
+        _body.interpolation = RigidbodyInterpolation2D.None;
+        _body.linearVelocity = Vector2.zero;
+        _body.angularVelocity = 0f;
+
+        _hitbox.isTrigger = true;
+        _body.simulated = false;
+    }
 
     // 서버가 Instantiate한 뒤 Spawn하기 전에 호출.
     public void InitOnServer(
@@ -27,7 +47,6 @@ public class PlayerAttackProjectile : NetworkBehaviour
         Vector2 direction,
         float speed,
         float distance,
-        float radius,
         LayerMask targetLayer,
         LayerMask wallLayer)
     {
@@ -43,7 +62,6 @@ public class PlayerAttackProjectile : NetworkBehaviour
 
         _speed = speed;
         _remainingDistance = distance;
-        _radius = radius;
 
         _targetLayer = targetLayer;
         _wallLayer = wallLayer;
@@ -53,6 +71,11 @@ public class PlayerAttackProjectile : NetworkBehaviour
         float angle = Mathf.Atan2(_direction.y, _direction.x) * Mathf.Rad2Deg;
 
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
+        _hitFilter = new ContactFilter2D();
+        _hitFilter.SetLayerMask(_targetLayer.value | _wallLayer.value);
+
+        _hitFilter.useTriggers = false;
 
         _initialized = true;
     }
@@ -78,14 +101,13 @@ public class PlayerAttackProjectile : NetworkBehaviour
             return;
         }
 
-        Vector2 origin = transform.position;
-        int mask = _targetLayer.value | _wallLayer.value;
+        _castHits.Clear();
 
-        RaycastHit2D[] hits = Physics2D.CircleCastAll(origin, _radius, _direction, moveDistance, mask);
+        _hitbox.Cast(_direction, _hitFilter, _castHits, moveDistance);
 
-        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        _castHits.Sort((a, b) => a.distance.CompareTo(b.distance));
 
-        foreach (RaycastHit2D hit in hits)
+        foreach (RaycastHit2D hit in _castHits)
         {
             if (hit.collider == null)
             {
@@ -120,19 +142,11 @@ public class PlayerAttackProjectile : NetworkBehaviour
             }
         }
 
-        Vector2 nextPosition = origin + _direction * moveDistance;
+        Vector2 nextPosition = _body.position + _direction * moveDistance;
 
-        Vector3 position = transform.position;
-        position.x = nextPosition.x;
-        position.y = nextPosition.y;
-        transform.position = position;
+        _body.MovePosition(nextPosition);
 
-        _remainingDistance -= moveDistance;
-
-        if (_remainingDistance <= 0f)
-        {
-            DespawnOnServer();
-        }
+        _remainingDistance = Mathf.Max(0f, _remainingDistance - moveDistance);
     }
 
     private static bool IsInLayer(int layer, LayerMask mask)
@@ -145,6 +159,24 @@ public class PlayerAttackProjectile : NetworkBehaviour
         if (IsServer && IsSpawned)
         {
             NetworkObject.Despawn(destroy: true);
+        }
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        // 원격 클라이언트는 NetworkTransform으로 외형만 이동.
+        _body.simulated = IsServer;
+        _hitbox.enabled = IsServer;
+
+        if (IsServer)
+        {
+            _body.position = transform.position;
+            _body.rotation = transform.eulerAngles.z;
+
+            // 초기 위치·회전·룬 크기 배율을 물리 검사에 반영.
+            Physics2D.SyncTransforms();
         }
     }
 }
