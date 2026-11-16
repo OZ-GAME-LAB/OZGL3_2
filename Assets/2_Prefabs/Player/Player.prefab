@@ -421,7 +421,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkStats
   ShowTopMostFoldoutHeaderGroup: 1
   _initialMaxHp: 100
-  _initialAttackPower: 1
+  _initialAttackPower: 10
   _initialMoveSpeed: 12
   _initialJumpForce: 17.5
   _initialBaseAttackInterval: 0.75

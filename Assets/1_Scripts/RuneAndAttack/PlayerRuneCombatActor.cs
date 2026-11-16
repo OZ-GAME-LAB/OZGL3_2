@@ -33,7 +33,7 @@ public class PlayerRuneCombatActor : RuneCombatActor
     }
 
     public override bool IsAlive => IsSpawned && _stats != null && _stats.IsAlive;
-    public override bool CanAttack => IsAlive && isActiveAndEnabled;
+    public override bool CanAttack => IsAlive && isActiveAndEnabled && !_stats.IsEncounterLocked;
     public override float AttackPower => _stats != null ? _stats.AttackPower : 0f;
     public bool IsHitInvulnerable => _isHitInvulnerable.Value;
     public bool IsHitControlLocked => _hitControlLockRemaining > 0f
@@ -91,7 +91,7 @@ public class PlayerRuneCombatActor : RuneCombatActor
 
     public override bool CanHit(RuneCombatActor target)
     {
-        return IsAlive &&
+        return IsAlive && !_stats.IsEncounterLocked &&
                target != null &&
                target != this &&
                target.IsAlive &&
@@ -103,7 +103,7 @@ public class PlayerRuneCombatActor : RuneCombatActor
     // 독의 주기적 피해는 NetworkUnit에서 별도로 처리.
     public override RuneDamageResult ReceiveDirectDamageOnServer(RuneDamageInfo damageInfo)
     {
-        if (!IsServer || !IsAlive || float.IsNaN(damageInfo.RawDamage)
+        if (!IsServer || !IsAlive || _stats.IsEncounterLocked || float.IsNaN(damageInfo.RawDamage)
             || float.IsInfinity(damageInfo.RawDamage) || damageInfo.RawDamage <= 0f)
             return default;
 

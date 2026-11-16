@@ -4,14 +4,14 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using Unity.Behavior;
 
-public class BossNetwork : NetworkUnit
+public partial class BossNetwork : NetworkUnit
 {
     private bool _statsInitialized;
     private MonsterData _monsterData;
     private Boss _boss;
     public bool IsReady { get; private set; }
     public event System.Action Despawned;
-    protected override bool IsReadyForCombat => IsReady;
+    protected override bool IsReadyForCombat => IsReady && CombatActive;
     private BehaviorGraphAgent _bt;
     private readonly Dictionary<string, List<BossThornAttackObject>> _thornVisualPools = new();
     private uint _thornVisualVersion;
@@ -76,7 +76,7 @@ public class BossNetwork : NetworkUnit
         Despawned?.Invoke();
     }
 
-    public bool InitializeStatsOnServer(string id)
+    public bool InitializeStatsOnServer(string id, bool startCombat = true)
     {
         if (!IsServer || !IsSpawned)
         {
@@ -119,6 +119,7 @@ public class BossNetwork : NetworkUnit
                 data.IceResistance, data.ElectricalResistance, data.PoisonResistance))
             return false;
 
+        _startCombatWhenReady = startCombat;
         _monsterData = data;
         _statsInitialized = true;
 
@@ -129,6 +130,8 @@ public class BossNetwork : NetworkUnit
 
     protected override void OnDiedOnServer()
     {
+        _combatActive.Value = false;
+        DiedOnServer?.Invoke();
         IsReady = false;
 
         if (_bt != null)
@@ -176,7 +179,7 @@ public class BossNetwork : NetworkUnit
             }
 
             IsReady = true;
-            _bt.enabled = true;
+            if (_startCombatWhenReady) StartCombatOnServer();
 
             Debug.Log("보스 스킬 준비 완료. BT를 시작합니다.", this);
         }
