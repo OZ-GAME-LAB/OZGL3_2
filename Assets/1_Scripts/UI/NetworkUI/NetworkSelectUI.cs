@@ -216,19 +216,6 @@ public class NetworkSelectUI : UIBase
         }
     }
 
-    public void StartAsServer()
-    {
-        TryBindManager();
-
-        if (_boundManager == null)
-        {
-            SetMessage("네트워크 매니저가 없습니다.");
-            return;
-        }
-
-        _boundManager.StartAsServer();
-    }
-
     private void OnBackToLobby()
     {
         ReturnToLobbyAsync().Forget();

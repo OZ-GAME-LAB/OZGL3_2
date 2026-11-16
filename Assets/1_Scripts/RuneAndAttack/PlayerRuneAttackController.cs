@@ -27,7 +27,6 @@ public class PlayerRuneAttackController : NetworkBehaviour
     [SerializeField] private LayerMask _wallLayer;
     [SerializeField, Min(0.01f)] private float _projectileSpeed = 10f;
     [SerializeField, Min(0.01f)] private float _projectileDistance = 8f;
-    [SerializeField, Min(0.01f)] private float _projectileRadius = 0.15f;
 
     private readonly HashSet<RuneCombatActor> _hitTargets = new();
 
@@ -286,7 +285,6 @@ public class PlayerRuneAttackController : NetworkBehaviour
             Vector2.right * _attackDirection,
             _projectileSpeed,
             _projectileDistance * profile._rangeMultiple,
-            _projectileRadius * profile._projectileSizeMultiple,
             _targetLayer,
             _wallLayer);
 

@@ -76,7 +76,7 @@ public class NetworkCraftingService
             {
                 ItemDataId = material.Key,
                 RequiredCount = material.Value,
-                OwnedCount = 0 //InventoryManager.Inst.GetItemCount(material.Key)
+                OwnedCount = GetOwnedMaterialCount(material.Key)
             };
 
             requiredItems.Add(materialVm);
@@ -100,7 +100,7 @@ public class NetworkCraftingService
 
         foreach (var materialVm in _craftingViewModel.RequiredItemList)
         {
-            materialVm.OwnedCount = 0; //InventoryManager.Inst.GetItemCount(materialVm.ItemDataId);
+            materialVm.OwnedCount = GetOwnedMaterialCount(materialVm.ItemDataId);
 
             if (materialVm.IsEnough == false)
             {
@@ -137,7 +137,7 @@ public class NetworkCraftingService
 
         foreach (var material in materials)
         {
-            int ownedCount = 0; // InventoryManager.Inst.GetItemCount(material.Key);
+            int ownedCount = GetOwnedMaterialCount(material.Key);
 
             if (ownedCount < material.Value)
             {
@@ -157,7 +157,7 @@ public class NetworkCraftingService
 
         InventoryManager.Inst.AddItem(recipe.Item_Id, 1);
         */
-        Debug.LogWarning("제작 성공, 인벤토리가 연결되지 않아 제작을 실행하지 않았습니다.");
+        Debug.LogWarning("재료는 충분하지만 실제 재료 차감과 결과물 지급은 아직 연결되지 않았습니다.");
         RefreshInventoryState();
         return true;
     }
@@ -207,5 +207,45 @@ public class NetworkCraftingService
         }
 
         return true;
+    }
+
+    private int GetOwnedMaterialCount(string itemId)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return 0;
+        }
+
+        InventoryService inventory = ServiceManager.Inst != null ? ServiceManager.Inst.InventoryService : null;
+
+        if (inventory == null)
+        {
+            return 0;
+        }
+
+        long total = 0;
+
+        foreach (InventoryItemViewModel item in inventory.GetInventoryItems())
+        {
+            if (item == null || item.Id != itemId || item.Count <= 0)
+            {
+                continue;
+            }
+
+            // 장착 중인 장비는 제작 재료에서 제외.
+            if (inventory.IsEquippedItem(item))
+            {
+                continue;
+            }
+
+            total += item.Count;
+
+            if (total >= int.MaxValue)
+            {
+                return int.MaxValue;
+            }
+        }
+
+        return (int)total;
     }
 }

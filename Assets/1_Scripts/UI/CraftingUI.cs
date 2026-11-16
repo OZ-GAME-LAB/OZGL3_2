@@ -21,12 +21,12 @@ public class CraftingUI : UIBase
     [SerializeField] private Button Button_Close;
     [SerializeField] private Button Button_BackClose;
 
-
     private readonly List<CraftingSlotUI> _recipeSlots = new List<CraftingSlotUI>();
     private readonly List<CraftingRequiredItemSlotUI> _requiredItemSlots = new List<CraftingRequiredItemSlotUI>();
 
     private CraftingViewModel _craftingVM;
     public event Action CloseRequested;
+    private float _inventoryRefreshTimer;
 
     private void Awake()
     {
@@ -40,6 +40,7 @@ public class CraftingUI : UIBase
 
     private void OnEnable()
     {
+        _inventoryRefreshTimer = 0f;
         UnBindVM();
         ClearRecipeSlots();
         ClearRequiredItemSlots();
@@ -76,6 +77,28 @@ public class CraftingUI : UIBase
             case nameof(CraftingViewModel.IsCraftable):
                 Button_Craft.interactable = _craftingVM.IsCraftable;
                 break;
+        }
+    }
+
+    public void Update()
+    {
+        if (_craftingVM == null)
+        {
+            return;
+        }
+
+        _inventoryRefreshTimer += Time.unscaledDeltaTime;
+
+        if (_inventoryRefreshTimer < 0.2f)
+        {
+            return;
+        }
+
+        _inventoryRefreshTimer = 0f;
+
+        if (ServiceManager.Inst != null)
+        {
+            ServiceManager.Inst.CraftingService.RefreshInventoryState();
         }
     }
 

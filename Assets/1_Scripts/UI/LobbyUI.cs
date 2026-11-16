@@ -9,6 +9,9 @@ public class LobbyUI : UIBase
     [SerializeField] private Button Button_QuitGame;
     [SerializeField] private Button Button_Setting;
 
+    [SerializeField] private AudioClip _lobbyBgm;
+    [SerializeField] private AudioClip _clickSound;
+
     private bool _opening;
 
     private void Awake()
@@ -21,6 +24,11 @@ public class LobbyUI : UIBase
     private void OnEnable()
     {
         RefreshButtons();
+
+        if (_lobbyBgm != null)
+        {
+            SoundManager.Inst.PlayBgm(_lobbyBgm);
+        }
     }
 
     private void OnDestroy()
@@ -32,6 +40,7 @@ public class LobbyUI : UIBase
 
     private void OnClickStartGame()
     {
+        PlayClickSound();
         OpenNetworkSelectionAsync().Forget();
     }
 
@@ -99,6 +108,14 @@ public class LobbyUI : UIBase
                 _opening = false;
                 RefreshButtons();
             }
+        }
+    }
+
+    private void PlayClickSound()
+    {
+        if (SoundManager.Inst != null)
+        {
+            SoundManager.Inst.PlaySfx(_clickSound);
         }
     }
 
