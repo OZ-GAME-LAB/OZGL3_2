@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cde229b62e8782141b296de06681a31f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlidingPuzzleInteractable
-  _interactionText: "\uD37C\uC990 \uD480\uAE30 (F)"
+  _interactionText: "\uD37C\uC990 \uB3C4\uC804\uD558\uAE30 (F)"
   _activateOnComplete: {fileID: 4531846673951759558}
   _interactionArea: {fileID: 1526265444325519169}
   _sharedSource: {fileID: 4611778106904971915}

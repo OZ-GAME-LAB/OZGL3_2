@@ -315,7 +315,7 @@ public class ObjectManager : MonoBehaviour
         return item;
     }
 
-    public Boss SpawnBoss(string id, Vector3 position)
+    public Boss SpawnBoss(string id, Vector3 position, bool startCombat = true)
     {
         if (!CanSpawn())
             return null;
@@ -347,7 +347,7 @@ public class ObjectManager : MonoBehaviour
 
         networkObject.Spawn();
 
-        if (!bossNetwork.InitializeStatsOnServer(id))
+        if (!bossNetwork.InitializeStatsOnServer(id, startCombat))
         {
             Debug.LogError($"보스 초기화에 실패했습니다: {id}", instance);
 

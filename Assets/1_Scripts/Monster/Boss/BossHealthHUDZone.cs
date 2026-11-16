@@ -82,7 +82,7 @@ public class BossHealthHUDZone : MonoBehaviour
     {
         if (!isActiveAndEnabled || _area == null || !_area.isActiveAndEnabled
             || _boss == null || _bossNetwork == null || !_bossNetwork.IsClient
-            || !_bossNetwork.IsSpawned || _bossNetwork.MaxHp <= 0f)
+            || !_bossNetwork.IsSpawned || !_bossNetwork.CombatActive || _bossNetwork.MaxHp <= 0f)
             return false;
 
         _localContacts.RemoveWhere(contact =>

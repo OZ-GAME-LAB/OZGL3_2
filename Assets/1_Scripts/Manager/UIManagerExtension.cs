@@ -33,6 +33,9 @@ public enum UIType
     BossHealthUI,
     DialogueUI,
     SlidingPuzzleUI,
+    ScreenTransitionUI,
+    CinematicEffectUI,
+    BossEntryUI,
 }
 
 

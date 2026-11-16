@@ -148,6 +148,8 @@ public class BossFlowerSummonSkill : MonsterSkillBase
 
     private void OnDestroy()
     {
+        MonsterNetwork flower = _flower;
         ReleaseFlower();
+        if (flower != null && flower.IsServer && flower.IsSpawned) flower.NetworkObject.Despawn();
     }
 }

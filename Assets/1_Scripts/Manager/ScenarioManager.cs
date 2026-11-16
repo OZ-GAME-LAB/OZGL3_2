@@ -53,6 +53,8 @@ public sealed partial class ScenarioManager : NetworkBehaviour
         }
 
         Inst = this;
+        if (IsServer) _bossPhase.Value = BossEncounterPhase.Ready;
+        BossEncounterController.Active?.ResetEncounterSession(this);
         // 이 매니저는 한 세션에 한 번만 스폰합니다. 같은 세션의 재스폰은 지원하지 않습니다.
         // 호스트 재시작 시 재사용된 씬 객체에도 이전 완료 기록이 남지 않게 합니다.
         // 클라이언트에는 서버에서 받은 스냅샷이 있으므로 목록을 비우면 안 됩니다.
@@ -72,6 +74,7 @@ public sealed partial class ScenarioManager : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        BossEncounterController.Active?.ResetEncounterSession(null);
         _completedIds.OnListChanged -= OnCompletedIdsChanged;
         if (NetworkManager != null)
             NetworkManager.OnClientDisconnectCallback -= OnClientDisconnected;

@@ -144,7 +144,8 @@ MonoBehaviour:
   _thornMask: {fileID: 7922756178707843120}
   _thornVisual: {fileID: 1675769414596735189}
   _hitbox: {fileID: 8823619081795806394}
-  _warningHeight: 0.1
+  _warningHeight: 0.22
+  _useAttackHeightForWarning: 0
   _warningSeconds: 1
   _riseSeconds: 0.2
 --- !u!210 &4880364200154403307
@@ -338,7 +339,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.19659668, y: 1.0070276, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7645520495510980096}
@@ -392,11 +393,11 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 1
-  m_Sprite: {fileID: -224983794, guid: 5b65d845bad3957408868f62b01d5089, type: 3}
+  m_Sprite: {fileID: 21300000, guid: d35741c31fde48bfbc7456d7f15fc062, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
-  m_DrawMode: 2
+  m_DrawMode: 0
   m_Size: {x: 1.668, y: 2.848}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
@@ -483,8 +484,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 100
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 39ac1457a5524112940fe2cb0ff5384c, type: 3}
-  m_Color: {r: 1, g: 0.02020948, b: 0, a: 0.6392157}
+  m_Sprite: {fileID: 21300000, guid: 93d8fae08dc369a47963f3d398e75e4f, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.65}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

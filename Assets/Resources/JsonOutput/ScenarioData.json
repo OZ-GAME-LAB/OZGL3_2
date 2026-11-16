@@ -9,6 +9,24 @@
     "PlayOncePerPlayer": true
   },
   {
+    "Id": "BossEncounterStarted",
+    "CompletionType": "WorldEvent",
+    "DialogueId": null,
+    "RequiredCompletedScenarioId": null,
+    "BlockedByCompletedScenarioId": null,
+    "CompleteWorldOnFinish": true,
+    "PlayOncePerPlayer": false
+  },
+  {
+    "Id": "BossEncounterDefeated",
+    "CompletionType": "WorldEvent",
+    "DialogueId": null,
+    "RequiredCompletedScenarioId": "BossEncounterStarted",
+    "BlockedByCompletedScenarioId": null,
+    "CompleteWorldOnFinish": true,
+    "PlayOncePerPlayer": false
+  },
+  {
     "Id": "NPCGirlEncounter",
     "CompletionType": "Dialogue",
     "DialogueId": "NPCGirlEncounterDialogue",
