@@ -102,6 +102,23 @@ public class InventoryService
 
     public void UseItem(InventoryItemViewModel item)
     {
+        if (!DataManager.Inst.ReadData<ConsumableData>()
+            .TryGetValue(item.Id, out var consumableData))
+        {
+            return;
+        }
+
+
+        switch (consumableData.EffectType)
+        {
+            case nameof(ConsumableEffectType.RestoreHp):
+                ServiceManager.Inst.PlayerService.HealOnPlayerSelf(consumableData.EffectValue);
+
+                break;
+            default:
+                break;
+        }
+
         Debug.Log($"{item.Name}아이템 사용됨");
     }
 
