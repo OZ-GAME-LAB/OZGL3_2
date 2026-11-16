@@ -6,6 +6,10 @@ public class InteractableInfoUI : UIBase
 {
     [SerializeField] TMP_Text _infoText;
 
+    [Header("안내 색상")]
+    [SerializeField] private Color _availableColor = Color.white;
+    [SerializeField] private Color _unavailableColor = new Color(1f, 0.65f, 0.65f, 1f);
+
     private InteractionVMBase _viewModel;
 
     public void Bind(InteractionVMBase viewModel)
@@ -48,9 +52,13 @@ public class InteractableInfoUI : UIBase
 
     private void RefreshInfo()
     {
+        _infoText.color = _viewModel.HasRequiredTool && _viewModel.IsAvailable
+            ? _availableColor
+            : _unavailableColor;
+
         if (!_viewModel.HasRequiredTool)
         {
-            _infoText.text = "상호작용 불가\n(관련 도구 없음)";
+            _infoText.text = "도구 필요";
             return;
         }
 
@@ -61,7 +69,7 @@ public class InteractableInfoUI : UIBase
         }
 
         _infoText.text = _viewModel.IsUsedByOtherPlayer
-            ? "상호작용 불가\n(다른 유저 사용 중)"
+            ? "사용 중"
             : "상호작용 불가";
     }
 

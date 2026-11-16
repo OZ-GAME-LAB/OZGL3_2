@@ -5,7 +5,27 @@ using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-public class InteractionNetwork : NetworkBehaviour
+public struct PlacedInteractionSettings : INetworkSerializable, IEquatable<PlacedInteractionSettings>
+{
+    public bool UsesPlacedVisual;
+    public bool UsesResourceLayout;
+    public Vector2 Size;
+    public Vector2 Offset;
+    public bool IsValid => !UsesPlacedVisual || (Finite(Size.x) && Finite(Size.y) &&
+        Finite(Offset.x) && Finite(Offset.y) && Size.x > 0f && Size.y > 0f);
+    private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref UsesPlacedVisual);
+        serializer.SerializeValue(ref UsesResourceLayout);
+        serializer.SerializeValue(ref Size);
+        serializer.SerializeValue(ref Offset);
+    }
+    public bool Equals(PlacedInteractionSettings other) => UsesPlacedVisual == other.UsesPlacedVisual &&
+        UsesResourceLayout == other.UsesResourceLayout && Size.Equals(other.Size) && Offset.Equals(other.Offset);
+}
+
+public partial class InteractionNetwork : NetworkBehaviour
 {
     NetworkVariable<bool> _isAvailable = new NetworkVariable<bool>
     (true,
@@ -27,7 +47,31 @@ public class InteractionNetwork : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
-    public bool IsAvailable => IsSpawned && _isAvailable.Value;
+    private NetworkVariable<PlacedInteractionSettings> _placement = new(default,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private PlacedInteractionSettings _pendingPlacement;
+    private bool _localInitialized;
+    private int _initializationVersion;
+    public bool IsReady => IsSpawned && _localInitialized;
+    public bool IsAvailable => IsReady && _isAvailable.Value;
+
+    public void SetPlacementBeforeSpawn(PlacedInteractionSettings placement)
+    {
+        if (IsSpawned || !placement.IsValid) return;
+        _pendingPlacement = placement;
+    }
+
+    private void ApplyPlacement()
+    {
+        PlacedInteractionSettings placement = _placement.Value;
+        if (!placement.UsesPlacedVisual || placement.UsesResourceLayout) return;
+        if (!placement.IsValid) throw new InvalidOperationException("Invalid placed interaction geometry.");
+        if (!TryGetComponent(out BoxCollider2D box)) box = gameObject.AddComponent<BoxCollider2D>();
+        box.isTrigger = true;
+        box.size = placement.Size;
+        box.offset = placement.Offset;
+        box.enabled = true;
+    }
 
     public bool IsUsedByOtherPlayer => IsSpawned && IsClient
         && _reservedClientId.Value != ulong.MaxValue
@@ -56,27 +100,42 @@ public class InteractionNetwork : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        _localInitialized = false;
+        _initializationVersion++;
 
         _isAvailable.OnValueChanged += OnAvailabilityChanged;
         _reservedClientId.OnValueChanged += OnReservedClientChanged;
         _isDormant.OnValueChanged += OnDormantChanged;
+        _loggingPresentation.OnValueChanged += OnLoggingPresentationChanged;
 
         if (IsServer)
         {
+            if (_loggingPresentation.Value.Phase == LoggingPresentationPhase.Sinking)
+            {
+                _serverAllowsInteraction = true;
+                _isDormant.Value = false;
+            }
+            ClearLoggingPresentation();
+            _loggingPresentation.Value = default;
             _objectId.Value = _pendingObjectId;
+            _placement.Value = _pendingPlacement;
 
             NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
             RefreshAvailabilityOnServer();
         }
 
-        InitializeObject().Forget();
+        InitializeObject(_initializationVersion).Forget();
     }
 
     public override void OnNetworkDespawn()
     {
+        _localInitialized = false;
+        _initializationVersion++;
         _isAvailable.OnValueChanged -= OnAvailabilityChanged;
         _reservedClientId.OnValueChanged -= OnReservedClientChanged;
         _isDormant.OnValueChanged -= OnDormantChanged;
+        _loggingPresentation.OnValueChanged -= OnLoggingPresentationChanged;
+        ClearLoggingPresentation();
 
         if (IsServer)
         {
@@ -96,7 +155,7 @@ public class InteractionNetwork : NetworkBehaviour
 
     private void OnAvailabilityChanged(bool previous, bool current)
     {
-        AvailabilityChanged?.Invoke(current);
+        AvailabilityChanged?.Invoke(IsAvailable);
     }
 
     private void OnReservedClientChanged(ulong previous, ulong current)
@@ -108,7 +167,7 @@ public class InteractionNetwork : NetworkBehaviour
     {
         fishId = string.Empty;
 
-        if (!IsServer || !IsSpawned)
+        if (!IsServer || !IsReady)
             return false;
 
         if (_fishingSessions.TryGetValue(clientId, out FishingSession existingSession))
@@ -150,6 +209,13 @@ public class InteractionNetwork : NetworkBehaviour
         return true;
     }
 
+    public bool HasReservationOnServer(ulong clientId, ulong requestId)
+    {
+        if (!IsServer || !IsReady || !_serverAllowsInteraction) return false;
+        if (_fishingSessions.TryGetValue(clientId, out FishingSession session)) return session.RequestId == requestId;
+        return _hasInteractor && _interactorClientId == clientId && _interactionRequestId == requestId;
+    }
+
     public bool TryCancelOnServer(ulong clientId, ulong requestId)
     {
         if (!IsServer || !IsSpawned)
@@ -176,6 +242,7 @@ public class InteractionNetwork : NetworkBehaviour
         if (!IsServer || !IsSpawned)
             return false;
 
+        if (isAvailable && _pendingLoggingReward != null) return false;
         _serverAllowsInteraction = isAvailable;
         RefreshAvailabilityOnServer();
 
@@ -184,6 +251,7 @@ public class InteractionNetwork : NetworkBehaviour
 
     private void ReleaseInteractorOnServer()
     {
+        CancelFutureLoggingImpact();
         _hasInteractor = false;
         _interactorClientId = 0;
         _interactionRequestId = 0;
@@ -230,28 +298,35 @@ public class InteractionNetwork : NetworkBehaviour
         _pendingObjectId = new FixedString128Bytes(id);
     }
 
-    private async UniTask InitializeObject()
+    private async UniTask InitializeObject(int version)
     {
-        if (!TryGetComponent<InteractableObject>(out var interactableObject))
-            return;
-
-        string id = _objectId.Value.ToString();
-
-        FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(id);
-
-        if (data == null)
-            return;
-
-        interactableObject.SetDestroyAfterUse(data.DestroyAfterUse);
-        interactableObject.SetRequiredToolAction(data.RequiredToolAction);
-
-        await interactableObject.InitObject(id);
-
-        if (!IsSpawned)
-            return;
-
-        ApplyDormantState();
-        AvailabilityChanged?.Invoke(IsAvailable);
+        try
+        {
+            if (!TryGetComponent<InteractableObject>(out var interactableObject) || DataManager.Inst == null)
+                throw new InvalidOperationException("Interaction initialization dependencies are missing.");
+            ApplyPlacement();
+            string id = _objectId.Value.ToString();
+            FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(id);
+            if (data == null) throw new InvalidOperationException("Missing field data: " + id);
+            interactableObject.ConfigureResourceLayout(data.InteractionType, _placement.Value.UsesResourceLayout, _placement.Value.Size);
+            interactableObject.ConfigureFieldPresentation(data.InteractionType, _placement.Value.UsesPlacedVisual);
+            interactableObject.SetDestroyAfterUse(data.DestroyAfterUse);
+            interactableObject.SetRequiredToolAction(data.RequiredToolAction);
+            await interactableObject.InitObject(id);
+            if (this == null || !IsSpawned || version != _initializationVersion) return;
+            _localInitialized = true;
+            InitializeLoggingPresentation(interactableObject);
+            ApplyDormantState();
+            AvailabilityChanged?.Invoke(IsAvailable);
+        }
+        catch (Exception exception)
+        {
+            if (this == null || version != _initializationVersion) return;
+            _localInitialized = false;
+            if (IsSpawned && IsServer) TrySetAvailableOnServer(false);
+            AvailabilityChanged?.Invoke(false);
+            Debug.LogException(exception, this);
+        }
     }
 
     public virtual bool CompleteInteraction(ulong clientId, ulong requestId, float accuracy)
@@ -300,6 +375,8 @@ public class InteractionNetwork : NetworkBehaviour
         }
 
         int playerCount = NetworkManager.ConnectedClientsList.Count;
+        if (data.InteractionType == "Logging" && target.LoggingEffect != null)
+            return TryBeginLoggingCompletion(data, target, rewardMultiplier, playerCount, requestId);
 
         _serverAllowsInteraction = false;
         ReleaseInteractorOnServer();
@@ -333,9 +410,11 @@ public class InteractionNetwork : NetworkBehaviour
 
     public bool TryReactivateOnServer()
     {
-        if (!IsServer || !IsSpawned || !_isDormant.Value)
+        if (!IsServer || !IsSpawned || !_isDormant.Value || _pendingLoggingReward != null)
             return false;
 
+        _loggingPresentation.Value = default;
+        _lastLoggingImpactSequence = 0;
         _isDormant.Value = false;
         _serverAllowsInteraction = true;
         RefreshAvailabilityOnServer();

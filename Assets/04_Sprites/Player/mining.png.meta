@@ -1,0 +1,544 @@
+fileFormatVersion: 2
+guid: ec9261b774234b6885f85ded8a5f1b0d
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 4096
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 74.85380163
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: mining_000
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2040
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a152c09e870f4e268c5ec0f5bc2825cb
+      internalID: 4200000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_001
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 2040
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5c2dd2a21b7742b4afff1bbcab4a7eda
+      internalID: 4200001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_002
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 2040
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6139f3b35ba74cb3b746b9a723913fd6
+      internalID: 4200002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_003
+      rect:
+        serializedVersion: 2
+        x: 1728
+        y: 2040
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e620d2d97c5e4686ad0648129bb1d669
+      internalID: 4200003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_004
+      rect:
+        serializedVersion: 2
+        x: 2304
+        y: 2040
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3cada20b0b1e4a0696673688b1e13ef2
+      internalID: 4200004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_005
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1360
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 74700cce233345a98f536d1530f88dbc
+      internalID: 4200005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_006
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 1360
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a1ba21c283aa4757b2bfc28287295a2d
+      internalID: 4200006
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_007
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 1360
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: be8386278ae441b3846c82f9a5d75cdb
+      internalID: 4200007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_008
+      rect:
+        serializedVersion: 2
+        x: 1728
+        y: 1360
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47c81251124c4126af22a20852441470
+      internalID: 4200008
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_009
+      rect:
+        serializedVersion: 2
+        x: 2304
+        y: 1360
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ab246dc19d4a410c92040cf1643569b4
+      internalID: 4200009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_010
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 680
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f99fc24824aa4a8a994079e2efd5098e
+      internalID: 4200010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_011
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 680
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 14cfd048793b4ee8a1f4de3b0e92467b
+      internalID: 4200011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_012
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 680
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5ac98bf2134047bda1b87ac95cbf7381
+      internalID: 4200012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_013
+      rect:
+        serializedVersion: 2
+        x: 1728
+        y: 680
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fcea49d9205f46f0ac75d9deda9be32e
+      internalID: 4200013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_014
+      rect:
+        serializedVersion: 2
+        x: 2304
+        y: 680
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5aa9dfa821ac4646ada0c1be0010f32d
+      internalID: 4200014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_015
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a1422564fdf84b1a8a5f9f6f0be73996
+      internalID: 4200015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_016
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 0
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 664e0462a7e44f299b39a1a3167964e3
+      internalID: 4200016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mining_017
+      rect:
+        serializedVersion: 2
+        x: 1152
+        y: 0
+        width: 576
+        height: 680
+      alignment: 9
+      pivot: {x: 0.305555556, y: 0.014705882}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 51272dd807cc4a718857e33875ba3092
+      internalID: 4200017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: ccb81ff427664f26b04eb8c0a1e9eaa4
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      mining_000: 4200000
+      mining_001: 4200001
+      mining_002: 4200002
+      mining_003: 4200003
+      mining_004: 4200004
+      mining_005: 4200005
+      mining_006: 4200006
+      mining_007: 4200007
+      mining_008: 4200008
+      mining_009: 4200009
+      mining_010: 4200010
+      mining_011: 4200011
+      mining_012: 4200012
+      mining_013: 4200013
+      mining_014: 4200014
+      mining_015: 4200015
+      mining_016: 4200016
+      mining_017: 4200017
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

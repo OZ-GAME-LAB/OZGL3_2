@@ -1,15 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class InteractionLoggingMiningObject : InteractableObject
 {
     [Header("수축 설정 — 현재는 테스트 값")]
-    [SerializeField] private float _startSizeRatio = 3f;
-    [SerializeField] private float _endSizeRatio = 0.5f;
+    [SerializeField] private float _startSizeRatio = 2.5f;
+    [SerializeField] private float _endSizeRatio = 0.2f;
     [SerializeField] private float _shrinkSpeed = 1f;
 
     [Header("판정 설정")]
-    [SerializeField] private float _successStartRatio = 2f;
+    [SerializeField] private float _successStartRatio = 1.6f;
     [SerializeField] private float _perfectTolerance = 0.05f;
 
     [Header("난이도 설정")]
@@ -17,15 +17,21 @@ public class InteractionLoggingMiningObject : InteractableObject
     private float _increasePerTier = 0.25f;
 
     private int _targetTier;
+    private bool _loggingMotionInProgress;
+    private bool _loggingResultPending;
 
     private readonly InteractionLoggingMiningVM _viewModel = new();
 
     public override InteractionVMBase ViewModel => _viewModel;
+    public override bool RequiresContentReady => true;
+    public bool IsLogging => InteractionType == "Logging";
+    public bool IsFinalLoggingJudgment => IsLogging && _viewModel.CompletedRounds >= InteractionLoggingMiningVM.TotalRounds;
+    public float LoggingFinalAccuracy => _viewModel.FinalAccuracy;
 
     private Transform[] _playerUIAnchors;
     private Camera _playerCamera;
 
-    private int _uiRequestVersion;
+
 
     public override bool UsesMiniGameInput => true;
 
@@ -34,11 +40,15 @@ public class InteractionLoggingMiningObject : InteractableObject
         FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(id);
 
         if (data == null)
-            return;
+            throw new System.InvalidOperationException("벌목·채광 데이터가 없습니다: " + id);
 
         _targetTier = data.Tier;
+        _viewModel.SetInteractionType(data.InteractionType);
 
         _viewModel.Initialize(_startSizeRatio, _endSizeRatio, _shrinkSpeed, _successStartRatio, _perfectTolerance);
+
+        if (UsesPlacedVisual)
+            return;
 
         GameObject visual = await ResourceManager.Inst.InstantiateAsync(
             data.PrefabPath,
@@ -48,8 +58,7 @@ public class InteractionLoggingMiningObject : InteractableObject
 
         if (visual == null)
         {
-            Debug.LogError($"외형 생성 실패: {id}", this);
-            return;
+            throw new System.InvalidOperationException("외형 생성 실패: " + id);
         }
 
         RegisterVisual(visual);
@@ -102,46 +111,32 @@ public class InteractionLoggingMiningObject : InteractableObject
 
     protected override void PlayContent()
     {
-        int requestVersion = ++_uiRequestVersion;
-        OpenMiniGameUIAsync(requestVersion).Forget();
+        OpenMiniGameUIAsync().Forget();
     }
 
-    private async UniTask OpenMiniGameUIAsync(int requestVersion)
+    private async UniTask OpenMiniGameUIAsync()
     {
-        UIBase ui = await UIManager.Inst.OpenMainRootAsync(UIType.LoggingMiningUI);
-
-        if (this == null || requestVersion != _uiRequestVersion)
+        try
         {
-            if (ui != null)
-                UIManager.Inst.Close(UIType.LoggingMiningUI);
-
-            return;
+            UIBase ui = await OpenResourceUIAsync(UIType.LoggingMiningUI, _playerUIAnchors, _playerCamera);
+            if (ui == null) return;
+            if (ui is not LoggingMiningUI miniGameUI)
+                throw new System.InvalidOperationException("LoggingMiningUI component is required.");
+            miniGameUI.Bind(_viewModel);
+            NotifyContentReady();
         }
-
-        if (ui is not LoggingMiningUI miniGameUI)
+        catch (System.Exception exception)
         {
-            Debug.LogError("LoggingMiningUI 생성 또는 컴포넌트를 확인해 주세요.", this);
-
-            if (ui != null)
-                UIManager.Inst.Close(UIType.LoggingMiningUI);
-
+            Debug.LogException(exception, this);
+            CloseContent();
             RequestInteractionEnd();
-            return;
         }
+    }
 
-        _openUI = miniGameUI;
-
-        if (!miniGameUI.TryGetComponent(out InteractionUIPositioner positioner))
-        {
-            Debug.LogError("InteractionUIPositioner가 필요합니다.", miniGameUI);
-            RequestInteractionEnd();
-            return;
-        }
-
-        positioner.SetTargets(_playerUIAnchors, _playerCamera);
-
-        miniGameUI.Bind(_viewModel);
-
+    public override void StartPreparedInteraction()
+    {
+        _loggingMotionInProgress = false;
+        _loggingResultPending = false;
         _viewModel.BeginGame();
     }
 
@@ -155,24 +150,20 @@ public class InteractionLoggingMiningObject : InteractableObject
 
     public override void CancelInteraction()
     {
+        _loggingMotionInProgress = false;
+        _loggingResultPending = false;
         _viewModel.Cancel();
         CloseContent();
     }
 
     public override void CloseContent()
     {
-        _uiRequestVersion++;
-
-        if (_openUI == null)
-            return;
-
-        UIManager.Inst.Close(UIType.LoggingMiningUI);
-        _openUI = null;
+        CloseResourceUI();
     }
 
     public override void ConfirmInteraction()
     {
-        if (_openUI == null)
+        if (_openUI == null || IsLogging)
             return;
 
         if (_viewModel.Confirm())
@@ -181,8 +172,48 @@ public class InteractionLoggingMiningObject : InteractableObject
         }
     }
 
+    public bool TryConfirmLoggingSwing()
+    {
+        if (!IsLogging || _openUI == null || !_viewModel.TryConfirmAndWaitForMotion()) return false;
+        _loggingMotionInProgress = true;
+        return true;
+    }
+
+    public bool ResumeLoggingJudgmentAtImpact()
+    {
+        // 마지막 결과 표시는 서버의 타격 시점 보상 확정 후 별도로 처리합니다.
+        if (!IsLogging || _viewModel.CompletedRounds >= InteractionLoggingMiningVM.TotalRounds) return false;
+        _viewModel.ResumeAfterMotion();
+        return true;
+    }
+
+    public void CompleteLoggingSwing()
+    {
+        if (!IsLogging) return;
+        _loggingMotionInProgress = false;
+        if (_viewModel.ResumeAfterMotion() || _loggingResultPending)
+        {
+            _loggingResultPending = false;
+            FinishMiniGame();
+        }
+    }
+
+    public void ShowLoggingCompletionAtImpact()
+    {
+        if (!IsFinalLoggingJudgment) return;
+        _loggingMotionInProgress = false;
+        _loggingResultPending = false;
+        FinishMiniGame();
+    }
+
     private void FinishMiniGame()
     {
+        // 회수 중 다음 라운드가 시간 초과되어도 마지막 모션은 자르지 않습니다.
+        if (IsLogging && _loggingMotionInProgress)
+        {
+            _loggingResultPending = true;
+            return;
+        }
         float accuracy = _viewModel.FinalAccuracy;
 
         Debug.Log($"벌목·채광 종료: 평균 정확도 {accuracy:P1}", this);
@@ -207,18 +238,4 @@ public class InteractionLoggingMiningObject : InteractableObject
         NotifyCompleted(accuracy);
     }
 
-    private void CompleteAfterResult()
-    {
-        float accuracy = _viewModel.FinalAccuracy;
-
-        CloseContent();
-
-        if (accuracy <= 0f)
-        {
-            RequestInteractionEnd();
-            return;
-        }
-
-        NotifyCompleted(accuracy);
-    }
 }

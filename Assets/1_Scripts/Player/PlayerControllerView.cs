@@ -1,10 +1,10 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerControllerView : MonoBehaviour
+public partial class PlayerControllerView : MonoBehaviour
 {
     [Header("이동 설정")]
     [SerializeField] private float _moveSpeed = 8f;
@@ -311,6 +311,7 @@ public class PlayerControllerView : MonoBehaviour
         if (!CanReadAttackInput())
             _runeAttackController?.CancelAttackInput();
 
+
         if (IsHitControlLocked || _isDialogueMode)
             return;
 
@@ -341,6 +342,7 @@ public class PlayerControllerView : MonoBehaviour
         // 물리 시뮬레이션이 꺼져 있으므로 위치를 직접 옮깁니다.
         transform.position += (Vector3)(direction.normalized * _spectatorMoveSpeed * Time.deltaTime);
     }
+
 
     public void Bind (PlayerStatViewModel playerStatViewModel)
     {
@@ -406,10 +408,17 @@ public class PlayerControllerView : MonoBehaviour
             return;
 
         // 공격 중 이동 제한이 피격으로 밀려나는 속도를 지우지 않도록 먼저 처리합니다.
+        if (_loggingAlignmentRequest != 0 && IsHitControlLocked) FinishLoggingAlignment(false);
         if (UpdateHitControlLock())
         {
             UpdateThinPlatformCollisions();
             UpdateGroundStateAndAnimation();
+            return;
+        }
+
+        if (_loggingAlignmentRequest != 0)
+        {
+            UpdateLoggingAlignment();
             return;
         }
 
@@ -1417,7 +1426,8 @@ public class PlayerControllerView : MonoBehaviour
 
     private bool CanReadAttackInput()
     {
-        return !IsHitControlLocked && !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode && _networkObject != null &&
+        return (_interactionController == null || !_interactionController.HasLocalRequest) &&
+            !IsHitControlLocked && !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode && _networkObject != null &&
             _networkObject.IsSpawned && _networkObject.IsOwner && _playerInput != null &&
             _playerInput.isActiveAndEnabled && _playerInput.inputIsActive &&
             _attackAction != null && _attackAction.enabled && Application.isFocused;
@@ -1467,6 +1477,25 @@ public class PlayerControllerView : MonoBehaviour
             UpdateMovementAnimation();
         }
         _wasAttackLocked = locked;
+    }
+
+    public void UpdateResourcePresentation(PlayerResourceAnimationState state, double now)
+    {
+        if (_animationPresenter == null) return;
+        if (state.Kind != ResourceAnimationKind.None && state.FacingDirection != 0)
+        {
+            _lookRight = state.FacingDirection > 0;
+            Vector3 scale = transform.localScale;
+            float facingX = Mathf.Abs(scale.x) * state.FacingDirection;
+            if (scale.x != facingX)
+            {
+                scale.x = facingX;
+                transform.localScale = scale;
+                if (_wallCling != null) _wallCling.SyncSensorTransform();
+            }
+        }
+        bool ending = _animationPresenter.IsPlayingResource && !state.PlaysAnimation;
+        _animationPresenter.UpdateResource(state, now, ending && IsGroundedForAttack());
     }
 
     private void OnSpecialAttack(InputAction.CallbackContext context)
@@ -1685,6 +1714,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void ExitMiniGameMode()
     {
+        StopLoggingAlignment();
         if (!_isMiniGameMode)
             return;
 
@@ -1708,12 +1738,9 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnMiniGameCancel(InputAction.CallbackContext context)
     {
+        // 대화는 마지막 줄까지 진행해야 완료됩니다. 취소 키로 닫지 않습니다.
         if (_isDialogueMode)
-        {
-            if (Time.frameCount != _dialogueEnteredFrame)
-                _scenarioService?.Cancel();
             return;
-        }
         if (!_isMiniGameMode)
             return;
 

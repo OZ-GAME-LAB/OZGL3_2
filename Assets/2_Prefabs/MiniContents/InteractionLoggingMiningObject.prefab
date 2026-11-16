@@ -31,7 +31,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 3273907289364118169}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1304325225332849116
@@ -44,11 +45,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a528513507779f94ea290a43d7b4dddf, type: 3}
-  m_Name: 
+  m_Name: ""
   m_EditorClassIdentifier: Assembly-CSharp::InteractionLoggingMiningObject
-  _startSizeRatio: 3
-  _endSizeRatio: 0.5
+  _rangeEffect: {fileID: 3410293656522165644}
+  _loggingLayoutPrefab: {fileID: 4854170344635734420, guid: 9100af4816fc8344b9a8d380933dc58e, type: 3}
+  _miningLayoutPrefab: {fileID: 8437468773034699933, guid: 7dbc766046dc9cd4fa62b5dfaf033361, type: 3}
+  _gatheringLayoutPrefab: {fileID: 0}
+  _startSizeRatio: 2.5
+  _endSizeRatio: 0.2
   _shrinkSpeed: 1
+  _successStartRatio: 1.6
+  _perfectTolerance: 0.05
+  _increasePerTier: 0.25
 --- !u!114 &7424429249767707452
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59,7 +67,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
+  m_Name: ""
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
   GlobalObjectIdHash: 566765452
   InScenePlacedSourceGlobalObjectIdHash: 0
@@ -86,6 +94,79 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f79562f52d2e794cbd1222fffcc1701, type: 3}
-  m_Name: 
+  m_Name: ""
   m_EditorClassIdentifier: Assembly-CSharp::InteractionNetwork
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!1001 &7120064110760100318
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1611138831677347670}
+    m_Modifications:
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8899363715152861088, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_Name
+      value: ResourceRangeEffect
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+--- !u!4 &3273907289364118169 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+  m_PrefabInstance: {fileID: 7120064110760100318}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3410293656522165644 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5592415853952404562, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+  m_PrefabInstance: {fileID: 7120064110760100318}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 534ecfdf9805f0a458edaadb92e3c9bd, type: 3}
+  m_Name: ""
+  m_EditorClassIdentifier: Assembly-CSharp::ResourceRangeEffect
