@@ -54,6 +54,29 @@ public class UIManager : MonoBehaviour
     }
 
 
+    public bool HasDialogueConflict()
+    {
+        return IsOpenOrLoading(UIType.InventoryUI) || IsOpenOrLoading(UIType.RuneInventoryUI) ||
+            IsOpenOrLoading(UIType.CraftingUI) || IsOpenOrLoading(UIType.GatheringUI) ||
+            IsOpenOrLoading(UIType.LoggingMiningUI) || IsOpenOrLoading(UIType.FishingUI) ||
+            IsOpenOrLoading(UIType.NetworkSelectUI) || IsOpenOrLoading(UIType.SlidingPuzzleUI);
+    }
+
+    private bool IsOpenOrLoading(UIType uiType)
+    {
+        return _openedUISet.Contains(uiType) || _loadingUISet.Contains(uiType);
+    }
+
+    public bool IsLoading(UIType uiType)
+    {
+        return _loadingUISet.Contains(uiType);
+    }
+
+    public bool IsOpen(UIType uiType)
+    {
+        return _openedUISet.Contains(uiType);
+    }
+
     public void Close(UIType uiType)
     {
         CloseUI(uiType);
@@ -70,6 +93,7 @@ public class UIManager : MonoBehaviour
 
     public async UniTask<UIBase> OpenUIAsync(UIType uiType, UIRootType uiRoot, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (!TryGetRootRectTransform(uiRoot, out RectTransform rootRectTransform))
         {
             Debug.LogError($"[{nameof(UIManager)}:{nameof(OpenUIAsync)}] '{uiRoot}'에 해당하는 Root RectTransform을 찾을 수 없습니다.");
@@ -109,6 +133,12 @@ public class UIManager : MonoBehaviour
             }
 
             _createdUICacheDictionary[uiType] = createdUI;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                createdUI.gameObject.SetActive(false);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
 
             OpenUI(uiType, createdUI);
             return createdUI;
