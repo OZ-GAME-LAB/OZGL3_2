@@ -66,17 +66,57 @@ public class PlayerNetworkStats : NetworkUnit
     public float Hp => CurrentHp;
     public float BaseAttackInterval => _baseAttackInterval.Value;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool _developerInvincible;
+#endif
 
+    public void RequestToggleDeveloperInvincibility()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!IsSpawned || !IsOwner)
+            return;
 
+        ToggleDeveloperInvincibilityServerRpc();
+#endif
+    }
 
+    [ServerRpc]
+    private void ToggleDeveloperInvincibilityServerRpc(ServerRpcParams rpcParams = default)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!IsServer || !IsSpawned || rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
 
+        if (!IsAlive)
+        {
+            Debug.LogWarning("[개발자 무적] 사망한 플레이어는 부활시키지 않습니다. 다시 시작해 주세요.", this);
+            return;
+        }
 
+        _developerInvincible = !_developerInvincible;
+        Debug.Log($"[개발자 무적] 플레이어 {OwnerClientId}: {(_developerInvincible ? "ON" : "OFF")}", this);
+#endif
+    }
 
+    public override bool TryTakeDamageOnServer(float finalDamage, out float actualDamage)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (IsServer && IsSpawned && _developerInvincible)
+        {
+            actualDamage = 0f;
+            return false;
+        }
+#endif
+        return base.TryTakeDamageOnServer(finalDamage, out actualDamage);
+    }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        _developerInvincible = false;
+#endif
 
         if (IsServer)
         {

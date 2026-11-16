@@ -313,6 +313,9 @@ public partial class PlayerControllerView : MonoBehaviour
         if (!CanReadAttackInput())
             _runeAttackController?.CancelAttackInput();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        HandleDeveloperInvincibilityInput();
+#endif
 
         if (IsEncounterControlLocked || IsHitControlLocked || _isDialogueMode)
             return;
@@ -345,6 +348,24 @@ public partial class PlayerControllerView : MonoBehaviour
         transform.position += (Vector3)(direction.normalized * _spectatorMoveSpeed * Time.deltaTime);
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void HandleDeveloperInvincibilityInput()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null || _playerInput == null || !_playerInput.isActiveAndEnabled
+            || !_playerInput.inputIsActive || _isDialogueMode || _isMiniGameMode)
+            return;
+
+        if (!keyboard.digit9Key.wasPressedThisFrame && !keyboard.numpad9Key.wasPressedThisFrame)
+            return;
+
+        PlayerNetworkStats stats = GetComponent<PlayerNetworkStats>();
+        if (stats != null)
+            stats.RequestToggleDeveloperInvincibility();
+        else
+            Debug.LogWarning("[개발자 무적] PlayerNetworkStats가 없습니다.", this);
+    }
+#endif
 
     public void Bind (PlayerStatViewModel playerStatViewModel)
     {
