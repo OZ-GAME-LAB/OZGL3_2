@@ -116,11 +116,13 @@ public class PlayerRuneAttackController : NetworkBehaviour
     private float _activeHitInterval;
 
     public bool IsAttackingOnServer => _activeProfile != null;
+    private PlayerInteractionController _interaction;
 
     private void Awake()
     {
         _stats = GetComponent<PlayerNetworkStats>();
         _view = GetComponent<PlayerControllerView>();
+        _interaction = GetComponent<PlayerInteractionController>();
 
         if (_actor == null)
         {
@@ -191,6 +193,11 @@ public class PlayerRuneAttackController : NetworkBehaviour
         ServerRpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId) return;
+        if (_interaction != null && _interaction.HasServerRequest)
+        {
+            CancelPendingInputOnServer();
+            return;
+        }
         _attackHeld = held && !cancel;
         if (cancel) _queuedAttack = false;
         if (!pressed) return;
@@ -203,6 +210,11 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
     private void TryStartAttack(bool faceRight)
     {
+        if (_interaction != null && _interaction.HasServerRequest)
+        {
+            CancelPendingInputOnServer();
+            return;
+        }
         if (isActiveAndEnabled == false || IsSpawned == false)
         {
             Debug.LogWarning("[공격 중단] 공격 컴포넌트가 비활성입니다.", this);
@@ -501,6 +513,13 @@ public class PlayerRuneAttackController : NetworkBehaviour
         _comboStep = 0;
         _lastAttackEndTime = double.NegativeInfinity;
         if (IsSpawned && IsServer) PublishAttackStopped();
+    }
+
+    public void CancelPendingInputOnServer()
+    {
+        if (!IsServer) return;
+        _attackHeld = false;
+        _queuedAttack = false;
     }
 
     private void PublishAttackStopped()

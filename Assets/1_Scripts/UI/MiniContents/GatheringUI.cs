@@ -1,10 +1,9 @@
 using System.ComponentModel;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class GatheringUI : UIBase
 {
-    [SerializeField] private Slider _progressSlider;
+    [SerializeField] private GatheringProgressGraphic _hud;
 
     private InteractionGatheringVM _viewModel;
 
@@ -24,6 +23,7 @@ public class GatheringUI : UIBase
 
     public void Unbind()
     {
+        if (_hud != null) _hud.enabled = false;
         if (_viewModel != null)
         {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
@@ -41,7 +41,16 @@ public class GatheringUI : UIBase
 
     private void RefreshProgress()
     {
-        _progressSlider.value = _viewModel.GatheringProgress;
+        if (_viewModel != null && _hud != null)
+            _hud.SetProgress(_viewModel.GatheringProgress);
+    }
+
+    public void ShowProgress()
+    {
+        if (_viewModel == null || _hud == null)
+            throw new System.InvalidOperationException("채집 UI가 준비되지 않았습니다.");
+        RefreshProgress();
+        _hud.enabled = true;
     }
 
     private void OnDisable()

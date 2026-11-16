@@ -5,6 +5,7 @@ public class InteractionGatheringObject : InteractableObject
 {
     private readonly InteractionGatheringVM _viewModel = new();
     public override InteractionVMBase ViewModel => _viewModel;
+    public override bool RequiresContentReady => true;
 
     private Transform[] _playerUIAnchors;
     private Camera _playerCamera;
@@ -13,12 +14,14 @@ public class InteractionGatheringObject : InteractableObject
     {
         if (!DataManager.Inst.ReadData<FieldObjectData>().ContainsKey(id))
         {
-            Debug.Log($"ID값 {id}은 InteractionGatheringData에 존재하지 않습니다.");
-            return;
+            throw new System.InvalidOperationException("채집 데이터가 없습니다: " + id);
         }    
 
 
         _viewModel.InitGatheringVM(id);
+
+        if (UsesPlacedVisual)
+            return;
 
         GameObject meshPrefab = await ResourceManager.Inst.InstantiateAsync(
             DataManager.Inst.ReadData<FieldObjectData>()[id].PrefabPath,
@@ -28,8 +31,7 @@ public class InteractionGatheringObject : InteractableObject
 
         if(meshPrefab == null)
         {
-            Debug.Log($"{id} ID 값을 가진 MeshPrefab이 생성되지 않았습니다.");
-            return;
+            throw new System.InvalidOperationException("채집 외형 생성 실패: " + id);
         }
 
         RegisterVisual(meshPrefab);
@@ -37,33 +39,34 @@ public class InteractionGatheringObject : InteractableObject
 
     protected override void PlayContent()
     {
-        OpenGatheringUIAsync().Forget();
+        OpenMiniGameUIAsync().Forget();
     }
 
-    private async UniTask OpenGatheringUIAsync()
+    private async UniTask OpenMiniGameUIAsync()
     {
-        UIBase ui = await UIManager.Inst.OpenMainRootAsync(UIType.GatheringUI);
-
-        if (ui == null)
-            return;
-
-        if (ui is not GatheringUI gatheringUI)
+        try
         {
-            Debug.LogError("GatheringUI 프리팹에 GatheringUI 컴포넌트가 필요합니다.");
-            return;
+            UIBase ui = await OpenResourceUIAsync(UIType.GatheringUI, _playerUIAnchors, _playerCamera);
+            if (ui == null) return;
+            if (ui is not GatheringUI gatheringUI)
+                throw new System.InvalidOperationException("GatheringUI component is required.");
+            gatheringUI.Bind(_viewModel);
+            NotifyContentReady();
         }
-
-        _openUI = gatheringUI;
-        gatheringUI.Bind(_viewModel);
-
-        if (gatheringUI.TryGetComponent(out InteractionUIPositioner positioner))
+        catch (System.Exception exception)
         {
-            positioner.SetTargets(_playerUIAnchors, _playerCamera);
+            Debug.LogException(exception, this);
+            CloseContent();
+            RequestInteractionEnd();
         }
-        else
-        {
-            Debug.LogError("GatheringUI에 InteractionUIPositioner가 필요합니다.");
-        }
+    }
+
+    public override void StartPreparedInteraction()
+    {
+        if (_openUI is not GatheringUI gatheringUI)
+            throw new System.InvalidOperationException("채집 UI가 준비되지 않았습니다.");
+        _viewModel.BeginGathering();
+        gatheringUI.ShowProgress();
     }
 
     public override void BeginInteraction(Transform[] playerUIAnchors, Camera playerCamera, string equipmentId)
@@ -73,7 +76,6 @@ public class InteractionGatheringObject : InteractableObject
         _playerUIAnchors = playerUIAnchors;
         _playerCamera = playerCamera;
 
-        _viewModel.BeginGathering();
         PlayContent();
     }
 
@@ -81,7 +83,7 @@ public class InteractionGatheringObject : InteractableObject
     {
         if (_viewModel.UpdateGathering(deltaTime))
         {
-            // 서버에 채집 완료 요청 및 처리 추가 필요
+            // 완료는 VM에서 한 번만 반환하며, 기존 서버 요청으로 보상을 처리합니다.
             NotifyCompleted();
 
             CloseContent();
@@ -96,11 +98,7 @@ public class InteractionGatheringObject : InteractableObject
 
     public override void CloseContent()
     {
-        if (_openUI == null)
-            return;
-
-        UIManager.Inst.Close(UIType.GatheringUI);
-        _openUI = null;
+        CloseResourceUI();
     }
 
 

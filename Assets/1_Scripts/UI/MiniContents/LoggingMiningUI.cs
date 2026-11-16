@@ -3,8 +3,7 @@ using UnityEngine;
 
 public class LoggingMiningUI : UIBase
 {
-    [SerializeField] private RectTransform _standardCircle;
-    [SerializeField] private RectTransform _shrinkageCircle;
+    [SerializeField] private ResourceTimingGraphic _hud;
 
     private InteractionLoggingMiningVM _viewModel;
 
@@ -13,16 +12,6 @@ public class LoggingMiningUI : UIBase
 
     private bool _isShowingResult;
     private float _resultRemainingSeconds;
-
-    [System.Serializable]
-    private class RoundImages
-    {
-        public GameObject NotProceeding;
-        public GameObject Success;
-        public GameObject Fail;
-    }
-
-    [SerializeField] private RoundImages[] _roundImages = new RoundImages[3];
 
     private void Update()
     {
@@ -51,8 +40,7 @@ public class LoggingMiningUI : UIBase
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-        RefreshCircleSize();
-        ResetRoundImages();
+        RefreshHUD();
     }
 
     public void Unbind()
@@ -66,26 +54,19 @@ public class LoggingMiningUI : UIBase
 
     private void OnViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(InteractionLoggingMiningVM.CurrentSizeRatio))
-        {
-            RefreshCircleSize();
-        }
-        else if (e.PropertyName == nameof(InteractionLoggingMiningVM.CompletedRounds))
-        {
-            RefreshRoundResult();
-        }
+        if (e.PropertyName == nameof(InteractionLoggingMiningVM.CurrentSizeRatio) ||
+            e.PropertyName == nameof(InteractionLoggingMiningVM.CompletedRounds))
+            RefreshHUD();
     }
 
-    private void RefreshCircleSize()
+    private void RefreshHUD()
     {
-        if (_viewModel == null)
+        if (_viewModel == null || _hud == null)
             return;
 
-        Vector2 size = _standardCircle.rect.size * _viewModel.CurrentSizeRatio;
-
-        _shrinkageCircle.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
-
-        _shrinkageCircle.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+        _hud.SetState(_viewModel.CurrentSizeRatio, _viewModel.StartSizeRatio,
+            _viewModel.EndSizeRatio,
+            (float)_viewModel.CompletedRounds / InteractionLoggingMiningVM.TotalRounds);
     }
 
     private void OnDisable()
@@ -95,37 +76,6 @@ public class LoggingMiningUI : UIBase
         Unbind();
     }
 
-    private void ResetRoundImages()
-    {
-        foreach (RoundImages images in _roundImages)
-        {
-            images.NotProceeding.SetActive(true);
-            images.Success.SetActive(false);
-            images.Fail.SetActive(false);
-        }
-    }
-
-    private void RefreshRoundResult()
-    {
-        if (_viewModel.CompletedRounds == 0)
-        {
-            ResetRoundImages();
-            return;
-        }
-
-        int index = _viewModel.CompletedRounds - 1;
-
-        if (index < 0 || index >= _roundImages.Length)
-            return;
-
-        RoundImages images = _roundImages[index];
-        bool succeeded = _viewModel.LastAccuracy > 0f;
-
-        images.NotProceeding.SetActive(false);
-        images.Success.SetActive(succeeded);
-        images.Fail.SetActive(!succeeded);
-    }
-
     public void ShowFinalResult()
     {
         Unbind();
@@ -133,8 +83,6 @@ public class LoggingMiningUI : UIBase
         _isShowingResult = true;
         _resultRemainingSeconds = _resultDisplaySeconds;
     }
-
-
 
     public bool TryCloseResult()
     {

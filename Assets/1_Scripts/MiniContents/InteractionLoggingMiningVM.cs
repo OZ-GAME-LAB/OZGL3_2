@@ -3,8 +3,10 @@ using System;
 
 public class InteractionLoggingMiningVM : InteractionVMBase
 {
-    public override string InteractionInfoText => "¹ú¸ñ / Ã¤±¤ (F¸¦ ´­·¯ ½ÃÀÛ)";
+    private string _interactionInfoText = "¹ú¸ñÇÏ±â (F)";
+    public override string InteractionInfoText => _interactionInfoText;
     public const int TotalRounds = 3;
+    private const float MinimumSuccessAccuracy = 0.01f;
 
     private float _startSizeRatio;
     private float _endSizeRatio;
@@ -13,9 +15,12 @@ public class InteractionLoggingMiningVM : InteractionVMBase
     private float _shrinkSpeed;
 
     private bool _isRunning;
+    private bool _awaitingMotion;
     private float _accuracySum;
     private float _currentSizeRatio;
 
+    public float StartSizeRatio => _startSizeRatio;
+    public float EndSizeRatio => _endSizeRatio;
     public int CompletedRounds { get; private set; }
     public float LastAccuracy { get; private set; }
 
@@ -32,6 +37,16 @@ public class InteractionLoggingMiningVM : InteractionVMBase
             _currentSizeRatio = value;
             OnPropertyChanged(nameof(CurrentSizeRatio));
         }
+    }
+
+    public void SetInteractionType(string interactionType)
+    {
+        string text = interactionType == "Mining" ? "Ã¤±¤ÇÏ±â (F)" : "¹ú¸ñÇÏ±â (F)";
+        if (_interactionInfoText == text)
+            return;
+
+        _interactionInfoText = text;
+        OnPropertyChanged(nameof(InteractionInfoText));
     }
 
     public void Initialize(float startSizeRatio, float endSizeRatio, float shrinkSpeed, float successStartRatio, float perfectTolerance)
@@ -53,11 +68,17 @@ public class InteractionLoggingMiningVM : InteractionVMBase
         _perfectTolerance = perfectTolerance;
 
         _isRunning = false;
+        _awaitingMotion = false;
+        CompletedRounds = 0;
+        LastAccuracy = 0f;
+        _accuracySum = 0f;
         CurrentSizeRatio = _startSizeRatio;
+        NotifyResultChanged();
     }
 
     public void BeginGame()
     {
+        _awaitingMotion = false;
         CompletedRounds = 0;
         LastAccuracy = 0f;
         _accuracySum = 0f;
@@ -77,11 +98,10 @@ public class InteractionLoggingMiningVM : InteractionVMBase
         if (!_isRunning || deltaTime <= 0f)
             return false;
 
-        CurrentSizeRatio = Math.Max(
-            _endSizeRatio,
-            CurrentSizeRatio - _shrinkSpeed * deltaTime);
+        float nextSizeRatio = CurrentSizeRatio - _shrinkSpeed * deltaTime;
+        CurrentSizeRatio = Math.Max(0f, nextSizeRatio);
 
-        if (CurrentSizeRatio <= _endSizeRatio)
+        if (nextSizeRatio < _endSizeRatio)
             return FinishRound(0f);
 
         return false;
@@ -95,11 +115,28 @@ public class InteractionLoggingMiningVM : InteractionVMBase
         return FinishRound(CalculateAccuracy());
     }
 
+    public bool TryConfirmAndWaitForMotion()
+    {
+        if (!_isRunning || _awaitingMotion) return false;
+        _awaitingMotion = true;
+        FinishRound(CalculateAccuracy(), false);
+        return true;
+    }
+
+    public bool ResumeAfterMotion()
+    {
+        if (!_awaitingMotion) return false;
+        _awaitingMotion = false;
+        if (CompletedRounds >= TotalRounds) return true;
+        BeginRound();
+        return false;
+    }
+
     private float CalculateAccuracy()
     {
         float size = CurrentSizeRatio;
 
-        if (size >= _successStartRatio || size <= _endSizeRatio)
+        if (size > _successStartRatio || size < _endSizeRatio)
             return 0f;
 
         float perfectMin = 1f - _perfectTolerance;
@@ -110,13 +147,15 @@ public class InteractionLoggingMiningVM : InteractionVMBase
 
         if (size > perfectMax)
         {
-            return (_successStartRatio - size) / (_successStartRatio - perfectMax);
+            return Math.Max(MinimumSuccessAccuracy,
+                (_successStartRatio - size) / (_successStartRatio - perfectMax));
         }
 
-        return (size - _endSizeRatio) / (perfectMin - _endSizeRatio);
+        return Math.Max(MinimumSuccessAccuracy,
+            (size - _endSizeRatio) / (perfectMin - _endSizeRatio));
     }
 
-    private bool FinishRound(float accuracy)
+    private bool FinishRound(float accuracy, bool advanceImmediately = true)
     {
         _isRunning = false;
 
@@ -129,13 +168,14 @@ public class InteractionLoggingMiningVM : InteractionVMBase
         if (CompletedRounds >= TotalRounds)
             return true;
 
-        BeginRound();
+        if (advanceImmediately) BeginRound();
         return false;
     }
 
     public void Cancel()
     {
         _isRunning = false;
+        _awaitingMotion = false;
         CurrentSizeRatio = _startSizeRatio;
     }
 

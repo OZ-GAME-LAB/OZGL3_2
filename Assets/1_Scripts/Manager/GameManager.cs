@@ -19,6 +19,9 @@ public class GameManager : MonoBehaviour
 
     private bool _worldInitialized;
     private GameObject _mapWorkspace;
+    private FieldInteractionPoint[] _fieldPoints;
+    private Coroutine _connectLocalPlayerRoutine;
+    private NetworkObject _connectedLocalPlayer;
 
     private void Awake()
     {
@@ -37,6 +40,8 @@ public class GameManager : MonoBehaviour
         if (_worldInitialized)
         {
             InitializeScenarioManager();
+            InitializeFieldPoints();
+            BeginConnectLocalPlayer();
             return;
         }
 
@@ -59,13 +64,30 @@ public class GameManager : MonoBehaviour
         Instantiate(_workspacePrefab_2);
         Instantiate(_workspacePrefab_3);
         _mapWorkspace = Instantiate(_workspacePrefab_4);
+        _fieldPoints = _mapWorkspace.GetComponentsInChildren<FieldInteractionPoint>(true);
 
         _worldInitialized = true;
         InitializeScenarioManager();
+        InitializeFieldPoints();
+        BeginConnectLocalPlayer();
+    }
 
+    private void InitializeFieldPoints()
+    {
+        if (_fieldPoints == null) return;
+        foreach (FieldInteractionPoint point in _fieldPoints)
+            if (point != null && point.isActiveAndEnabled) point.InitializeOnServer();
+    }
+
+    private void BeginConnectLocalPlayer()
+    {
         NetworkManager network = NetworkManager.Singleton;
-        if (network != null && network.IsClient)
-            StartCoroutine(ConnectLocalPlayer());
+        if (network == null || !network.IsClient ||
+            (_connectedLocalPlayer != null && _connectedLocalPlayer.IsSpawned &&
+             network.LocalClient != null && network.LocalClient.PlayerObject == _connectedLocalPlayer))
+            return;
+        if (_connectLocalPlayerRoutine != null) StopCoroutine(_connectLocalPlayerRoutine);
+        _connectLocalPlayerRoutine = StartCoroutine(ConnectLocalPlayer());
     }
 
     private void InitializeScenarioManager()
@@ -110,6 +132,7 @@ public class GameManager : MonoBehaviour
         }
 
         // LocalClient.PlayerObject이므로 본인 플레이어만 활성화합니다.
+        _connectedLocalPlayer = playerObject;
         body.bodyType = RigidbodyType2D.Dynamic;
         player.enabled = true;
         input.enabled = true;

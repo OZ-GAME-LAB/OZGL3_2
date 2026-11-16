@@ -64,6 +64,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5835971438999731576}
+  - {fileID: 3799967663718074727}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3104601390591045697
@@ -78,6 +79,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5d41331bdc7f0343bc5e88d94f721ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionGatheringObject
+  _rangeEffect: {fileID: 3927349033910845042}
+  _loggingLayoutPrefab: {fileID: 0}
+  _miningLayoutPrefab: {fileID: 0}
+  _gatheringLayoutPrefab: {fileID: 3403572067931657252, guid: b04eea362504f404b9ada45526fb7383, type: 3}
 --- !u!114 &6642706092110662616
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90,7 +95,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 855452991
+  GlobalObjectIdHash: 3965678504
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -118,3 +123,76 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionNetwork
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!1001 &8871246521822229024
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1524679968240452712}
+    m_Modifications:
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8899363715152861088, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+      propertyPath: m_Name
+      value: ResourceRangeEffect
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+--- !u!4 &3799967663718074727 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5737812152769657671, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+  m_PrefabInstance: {fileID: 8871246521822229024}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3927349033910845042 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5592415853952404562, guid: 1954d2ec203a71945a39b94544909659, type: 3}
+  m_PrefabInstance: {fileID: 8871246521822229024}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 534ecfdf9805f0a458edaadb92e3c9bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResourceRangeEffect

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// CinemachineBrain(실행 순서 100)이 카메라 이동을 반영한 뒤 화면 좌표를 계산합니다.
+// 카메라 실행 순서나 수동 갱신 방식이 바뀌면 이 순서도 재검토해야 합니다.
+[DefaultExecutionOrder(200)]
 [RequireComponent(typeof(RectTransform))]
 public class InteractionUIPositioner : MonoBehaviour
 {
