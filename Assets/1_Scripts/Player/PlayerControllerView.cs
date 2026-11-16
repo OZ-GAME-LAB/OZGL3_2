@@ -1,10 +1,10 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerControllerView : MonoBehaviour
+public partial class PlayerControllerView : MonoBehaviour
 {
     [Header("이동 설정")]
     [SerializeField] private float _moveSpeed = 8f;
@@ -38,6 +38,32 @@ public class PlayerControllerView : MonoBehaviour
     private bool _jumpInProgress;
     private bool _wasGroundedForAnimation = true;
     private PlayerAnimationPresenter _animationPresenter;
+    private bool _wasAttackLocked;
+    private bool IsAttackLocked => _runeAttackController != null && _runeAttackController.IsAttackActive;
+    public bool CanStartGroundAttack => !IsEncounterControlLocked && gameObject.activeInHierarchy && !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode &&
+        !_isCrouching && !_jumpInProgress && _rigidbody2D != null && _rigidbody2D.simulated && IsGroundedForAttack() &&
+        (_wallCling == null || !_wallCling.IsClinging);
+    private readonly RaycastHit2D[] _attackGroundHits = new RaycastHit2D[4];
+
+    private bool IsGroundedForAttack()
+    {
+        if (_rigidbody2D == null || _groundCheck == null) return false;
+        if (_networkObject == null || !_networkObject.IsSpawned || _networkObject.IsOwner)
+            return HasGroundContact();
+        // 원격 캐릭터는 Kinematic이라 정적 바닥과 접촉 정보가 없을 수 있습니다.
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(_groundLayer);
+        filter.useTriggers = false;
+        int count = Physics2D.Raycast((Vector2)_groundCheck.position + Vector2.up * _checkRadius,
+            Vector2.down, filter, _attackGroundHits, _checkRadius * 2f);
+        for (int i = 0; i < count; i++)
+        {
+            if (_attackGroundHits[i].collider != _bodyCollider &&
+                _attackGroundHits[i].normal.y >= MinimumGroundNormalY)
+                return true;
+        }
+        return false;
+    }
     private readonly ContactPoint2D[] _groundContacts = new ContactPoint2D[16];
 
     [Header("애니메이션 진단")]
@@ -123,6 +149,10 @@ public class PlayerControllerView : MonoBehaviour
 
     private bool _isMiniGameMode;
     private int _miniGameEnteredFrame;
+    private ScenarioService _scenarioService;
+    private bool _isDialogueMode;
+    private int _dialogueEnteredFrame;
+    private string _previousDialogueActionMap;
 
     void Awake()
     {
@@ -186,6 +216,7 @@ public class PlayerControllerView : MonoBehaviour
         _consumableAction.performed += OnConsumable;
         _fieldInteractAction.performed += OnFieldInteract;
         _attackAction.performed += OnAttack;
+        _attackAction.canceled += OnAttackCanceled;
         _specialAttackAction.performed += OnSpecialAttack;
         _switchConsumableAction.performed += OnSwitchConsumable;
         _inventoryAction.performed += OnOpenInventory;
@@ -218,7 +249,10 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnDisable()
     {
+        SetEncounterControlLocked(false);
         EndHitControlLock();
+        UnbindScenarioService();
+        _runeAttackController?.CancelAttackInput();
         RestoreThinPlatformCollisions();
         // Awake에서 필수 참조를 찾지 못해 비활성화된 경우에는 구독한 입력이 없습니다.
         if (!_inputActionsInitialized)
@@ -238,6 +272,7 @@ public class PlayerControllerView : MonoBehaviour
         _consumableAction.performed -= OnConsumable;
         _fieldInteractAction.performed -= OnFieldInteract;
         _attackAction.performed -= OnAttack;
+        _attackAction.canceled -= OnAttackCanceled;
         _specialAttackAction.performed -= OnSpecialAttack;
         _switchConsumableAction.performed -= OnSwitchConsumable;
         _inventoryAction.performed -= OnOpenInventory;
@@ -263,6 +298,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void Update()
     {
+        if (IsEncounterControlLocked) return;
         /*
         // 원격 플레이어까지 같은 키보드 입력으로 움직이지 않도록 제한합니다.
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
@@ -274,7 +310,14 @@ public class PlayerControllerView : MonoBehaviour
             return;
         }
 
-        if (IsHitControlLocked)
+        if (!CanReadAttackInput())
+            _runeAttackController?.CancelAttackInput();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        HandleDeveloperInvincibilityInput();
+#endif
+
+        if (IsEncounterControlLocked || IsHitControlLocked || _isDialogueMode)
             return;
 
         if (_isMiniGameMode || _fieldInteractAction.IsPressed())
@@ -305,6 +348,25 @@ public class PlayerControllerView : MonoBehaviour
         transform.position += (Vector3)(direction.normalized * _spectatorMoveSpeed * Time.deltaTime);
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private void HandleDeveloperInvincibilityInput()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null || _playerInput == null || !_playerInput.isActiveAndEnabled
+            || !_playerInput.inputIsActive || _isDialogueMode || _isMiniGameMode)
+            return;
+
+        if (!keyboard.digit9Key.wasPressedThisFrame && !keyboard.numpad9Key.wasPressedThisFrame)
+            return;
+
+        PlayerNetworkStats stats = GetComponent<PlayerNetworkStats>();
+        if (stats != null)
+            stats.RequestToggleDeveloperInvincibility();
+        else
+            Debug.LogWarning("[개발자 무적] PlayerNetworkStats가 없습니다.", this);
+    }
+#endif
+
     public void Bind (PlayerStatViewModel playerStatViewModel)
     {
         Unbind();
@@ -333,6 +395,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void SetSpectatorMode(bool enabled)
     {
+        if (enabled && IsAttackLocked) return;
         if (_isSpectatorMode == enabled)
             return;
 
@@ -364,9 +427,17 @@ public class PlayerControllerView : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (IsEncounterControlLocked && _networkObject != null && _networkObject.IsOwner)
+        {
+            SetMoveInput(0f);
+            if (_rigidbody2D != null) _rigidbody2D.linearVelocity = Vector2.zero;
+            return;
+        }
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
 
+        // 공격 중 이동 제한이 피격으로 밀려나는 속도를 지우지 않도록 먼저 처리합니다.
+        if (_loggingAlignmentRequest != 0 && IsHitControlLocked) FinishLoggingAlignment(false);
         if (UpdateHitControlLock())
         {
             UpdateThinPlatformCollisions();
@@ -374,7 +445,24 @@ public class PlayerControllerView : MonoBehaviour
             return;
         }
 
-        if (_isMiniGameMode)
+        if (_loggingAlignmentRequest != 0)
+        {
+            UpdateLoggingAlignment();
+            return;
+        }
+
+        if (IsAttackLocked)
+        {
+            SetMoveInput(0f);
+            ResetRunUp();
+            Vector2 attackVelocity = _rigidbody2D.linearVelocity;
+            attackVelocity.x = 0f;
+            _rigidbody2D.linearVelocity = attackVelocity;
+            UpdateGroundStateAndAnimation();
+            return;
+        }
+
+        if (_isMiniGameMode || _isDialogueMode)
         {
             SetMoveInput(0f);
 
@@ -594,6 +682,7 @@ public class PlayerControllerView : MonoBehaviour
     {
         get
         {
+            if (IsAttackLocked) return 0f;
             float input = _moveInput;
             Keyboard keyboard = Keyboard.current;
             // Move의 2D 합성 입력은 S+A/D에서 X가 0.707로 줄어들므로 키보드 앉기 이동만 보정합니다.
@@ -959,7 +1048,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnMove(InputAction.CallbackContext context)
     {
-        if (_isSpectatorMode || IsHitControlLocked)
+        if (IsEncounterControlLocked || _isSpectatorMode || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
             return;
 
         SetMoveInput(context.ReadValue<Vector2>().x);
@@ -1228,7 +1317,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (_isSpectatorMode || IsHitControlLocked)
+        if (IsEncounterControlLocked || _isSpectatorMode || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
             return;
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
@@ -1317,17 +1406,19 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnSpecialAbility(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
         Debug.Log($"{nameof(OnSpecialAbility)} 실행");
     }
 
     private void OnConsumable(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
         Debug.Log($"{nameof(OnConsumable)} 실행");
     }
 
     private void OnFieldInteract(InputAction.CallbackContext context)
     {
-        if (IsHitControlLocked)
+        if (IsEncounterControlLocked || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
             return;
 
         Debug.Log($"{nameof(OnFieldInteract)} 실행");
@@ -1353,7 +1444,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnAttack(InputAction.CallbackContext context)
     {
-        if (IsHitControlLocked || _isSpectatorMode || _networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false || _runeAttackController == null)
+        if (!CanReadAttackInput() || _runeAttackController == null || (!IsAttackLocked && !CanStartGroundAttack))
         {
             return;
         }
@@ -1364,20 +1455,99 @@ public class PlayerControllerView : MonoBehaviour
 
     }
 
+    private bool CanReadAttackInput()
+    {
+        return !IsEncounterControlLocked && (_interactionController == null || !_interactionController.HasLocalRequest) &&
+            !IsHitControlLocked && !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode && _networkObject != null &&
+            _networkObject.IsSpawned && _networkObject.IsOwner && _playerInput != null &&
+            _playerInput.isActiveAndEnabled && _playerInput.inputIsActive &&
+            _attackAction != null && _attackAction.enabled && Application.isFocused;
+    }
+
+    private void OnAttackCanceled(InputAction.CallbackContext context)
+    {
+        if (CanReadAttackInput()) _runeAttackController?.ReleaseAttack();
+        else _runeAttackController?.CancelAttackInput();
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus) _runeAttackController?.CancelAttackInput();
+    }
+
+    public void UpdateAttackPresentation()
+    {
+        bool locked = IsAttackLocked;
+        if (_runeAttackController != null && _runeAttackController.IsSpawned)
+        {
+            if (locked)
+            {
+                bool faceRight = _runeAttackController.AttackState.Direction > 0;
+                _lookRight = faceRight;
+                Vector3 scale = transform.localScale;
+                float facingX = Mathf.Abs(scale.x) * (faceRight ? 1f : -1f);
+                if (scale.x != facingX)
+                {
+                    scale.x = facingX;
+                    transform.localScale = scale;
+                    if (_wallCling != null) _wallCling.SyncSensorTransform();
+                }
+            }
+            _animationPresenter?.UpdateAttack(_runeAttackController.AttackState,
+                _runeAttackController.AttackClock, locked || !_wasAttackLocked || IsGroundedForAttack());
+        }
+        else
+            _animationPresenter?.UpdateAttack(default, 0, true);
+
+        if (_wasAttackLocked && !locked && _networkObject != null && _networkObject.IsOwner)
+        {
+            float input = _moveAction != null && _moveAction.enabled && _playerInput.inputIsActive &&
+                !_isMiniGameMode && !_isDialogueMode && !_isSpectatorMode ? _moveAction.ReadValue<Vector2>().x : 0f;
+            SetMoveInput(input);
+            if ((input > 0f && !_lookRight) || (input < 0f && _lookRight)) Flip();
+            UpdateMovementAnimation();
+        }
+        _wasAttackLocked = locked;
+    }
+
+    public void UpdateResourcePresentation(PlayerResourceAnimationState state, double now)
+    {
+        if (_animationPresenter == null) return;
+        if (state.Kind != ResourceAnimationKind.None && state.FacingDirection != 0)
+        {
+            _lookRight = state.FacingDirection > 0;
+            Vector3 scale = transform.localScale;
+            float facingX = Mathf.Abs(scale.x) * state.FacingDirection;
+            if (scale.x != facingX)
+            {
+                scale.x = facingX;
+                transform.localScale = scale;
+                if (_wallCling != null) _wallCling.SyncSensorTransform();
+            }
+        }
+        bool ending = _animationPresenter.IsPlayingResource && !state.PlaysAnimation;
+        _animationPresenter.UpdateResource(state, now, ending && IsGroundedForAttack());
+    }
+
     private void OnSpecialAttack(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
         Debug.Log($"{nameof(OnSpecialAttack)} 실행");
 
     }
 
     private void OnSwitchConsumable(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
         Debug.Log($"{nameof(OnSwitchConsumable)} 실행");
 
     }
 
     private async void OnOpenInventory(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
+        if (_isDialogueMode)
+            return;
         var view = await UIManager.Inst.OpenInventoryUIAsync();
         ServiceManager.Inst.InventoryService.BindInventoryView(view);
     }
@@ -1390,6 +1560,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnOpenSettings(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
         if (_networkObject == null ||
         !_networkObject.IsSpawned ||
         !_networkObject.IsOwner)
@@ -1408,6 +1579,9 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnOpenRuneInventory(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
+        if (_isDialogueMode)
+            return;
         if (_networkObject == null ||
             !_networkObject.IsSpawned ||
             !_networkObject.IsOwner)
@@ -1523,7 +1697,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnFieldInteractCanceled(InputAction.CallbackContext context)
     {
-        if (_isMiniGameMode)
+        if (_isMiniGameMode || _isDialogueMode)
             return;
 
         if (_interactionController == null)
@@ -1531,7 +1705,7 @@ public class PlayerControllerView : MonoBehaviour
 
         InteractableObject target = _interactionController.LockedTarget;
 
-        if (target != null && target.UsesMiniGameInput)
+        if (target != null && target.KeepInteractionOnRelease)
             return;
 
         _interactionController.CancelRequestedInteraction();
@@ -1552,6 +1726,9 @@ public class PlayerControllerView : MonoBehaviour
 
     private void EnterMiniGameMode()
     {
+        if (_isDialogueMode)
+            return;
+        _runeAttackController?.CancelAttackInput();
         if (_isMiniGameMode)
             return;
 
@@ -1573,6 +1750,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void ExitMiniGameMode()
     {
+        StopLoggingAlignment();
         if (!_isMiniGameMode)
             return;
 
@@ -1582,6 +1760,13 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnMiniGameConfirm(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
+        if (_isDialogueMode)
+        {
+            if (Time.frameCount != _dialogueEnteredFrame)
+                _scenarioService?.AdvanceDialogue();
+            return;
+        }
         if (!_isMiniGameMode || Time.frameCount == _miniGameEnteredFrame)
             return;
 
@@ -1590,9 +1775,103 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnMiniGameCancel(InputAction.CallbackContext context)
     {
+        if (IsEncounterControlLocked) return;
+        // 대화는 마지막 줄까지 진행해야 완료됩니다. 취소 키로 닫지 않습니다.
+        if (_isDialogueMode)
+            return;
         if (!_isMiniGameMode)
             return;
 
         _interactionController?.CancelRequestedInteraction();
+    }
+
+    public bool TryStartScenario(ScenarioSource source)
+    {
+        if (!CanEnterDialogueMode(source) || ServiceManager.Inst == null)
+            return false;
+        BindScenarioService(ServiceManager.Inst.ScenarioService);
+        return _scenarioService != null && _scenarioService.TryStart(source);
+    }
+
+    private bool CanEnterDialogueMode(ScenarioSource source)
+    {
+        if (IsEncounterControlLocked) return false;
+        if (!isActiveAndEnabled || source == null || _networkObject == null ||
+            !_networkObject.IsSpawned || !_networkObject.IsOwner || !_inputActionsInitialized ||
+            _isMiniGameMode || _isDialogueMode || _isSpectatorMode || IsAttackLocked ||
+            _playerInput == null || !_playerInput.isActiveAndEnabled || !_playerInput.inputIsActive ||
+            _playerInput.currentActionMap == null || _playerInput.currentActionMap.name != "Player" ||
+            _openingRuneInventory)
+            return false;
+
+        InteractableObject locked = _interactionController != null ? _interactionController.LockedTarget : null;
+        if (locked != null && (locked is not ScenarioNpcInteractable npc || npc.Source != source))
+            return false;
+        return UIManager.Inst == null || !UIManager.Inst.HasDialogueConflict();
+    }
+
+    private void BindScenarioService(ScenarioService service)
+    {
+        if (_scenarioService == service)
+            return;
+        UnbindScenarioService();
+        _scenarioService = service;
+        if (_scenarioService != null)
+            _scenarioService.StateChanged += OnScenarioStateChanged;
+    }
+
+    private void UnbindScenarioService()
+    {
+        if (_scenarioService != null)
+        {
+            if (_isDialogueMode)
+                _scenarioService.Cancel();
+            _scenarioService.StateChanged -= OnScenarioStateChanged;
+        }
+        ExitDialogueMode();
+        _scenarioService = null;
+    }
+
+    private void OnScenarioStateChanged()
+    {
+        if (!_scenarioService.IsBusy)
+        {
+            ExitDialogueMode();
+            return;
+        }
+        if (_isDialogueMode)
+            return;
+        if (!CanEnterDialogueMode(_scenarioService.ActiveSource))
+        {
+            _scenarioService.Cancel();
+            return;
+        }
+
+        _previousDialogueActionMap = _playerInput.currentActionMap.name;
+        _isDialogueMode = true;
+        _dialogueEnteredFrame = Time.frameCount;
+        SetMoveInput(0f);
+        ResetRunUp();
+        _wallCling?.ResetState();
+        _runeAttackController?.CancelAttackInput();
+        Vector2 velocity = _rigidbody2D.linearVelocity;
+        velocity.x = 0f;
+        _rigidbody2D.linearVelocity = velocity;
+        _interactionController?.SetScenarioInputBlocked(true);
+        // 기존 F/Escape 배정만 재사용합니다. 미니게임 진행 상태는 켜지 않습니다.
+        _playerInput.SwitchCurrentActionMap("MiniGame");
+    }
+
+    private void ExitDialogueMode()
+    {
+        if (!_isDialogueMode)
+            return;
+        _isDialogueMode = false;
+        if (_playerInput != null && _playerInput.isActiveAndEnabled &&
+            _playerInput.currentActionMap != null && _playerInput.currentActionMap.name == "MiniGame" &&
+            !string.IsNullOrEmpty(_previousDialogueActionMap))
+            _playerInput.SwitchCurrentActionMap(_previousDialogueActionMap);
+        _previousDialogueActionMap = null;
+        _interactionController?.SetScenarioInputBlocked(false);
     }
 }

@@ -1,11 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class InteractionFishingObject : InteractableObject
 {
     [Header("회전 설정 — 현재는 테스트 값")]
     [SerializeField, Min(0.01f)]
-    private float _rotationSpeed = 180f;
+    private float _rotationSpeed = 360f;
+
+    [Header("판정 영역")]
+    [SerializeField, Range(1f, 90f)] private float _successZoneAngle = 54f;
+    [SerializeField, Range(1f, 10f)] private float _pointerAngleWidth = 4f;
 
     [Header("난이도 설정")]
     [SerializeField, Min(0f)]
@@ -16,16 +20,17 @@ public class InteractionFishingObject : InteractableObject
     private readonly InteractionFishingVM _viewModel = new();
 
     public override InteractionVMBase ViewModel => _viewModel;
+    public override bool RequiresContentReady => true;
     public override bool UsesMiniGameInput => true;
 
     private Transform[] _playerUIAnchors;
     private Camera _playerCamera;
 
-    private int _uiRequestVersion;
+
 
     public override UniTask InitObject(string id)
     {
-        _viewModel.Initialize(_rotationSpeed);
+        _viewModel.Initialize(_rotationSpeed, _successZoneAngle, _pointerAngleWidth);
 
         return UniTask.CompletedTask;
     }
@@ -72,7 +77,7 @@ public class InteractionFishingObject : InteractableObject
 
         float rotationSpeed = _rotationSpeed * multiplier;
 
-        _viewModel.Initialize(rotationSpeed);
+        _viewModel.Initialize(rotationSpeed, _successZoneAngle, _pointerAngleWidth);
 
         _playerUIAnchors = playerUIAnchors;
         _playerCamera = playerCamera;
@@ -82,50 +87,34 @@ public class InteractionFishingObject : InteractableObject
 
     protected override void PlayContent()
     {
-        int requestVersion = ++_uiRequestVersion;
-        OpenMiniGameUIAsync(requestVersion).Forget();
+        OpenMiniGameUIAsync().Forget();
     }
 
-    private async UniTask OpenMiniGameUIAsync(int requestVersion)
+    private async UniTask OpenMiniGameUIAsync()
     {
-        UIBase ui = await UIManager.Inst.OpenMainRootAsync(UIType.FishingUI);
-
-        if (this == null || requestVersion != _uiRequestVersion)
+        try
         {
-            if (ui != null)
-                UIManager.Inst.Close(UIType.FishingUI);
-
-            return;
+            UIBase ui = await OpenResourceUIAsync(UIType.FishingUI, _playerUIAnchors, _playerCamera);
+            if (ui == null) return;
+            if (ui is not FishingUI fishingUI)
+                throw new System.InvalidOperationException("FishingUI component is required.");
+            fishingUI.Bind(_viewModel);
+            NotifyContentReady();
         }
-
-        if (ui is not FishingUI fishingUI)
+        catch (System.Exception exception)
         {
-            Debug.LogError("FishingUI 생성 또는 컴포넌트를 확인해 주세요.", this);
-
-            if (ui != null)
-                UIManager.Inst.Close(UIType.FishingUI);
-
-            RequestInteractionEnd();
-            return;
-        }
-
-        _openUI = fishingUI;
-
-        if (!fishingUI.TryGetComponent(out InteractionUIPositioner positioner))
-        {
-            Debug.LogError("FishingUI에 InteractionUIPositioner가 필요합니다.", fishingUI);
-
+            Debug.LogException(exception, this);
             CloseContent();
             RequestInteractionEnd();
-            return;
         }
+    }
 
-        positioner.SetTargets(_playerUIAnchors, _playerCamera);
-
-        fishingUI.Bind(_viewModel);
-
-        float startAngle = UnityEngine.Random.Range(0f, 360f);
-        _viewModel.BeginGame(startAngle);
+    public override void StartPreparedInteraction()
+    {
+        if (_openUI is not FishingUI fishingUI)
+            throw new System.InvalidOperationException("낚시 판정 UI가 준비되지 않았습니다.");
+        _viewModel.BeginGame();
+        fishingUI.ShowJudgment();
     }
 
     public override void UpdateInteraction(float deltaTime)
@@ -141,13 +130,7 @@ public class InteractionFishingObject : InteractableObject
 
     public override void CloseContent()
     {
-        _uiRequestVersion++;
-
-        if (_openUI == null)
-            return;
-
-        UIManager.Inst.Close(UIType.FishingUI);
-        _openUI = null;
+        CloseResourceUI();
     }
 
     public override void ConfirmInteraction()
@@ -169,7 +152,7 @@ public class InteractionFishingObject : InteractableObject
         }
         else
         {
-            Debug.Log("누적 실패 3회: 물고기를 놓쳤습니다.", this);
+            Debug.Log("경고 상태에서 다시 실패하여 물고기를 놓쳤습니다.", this);
             RequestInteractionEnd();
         }
     }

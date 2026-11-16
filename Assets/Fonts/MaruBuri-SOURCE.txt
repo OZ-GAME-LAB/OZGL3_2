@@ -1,0 +1,7 @@
+MaruBuri-Regular
+
+Source: NAVER Hangeul (한글한글 아름답게)
+Official distribution: https://hangeul.naver.com/font/maru
+
+The original font supplied for this project is preserved without modification.
+This notice records its source; it does not replace the publisher's license terms.

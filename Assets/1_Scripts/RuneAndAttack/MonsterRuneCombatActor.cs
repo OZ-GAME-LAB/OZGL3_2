@@ -29,7 +29,7 @@ public class MonsterRuneCombatActor : RuneCombatActor
                 return monster.IsReady;
 
             if (_unit is BossNetwork boss)
-                return boss.IsReady;
+                return boss.IsReady && boss.CombatActive;
 
             return false;
         }

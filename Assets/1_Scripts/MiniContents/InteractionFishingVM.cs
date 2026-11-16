@@ -2,127 +2,139 @@ using UnityEngine;
 
 public class InteractionFishingVM : InteractionVMBase
 {
-    public override string InteractionInfoText => "³¬½Ã (F¸¦ ´­·¯ ½ÃÀÛ)";
-
+    public override string InteractionInfoText => "ë‚šì‹œí•˜ê¸° (F)";
+    private const int FullGaugeSteps = 4;
+    private const float ZoneSeparation = 8f;
+    private const float PointerSeparation = 12f;
+    private readonly float[] _candidateCenters = new float[360];
     private float _rotationSpeed;
     private bool _isRunning;
+    private bool _canConfirm;
     private float _currentAngle;
-
-    private float _fillPerSuccess;
+    private int _gaugeSteps;
 
     public float SuccessZoneStartAngle { get; private set; }
     public float SuccessZoneAngle { get; private set; }
-
-    public float FillProgress { get; private set; }
+    public float PointerAngleWidth { get; private set; }
+    public float FillProgress => (float)_gaugeSteps / FullGaugeSteps;
     public int FailureCount { get; private set; }
-
-    public bool IsSucceeded => FillProgress >= 1f;
-    public bool IsFailed => FailureCount >= 3;
+    public bool IsWarning { get; private set; }
+    public bool IsSucceeded => _gaugeSteps == FullGaugeSteps;
+    public bool IsFailed { get; private set; }
 
     public float CurrentAngle
     {
         get => _currentAngle;
         private set
         {
-            if (_currentAngle == value)
-                return;
-
+            if (_currentAngle == value) return;
             _currentAngle = value;
             OnPropertyChanged(nameof(CurrentAngle));
         }
     }
 
-    public void Initialize(float rotationSpeed, float successZoneAngle = 54f, float fillPerSuccess = 0.25f)
+    public void Initialize(float rotationSpeed, float successZoneAngle = 54f, float pointerAngleWidth = 4f)
     {
-        if (float.IsNaN(rotationSpeed) || float.IsInfinity(rotationSpeed) || rotationSpeed <= 0f)
-        {
-            rotationSpeed = 180f;
-            Debug.LogError("È¸Àü ¼Óµµ´Â 0º¸´Ù Å« À¯È¿ÇÑ ¼ýÀÚ¿©¾ß ÇÕ´Ï´Ù.(ÀÓ½Ã ¼³Á¤ 180)");
-
-        }
-
-        if (float.IsNaN(successZoneAngle) || float.IsInfinity(successZoneAngle) || successZoneAngle <= 0f || successZoneAngle > 360f)
-        {
-            successZoneAngle = 54f;
-            Debug.LogError("¼º°ø ±¸°£Àº 0µµ ÃÊ°ú, 360µµ ÀÌÇÏ¿©¾ß ÇÕ´Ï´Ù.(ÀÓ½Ã ¼³Á¤ 54)");
-
-        }
-
-        if (float.IsNaN(fillPerSuccess) || float.IsInfinity(fillPerSuccess) || fillPerSuccess <= 0f || fillPerSuccess > 1f)
-        {
-            fillPerSuccess = 0.25f;
-            Debug.LogError("¼º°ø´ç °ÔÀÌÁö Áõ°¡·®Àº 0 ÃÊ°ú, 1 ÀÌÇÏ¿©¾ß ÇÕ´Ï´Ù. ÀÓ½Ã ¼³Á¤ 0.25f");
-        }
-
-        _rotationSpeed = rotationSpeed;
-        SuccessZoneAngle = successZoneAngle;
-        _fillPerSuccess = fillPerSuccess;
-
+        _rotationSpeed = IsFinite(rotationSpeed) && rotationSpeed > 0f ? rotationSpeed : 360f;
+        // Leave enough circumference for a new zone that overlaps neither the old zone nor the pointer.
+        SuccessZoneAngle = IsFinite(successZoneAngle) ? Mathf.Clamp(successZoneAngle, 1f, 90f) : 54f;
+        PointerAngleWidth = IsFinite(pointerAngleWidth) ? Mathf.Clamp(pointerAngleWidth, 1f, 10f) : 4f;
         _isRunning = false;
+        _canConfirm = false;
+        ResetProgress();
+        SuccessZoneStartAngle = 0f;
         CurrentAngle = 0f;
+        InvokeOnceOnInit();
     }
 
-    public void BeginGame(float successZoneStartAngle = 0f)
+    public void BeginGame()
     {
-        SuccessZoneStartAngle = ((successZoneStartAngle % 360f) + 360f) % 360f;
-
+        ResetProgress();
         CurrentAngle = 0f;
-        FillProgress = 0f;
-        FailureCount = 0;
-
+        SelectNextZone(false);
         _isRunning = true;
-
+        _canConfirm = true;
         InvokeOnceOnInit();
     }
 
     public bool Confirm()
     {
-        if (!_isRunning)
-            return false;
+        if (!_isRunning || !_canConfirm) return false;
+        _canConfirm = false;
+        float zoneCenter = SuccessZoneStartAngle + SuccessZoneAngle * 0.5f;
+        float distance = Mathf.Abs(Mathf.DeltaAngle(CurrentAngle, zoneCenter));
+        bool succeeded = distance <= (SuccessZoneAngle + PointerAngleWidth) * 0.5f;
 
-        float angleFromStart = (CurrentAngle - SuccessZoneStartAngle + 360f) % 360f;
-
-        bool isInSuccessZone = angleFromStart <= SuccessZoneAngle;
-
-        if (isInSuccessZone)
+        if (succeeded)
         {
-            FillProgress = System.Math.Min(1f, FillProgress + _fillPerSuccess);
+            _gaugeSteps++;
+            IsWarning = false;
         }
         else
         {
             FailureCount++;
+            if (_gaugeSteps > 0) _gaugeSteps--;
+            else if (IsWarning) IsFailed = true;
+            else IsWarning = true;
         }
 
-        bool isFinished = IsSucceeded || IsFailed;
-
-        if (isFinished)
-            _isRunning = false;
-
-        OnPropertyChanged(nameof(FillProgress));
-        OnPropertyChanged(nameof(FailureCount));
-
-        return isFinished;
+        bool finished = IsSucceeded || IsFailed;
+        if (finished) _isRunning = false;
+        else SelectNextZone(true);
+        InvokeOnceOnInit();
+        return finished;
     }
 
     public void UpdateGame(float deltaTime)
     {
-        if (!_isRunning || deltaTime <= 0f)
-            return;
-
-        CurrentAngle = (CurrentAngle + _rotationSpeed * deltaTime) % 360f;
+        if (!_isRunning || !IsFinite(deltaTime) || deltaTime <= 0f) return;
+        CurrentAngle = Mathf.Repeat(CurrentAngle + _rotationSpeed * deltaTime, 360f);
+        _canConfirm = true;
     }
 
     public void Cancel()
     {
         _isRunning = false;
+        _canConfirm = false;
     }
+
+    private void ResetProgress()
+    {
+        _gaugeSteps = 0;
+        FailureCount = 0;
+        IsWarning = false;
+        IsFailed = false;
+    }
+
+    private void SelectNextZone(bool excludePrevious)
+    {
+        float previousCenter = SuccessZoneStartAngle + SuccessZoneAngle * 0.5f;
+        float pointerClearance = (SuccessZoneAngle + PointerAngleWidth) * 0.5f + PointerSeparation;
+        int count = 0;
+        for (int center = 0; center < 360; center++)
+        {
+            if (excludePrevious && Mathf.Abs(Mathf.DeltaAngle(center, previousCenter)) <= SuccessZoneAngle + ZoneSeparation)
+                continue;
+            if (Mathf.Abs(Mathf.DeltaAngle(center, CurrentAngle)) <= pointerClearance)
+                continue;
+            _candidateCenters[count++] = center;
+        }
+        // Width limits above guarantee candidates; bounded enumeration avoids random retry loops.
+        float selectedCenter = _candidateCenters[Random.Range(0, count)];
+        SuccessZoneStartAngle = Mathf.Repeat(selectedCenter - SuccessZoneAngle * 0.5f, 360f);
+    }
+
+    private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
     public void InvokeOnceOnInit()
     {
         OnPropertyChanged(nameof(CurrentAngle));
         OnPropertyChanged(nameof(SuccessZoneStartAngle));
         OnPropertyChanged(nameof(SuccessZoneAngle));
+        OnPropertyChanged(nameof(PointerAngleWidth));
         OnPropertyChanged(nameof(FillProgress));
         OnPropertyChanged(nameof(FailureCount));
+        OnPropertyChanged(nameof(IsWarning));
+        OnPropertyChanged(nameof(IsFailed));
     }
 }

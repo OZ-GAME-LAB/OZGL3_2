@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 118480550460486947}
   - component: {fileID: 4182560156431693661}
   - component: {fileID: 6749821305780462911}
+  - component: {fileID: 9201585937657654976}
   m_Layer: 8
   m_Name: EventDoor
   m_TagString: Untagged
@@ -154,3 +155,17 @@ MonoBehaviour:
   _openDuration: 2.5
   _movePercent: 50
   _openOnStart: 0
+--- !u!114 &9201585937657654976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8378621256233189163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a779c2086153c4c4f808723c179710f4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ScenarioDoorBinding
+  _completedScenarioId: UndergroundAncientPlateSolved
+  _door: {fileID: 6749821305780462911}

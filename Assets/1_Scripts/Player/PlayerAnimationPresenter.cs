@@ -20,6 +20,83 @@ public sealed class PlayerAnimationPresenter
     private readonly Vector3 _spriteRestLocalPosition;
     private bool _hasDiagnosticState;
     private AnimatorStateInfo _lastDiagnosticState;
+    private static readonly int IsAttackingHash = Animator.StringToHash("IsAttacking");
+    private static readonly int AttackPlaybackRateHash = Animator.StringToHash("AttackPlaybackRate");
+    private static readonly int Attack1Hash = Animator.StringToHash("Base Layer.Attack1");
+    private static readonly int Attack2Hash = Animator.StringToHash("Base Layer.Attack2");
+    private static readonly int Attack3Hash = Animator.StringToHash("Base Layer.Attack3");
+    private static readonly int IdleStateHash = Animator.StringToHash("Base Layer.Idle");
+    private static readonly int FallStateHash = Animator.StringToHash("Base Layer.Fall");
+    private bool _playingAttack;
+    private int _attackSequence;
+    private static readonly int IsInteractingHash = Animator.StringToHash("IsInteracting");
+    private static readonly int InteractionPlaybackRateHash = Animator.StringToHash("InteractionPlaybackRate");
+    private static readonly int LoggingHash = Animator.StringToHash("Base Layer.Logging");
+    private static readonly int MiningHash = Animator.StringToHash("Base Layer.Mining");
+    private static readonly int FishingCastHash = Animator.StringToHash("Base Layer.FishingCast");
+    private static readonly int FishingIdleHash = Animator.StringToHash("Base Layer.FishingIdle");
+    private bool _playingResource;
+    public bool IsPlayingResource => _playingResource;
+    private PlayerResourceAnimationState _displayedResource;
+    private float _loggingLength = 1f, _miningLength = 1f, _castLength = 1f, _fishingIdleLength = 1f;
+
+    public void UpdateResource(PlayerResourceAnimationState state, double now, bool grounded)
+    {
+        if (_animator == null) return;
+        bool active = state.PlaysAnimation;
+        if (!active)
+        {
+            if (!_playingResource) return;
+            _playingResource = false;
+            _animator.SetBool(IsInteractingHash, false);
+            if (!_playingAttack) _animator.Play(grounded ? IdleStateHash : FallStateHash, 0, 0f);
+            return;
+        }
+        if (_playingResource && _displayedResource.Equals(state)) return;
+        _playingResource = true;
+        _displayedResource = state;
+        _playingAttack = false;
+        _animator.SetBool(IsAttackingHash, false);
+        _animator.SetBool(IsInteractingHash, true);
+        _animator.SetBool(IsMovingHash, false);
+        _animator.ResetTrigger(RunningJumpHash);
+        _animator.ResetTrigger(IdleJumpHash);
+        bool casting = state.Phase == ResourceAnimationPhase.Casting;
+        bool loggingSwing = state.Kind == ResourceAnimationKind.Logging && state.Phase == ResourceAnimationPhase.Swing;
+        int hash = state.Kind == ResourceAnimationKind.Logging ? LoggingHash :
+            state.Kind == ResourceAnimationKind.Mining ? MiningHash : casting ? FishingCastHash : FishingIdleHash;
+        float duration = loggingSwing ? state.MotionDuration : state.Kind == ResourceAnimationKind.Logging ? _loggingLength :
+            state.Kind == ResourceAnimationKind.Mining ? _miningLength : casting ? state.CastDuration : _fishingIdleLength;
+        duration = Mathf.Max(0.01f, duration);
+        _animator.SetFloat(InteractionPlaybackRateHash, loggingSwing ? _loggingLength / duration : casting ? _castLength / duration : 1f);
+        float normalized = Mathf.Max(0f, (float)((now - state.StartTime) / duration));
+        _animator.Play(hash, 0, casting || loggingSwing ? Mathf.Min(normalized, 0.9999f) : normalized % 1f);
+    }
+
+    public void UpdateAttack(PlayerAttackState attack, double now, bool grounded)
+    {
+        if (_animator == null || _playingResource) return;
+        if (attack.Step == 0)
+        {
+            if (!_playingAttack) return;
+            _playingAttack = false;
+            _animator.SetBool(IsAttackingHash, false);
+            _animator.Play(grounded ? IdleStateHash : FallStateHash, 0, 0f);
+            return;
+        }
+        if (_playingAttack && _attackSequence == attack.Sequence) return;
+        _playingAttack = true;
+        _attackSequence = attack.Sequence;
+        float duration = Mathf.Max(0.01f, attack.AnimationDuration);
+        _animator.SetBool(IsAttackingHash, true);
+        _animator.SetBool(IsMovingHash, false);
+        _animator.ResetTrigger(RunningJumpHash);
+        _animator.ResetTrigger(IdleJumpHash);
+        _animator.SetFloat(AttackPlaybackRateHash, 1f / duration);
+        int stateHash = attack.Step == 1 ? Attack1Hash : attack.Step == 2 ? Attack2Hash : Attack3Hash;
+        // 다단히트 후딜레이와 별개로, 타별 모션 재생 시간에 맞춥니다.
+        _animator.Play(stateHash, 0, Mathf.Clamp01((float)((now - attack.StartTime) / duration)));
+    }
 
     // 진단용 조회입니다. 실제 접지나 점프 가능 여부를 판정하는 데 사용하지 않습니다.
     public bool DisplayedGrounded => _animator != null && _animator.GetBool(IsGroundedHash);
@@ -28,7 +105,20 @@ public sealed class PlayerAnimationPresenter
     {
         _animator = animator;
         if (_animator != null)
+        {
             _spriteRestLocalPosition = _animator.transform.localPosition;
+            if (_animator.runtimeAnimatorController != null)
+                foreach (AnimationClip clip in _animator.runtimeAnimatorController.animationClips)
+                {
+                    switch (clip.name)
+                    {
+                        case "Logging": _loggingLength = clip.length; break;
+                        case "Mining": _miningLength = clip.length; break;
+                        case "FishingCast": _castLength = clip.length; break;
+                        case "FishingIdle": _fishingIdleLength = clip.length; break;
+                    }
+                }
+        }
     }
 
     public void SetMoving(bool moving)

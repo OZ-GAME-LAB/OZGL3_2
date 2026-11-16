@@ -14,8 +14,14 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject _workspacePrefab_3;
     [SerializeField] private GameObject _workspacePrefab_4;
 
+    [Header("시나리오 네트워크 프리팹")]
+    [SerializeField] private NetworkObject _scenarioManagerPrefab;
+
     private bool _worldInitialized;
     private GameObject _mapWorkspace;
+    private FieldInteractionPoint[] _fieldPoints;
+    private Coroutine _connectLocalPlayerRoutine;
+    private NetworkObject _connectedLocalPlayer;
 
     private void Awake()
     {
@@ -32,7 +38,12 @@ public class GameManager : MonoBehaviour
     public void StartGame()
     {
         if (_worldInitialized)
+        {
+            InitializeScenarioManager();
+            InitializeFieldPoints();
+            BeginConnectLocalPlayer();
             return;
+        }
 
         if (_workspacePrefab_1 == null ||
             _workspacePrefab_2 == null ||
@@ -53,12 +64,43 @@ public class GameManager : MonoBehaviour
         Instantiate(_workspacePrefab_2);
         Instantiate(_workspacePrefab_3);
         _mapWorkspace = Instantiate(_workspacePrefab_4);
+        _fieldPoints = _mapWorkspace.GetComponentsInChildren<FieldInteractionPoint>(true);
 
         _worldInitialized = true;
+        InitializeScenarioManager();
+        InitializeFieldPoints();
+        BeginConnectLocalPlayer();
+    }
 
+    private void InitializeFieldPoints()
+    {
+        if (_fieldPoints == null) return;
+        foreach (FieldInteractionPoint point in _fieldPoints)
+            if (point != null && point.isActiveAndEnabled) point.InitializeOnServer();
+    }
+
+    private void BeginConnectLocalPlayer()
+    {
         NetworkManager network = NetworkManager.Singleton;
-        if (network != null && network.IsClient)
-            StartCoroutine(ConnectLocalPlayer());
+        if (network == null || !network.IsClient ||
+            (_connectedLocalPlayer != null && _connectedLocalPlayer.IsSpawned &&
+             network.LocalClient != null && network.LocalClient.PlayerObject == _connectedLocalPlayer))
+            return;
+        if (_connectLocalPlayerRoutine != null) StopCoroutine(_connectLocalPlayerRoutine);
+        _connectLocalPlayerRoutine = StartCoroutine(ConnectLocalPlayer());
+    }
+
+    private void InitializeScenarioManager()
+    {
+        NetworkManager network = NetworkManager.Singleton;
+        if (network == null || !network.IsServer || ScenarioManager.Inst != null || _scenarioManagerPrefab == null)
+            return;
+        if (ObjectManager.Inst == null || !_scenarioManagerPrefab.TryGetComponent<ScenarioManager>(out _))
+        {
+            Debug.LogError("ObjectManager 및 ScenarioManager 컴포넌트가 있는 네트워크 프리팹을 확인해 주세요.", this);
+            return;
+        }
+        ObjectManager.Inst.SpawnObject(_scenarioManagerPrefab, Vector3.zero, Quaternion.identity);
     }
 
     private IEnumerator ConnectLocalPlayer()
@@ -90,6 +132,7 @@ public class GameManager : MonoBehaviour
         }
 
         // LocalClient.PlayerObject이므로 본인 플레이어만 활성화합니다.
+        _connectedLocalPlayer = playerObject;
         body.bodyType = RigidbodyType2D.Dynamic;
         player.enabled = true;
         input.enabled = true;

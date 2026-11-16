@@ -13,6 +13,10 @@ public class PlayerNetworkStats : NetworkUnit
     [SerializeField, Min(0f)] private float _initialMoveSpeed = 12f;
     [SerializeField, Min(0f)] private float _initialJumpForce = 17.5f;
 
+    [Header("기본 공격 간격")]
+    [Tooltip("3타별 모션 시간의 기준 간격(초)입니다. 룬 공격속도 배율은 공격 시 적용합니다.")]
+    [SerializeField, Min(0.01f)] private float _initialBaseAttackInterval = 0.75f;
+
     [Header("상태 이상")]
     [SerializeField, Range(-1f, 1f)] private float _initialPoisonResistance;
 
@@ -26,23 +30,104 @@ public class PlayerNetworkStats : NetworkUnit
 
     private NetworkVariable<float> _jumpForce = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    private NetworkVariable<float> _baseAttackInterval = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     // 플레이어마다 서로 다른 VM 인스턴스를 가짐.
     public PlayerStatViewModel ViewModel { get; } = new();
 
+    private readonly NetworkVariable<bool> _encounterLocked = new(false);
+    public bool IsEncounterLocked => _encounterLocked.Value;
+    protected override bool IsReadyForCombat => !IsEncounterLocked;
+    private double _encounterLockedAt;
+
+    public void SetEncounterLockedOnServer(bool locked)
+    {
+        if (!IsServer || !IsSpawned || IsEncounterLocked == locked) return;
+        double now = NetworkManager.ServerTime.Time;
+        if (locked)
+        {
+            base.Update();
+            if (!IsAlive) return;
+            _encounterLockedAt = now;
+        }
+        else
+        {
+            // 연출 중 멈춘 지속 피해를 해제 순간에 몰아서 적용하지 않습니다.
+            double pause = System.Math.Max(0d, now - _encounterLockedAt);
+            if (StatusState.PoisonExpiresAt > 0d) StatusState.PoisonExpiresAt += pause;
+            if (StatusState.NextPoisonTickAt > 0d) StatusState.NextPoisonTickAt += pause;
+            if (StatusState.NextBossPoisonTickAt > 0d) StatusState.NextBossPoisonTickAt += pause;
+            if (StatusState.BossPoisonProtectedUntil > 0d) StatusState.BossPoisonProtectedUntil += pause;
+            if (StatusState.NextBleedDecayAt > 0d) StatusState.NextBleedDecayAt += pause;
+        }
+        _encounterLocked.Value = locked;
+    }
+
     public float Hp => CurrentHp;
+    public float BaseAttackInterval => _baseAttackInterval.Value;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private bool _developerInvincible;
+#endif
+
+    public void RequestToggleDeveloperInvincibility()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!IsSpawned || !IsOwner)
+            return;
+
+        ToggleDeveloperInvincibilityServerRpc();
+#endif
+    }
+
+    [ServerRpc]
+    private void ToggleDeveloperInvincibilityServerRpc(ServerRpcParams rpcParams = default)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!IsServer || !IsSpawned || rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        if (!IsAlive)
+        {
+            Debug.LogWarning("[개발자 무적] 사망한 플레이어는 부활시키지 않습니다. 다시 시작해 주세요.", this);
+            return;
+        }
+
+        _developerInvincible = !_developerInvincible;
+        Debug.Log($"[개발자 무적] 플레이어 {OwnerClientId}: {(_developerInvincible ? "ON" : "OFF")}", this);
+#endif
+    }
+
+    public override bool TryTakeDamageOnServer(float finalDamage, out float actualDamage)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (IsServer && IsSpawned && _developerInvincible)
+        {
+            actualDamage = 0f;
+            return false;
+        }
+#endif
+        return base.TryTakeDamageOnServer(finalDamage, out actualDamage);
+    }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        _developerInvincible = false;
+#endif
+
         if (IsServer)
         {
+            _encounterLocked.Value = false;
             if (!InitializeUnitOnServer(ValidOrDefault(_initialMaxHp, 100f, 1f),
                 ValidOrDefault(_initialAttackPower, 100f, 0f), canReceiveBossPoison: true))
                 return;
 
             _moveSpeed.Value = ValidOrDefault(_initialMoveSpeed, 12f, 0f);
             _jumpForce.Value = ValidOrDefault(_initialJumpForce, 17.5f, 0f);
+            _baseAttackInterval.Value = ValidOrDefault(_initialBaseAttackInterval, 0.75f, 0.01f);
             SetPoisonResistanceOnServer(ValidOrDefault(_initialPoisonResistance, 0f, -1f));
         }
 

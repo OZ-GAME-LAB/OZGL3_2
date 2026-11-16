@@ -37,11 +37,11 @@ public class InteractionGatheringVM : InteractionVMBase
 
     private float _gatheringSeconds;
     private bool _isGathering;
-    public override string InteractionInfoText => "채집 (F 길게 누르기)";
+    public override string InteractionInfoText => "채집하기 (F)";
 
     public void InitGatheringVM(string id)
     {
-        _gatheringDurationSeconds = 5f;
+        _gatheringDurationSeconds = 2.5f;
     }
 
     public void BeginGathering()

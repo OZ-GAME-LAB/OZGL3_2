@@ -2,20 +2,78 @@
 using Unity.Netcode;
 using UnityEngine;
 
+public struct PlayerAttackState : INetworkSerializable, System.IEquatable<PlayerAttackState>
+{
+    public int Sequence;
+    public int Step;
+    public int Direction;
+    public double StartTime;
+    public double EndTime;
+    public float AnimationDuration;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref Sequence);
+        serializer.SerializeValue(ref Step);
+        serializer.SerializeValue(ref Direction);
+        serializer.SerializeValue(ref StartTime);
+        serializer.SerializeValue(ref EndTime);
+        serializer.SerializeValue(ref AnimationDuration);
+    }
+
+    public bool Equals(PlayerAttackState other) => Sequence == other.Sequence && Step == other.Step &&
+        Direction == other.Direction && StartTime == other.StartTime && EndTime == other.EndTime &&
+        AnimationDuration == other.AnimationDuration;
+}
+
 public class PlayerRuneAttackController : NetworkBehaviour
 {
+    [System.Serializable]
+    private sealed class AttackTiming
+    {
+        [Tooltip("기본 공격 간격에 곱할 모션 재생 시간 비율입니다. 실제 시간에는 룬 공격속도도 적용합니다.")]
+        [SerializeField, Min(0.01f)] private float _durationMultiplier;
+        [Tooltip("모션 진행률 기준 첫 타격 시점입니다. 0은 시작, 1은 끝입니다.")]
+        [SerializeField, Range(0f, 1f)] private float _hitNormalizedTime;
+        [Tooltip("입력이 예약되어 있으면 다음 타로 넘어갈 수 있는 진행률입니다. 남은 다단히트와 최소 후딜레이는 보장합니다.")]
+        [SerializeField, Range(0f, 1f)] private float _comboNormalizedTime;
+
+        public AttackTiming(float durationMultiplier, float hitNormalizedTime, float comboNormalizedTime)
+        {
+            _durationMultiplier = durationMultiplier;
+            _hitNormalizedTime = hitNormalizedTime;
+            _comboNormalizedTime = comboNormalizedTime;
+        }
+
+        public float DurationMultiplier => ValidTiming(_durationMultiplier, 1f, 0.01f);
+        public float HitNormalizedTime => Mathf.Clamp01(ValidTiming(_hitNormalizedTime, 0.25f, 0f));
+        public float ComboNormalizedTime => Mathf.Clamp01(ValidTiming(_comboNormalizedTime, 1f, 0f));
+
+        private static float ValidTiming(float value, float fallback, float minimum)
+        {
+            return float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Max(minimum, value);
+        }
+    }
+
     [Header("캐릭터 연결")]
     [SerializeField] private RuneCombatActor _actor;
 
-    [Header("임시 장착 룬 - 서버에서 사용")]
-    [SerializeField] private string[] _testRuneIds;
+    [Header("장착 룬 연결")]
     [SerializeField] private PlayerRuneEquipmentController _runeEquipmentController;
 
-    [Header("기본 공격")]
-    [SerializeField, Min(0.01f)] private float _baseAttackInterval = 0.6f;
-    [SerializeField, Min(0f)] private float _windupSeconds = 0.1f;
-    [SerializeField, Min(0.01f)] private float _tripleHitInterval = 0.12f;
-    [SerializeField, Min(0.01f)] private float _recoverySeconds = 0.15f;
+    [Header("룬 다단히트와 후딜레이")]
+    [SerializeField, Min(0.01f)]
+    private float _tripleHitInterval = 0.12f;
+
+    [SerializeField, Min(0.01f)]
+    [Tooltip("마지막 타격 뒤 최소 대기 시간입니다. 룬 공격속도 배율로 나눕니다.")]
+    private float _recoverySeconds = 0.15f;
+
+    [Header("기본 3타 연계")]
+    [SerializeField, Min(0f)] private float _comboResetSeconds = 0.4f;
+    [SerializeField] private AttackTiming _attack1Timing = new(0.8f, 1f / 6f, 0.65f);
+    [SerializeField] private AttackTiming _attack2Timing = new(2f / 3f, 1f / 6f, 0.6f);
+    [SerializeField] private AttackTiming _attack3Timing = new(1.2f, 4f / 15f, 0.9f);
 
     [Header("근접 공격")]
     [SerializeField] private LayerMask _targetLayer;    
@@ -30,6 +88,20 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
     private readonly HashSet<RuneCombatActor> _hitTargets = new();
 
+    private PlayerNetworkStats _stats;
+    private PlayerControllerView _view;
+    private readonly NetworkVariable<PlayerAttackState> _attackState = new(default,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private bool _attackHeld;
+    private bool _queuedAttack;
+    private bool _requestedFaceRight;
+    private bool _localInputActive;
+    private int _comboStep;
+    private double _lastAttackEndTime = double.NegativeInfinity;
+
+    public PlayerAttackState AttackState => IsSpawned && isActiveAndEnabled ? _attackState.Value : default;
+    public bool IsAttackActive => AttackState.Step != 0;
+    public double AttackClock => IsSpawned ? NetworkManager.ServerTime.Time : 0;
     private AttackProfile _activeProfile;
     private float _attackPowerSnapshot;
 
@@ -38,14 +110,20 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
     private double _nextHitTime;
     private double _attackEndTime;
+    private double _comboAvailableTime;
     private double _nextAttackTime;
 
     private float _activeHitInterval;
 
     public bool IsAttackingOnServer => _activeProfile != null;
+    private PlayerInteractionController _interaction;
 
     private void Awake()
     {
+        _stats = GetComponent<PlayerNetworkStats>();
+        _view = GetComponent<PlayerControllerView>();
+        _interaction = GetComponent<PlayerInteractionController>();
+
         if (_actor == null)
         {
             _actor = GetComponent<RuneCombatActor>();
@@ -62,6 +140,12 @@ public class PlayerRuneAttackController : NetworkBehaviour
         _activeProfile = null;
         _remainingHits = 0;
         _nextAttackTime = 0;
+        _comboStep = 0;
+        _lastAttackEndTime = double.NegativeInfinity;
+        _attackHeld = false;
+        _queuedAttack = false;
+        _localInputActive = false;
+        if (IsServer) _attackState.Value = default;
     }
 
     public override void OnNetworkDespawn()
@@ -72,6 +156,7 @@ public class PlayerRuneAttackController : NetworkBehaviour
     private void OnDisable()
     {
         ClearActiveAttack();
+        _view?.UpdateAttackPresentation();
     }
 
     // 로컬 플레이어 입력에서 호출.
@@ -86,20 +171,50 @@ public class PlayerRuneAttackController : NetworkBehaviour
             return;
         }
 
-        RequestAttackServerRpc(faceRight);
+        _localInputActive = true;
+        SetAttackInputServerRpc(true, true, false, faceRight);
+    }
+
+    public void ReleaseAttack()
+    {
+        if (!IsSpawned || !IsOwner || !_localInputActive) return;
+        SetAttackInputServerRpc(false, false, false, true);
+    }
+
+    public void CancelAttackInput()
+    {
+        if (!IsSpawned || !IsOwner || !_localInputActive) return;
+        _localInputActive = false;
+        SetAttackInputServerRpc(false, false, true, true);
     }
 
     [ServerRpc]
-    private void RequestAttackServerRpc(bool faceRight, ServerRpcParams rpcParams = default)
+    private void SetAttackInputServerRpc(bool held, bool pressed, bool cancel, bool faceRight,
+        ServerRpcParams rpcParams = default)
     {
-        Debug.Log($"[서버 공격 수신] {name}", this);
-
-        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+        if (rpcParams.Receive.SenderClientId != OwnerClientId) return;
+        if (_interaction != null && _interaction.HasServerRequest)
         {
-            Debug.LogWarning("[공격 중단] 요청자와 소유자가 다릅니다.", this);
+            CancelPendingInputOnServer();
             return;
         }
+        _attackHeld = held && !cancel;
+        if (cancel) _queuedAttack = false;
+        if (!pressed) return;
+        _requestedFaceRight = faceRight;
+        if (_activeProfile != null || NetworkManager.ServerTime.Time < _nextAttackTime)
+            _queuedAttack = true;
+        else
+            TryStartAttack(faceRight);
+    }
 
+    private void TryStartAttack(bool faceRight)
+    {
+        if (_interaction != null && _interaction.HasServerRequest)
+        {
+            CancelPendingInputOnServer();
+            return;
+        }
         if (isActiveAndEnabled == false || IsSpawned == false)
         {
             Debug.LogWarning("[공격 중단] 공격 컴포넌트가 비활성입니다.", this);
@@ -123,6 +238,13 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
         double now = NetworkManager.ServerTime.Time;
 
+        if (_view == null || !_view.CanStartGroundAttack)
+        {
+            _attackHeld = false;
+            _queuedAttack = false;
+            return;
+        }
+
         if (_activeProfile != null || now < _nextAttackTime)
         {
             Debug.Log($"[공격 대기] 진행 중: {_activeProfile != null}, " + $"남은 대기시간: {System.Math.Max(0, _nextAttackTime - now):F2}", this);
@@ -135,11 +257,17 @@ public class PlayerRuneAttackController : NetworkBehaviour
             return;
         }
 
-        Debug.Log($"[실제 공격 설정] " + $"룬: {(_testRuneIds == null ? "(없음)" : string.Join(", ", _testRuneIds))}, " + $"투사체: {profile._useProjectile}, " + $"타격 수: {profile._hitCount}", this);
+        Debug.Log($"[실제 공격 설정] 투사체: {profile._useProjectile}, 타격 수: {profile._hitCount}", this);
 
         if (profile._useProjectile && _projectilePrefab == null)
         {
             Debug.LogError("투사체 프리팹을 연결해 주세요.", this);
+            return;
+        }
+
+        if (_stats == null || !_stats.IsSpawned)
+        {
+            Debug.LogError("공격 간격을 읽을 PlayerNetworkStats를 확인해 주세요.", this);
             return;
         }
 
@@ -159,23 +287,45 @@ public class PlayerRuneAttackController : NetworkBehaviour
         _remainingHits = profile._hitCount;
         _attackDirection = faceRight ? 1 : -1;
 
+        int nextStep = now > _lastAttackEndTime + _comboResetSeconds ? 1 : _comboStep % 3 + 1;
+        AttackTiming timing = GetAttackTiming(nextStep);
         float speed = profile._attackSpeedMultiple;
-        float windup = _windupSeconds / speed;
+        float animationDuration = Mathf.Max(0.01f, _stats.BaseAttackInterval * timing.DurationMultiplier / speed);
+        float windup = animationDuration * timing.HitNormalizedTime;
 
         _activeHitInterval = _tripleHitInterval / speed;
         _nextHitTime = now + windup;
 
         double sequenceDuration = windup + (profile._hitCount - 1) * _activeHitInterval + _recoverySeconds / speed;
 
-        double attackCycle = System.Math.Max(_baseAttackInterval / speed, sequenceDuration);
-
-        _attackEndTime = now + attackCycle;
+        // 다단히트가 늘어나도 모션 재생 시간 자체는 늘리지 않습니다.
+        _attackEndTime = now + System.Math.Max(animationDuration, sequenceDuration);
+        _comboAvailableTime = now + System.Math.Max(animationDuration * timing.ComboNormalizedTime, sequenceDuration);
         _nextAttackTime = _attackEndTime;
+        _comboStep = nextStep;
+        _attackState.Value = new PlayerAttackState
+        {
+            Sequence = _attackState.Value.Sequence + 1,
+            Step = _comboStep,
+            Direction = _attackDirection,
+            StartTime = now,
+            EndTime = _attackEndTime,
+            AnimationDuration = animationDuration
+        };
+    }
+
+    private AttackTiming GetAttackTiming(int step)
+    {
+        if (step == 1) return _attack1Timing;
+        if (step == 2) return _attack2Timing;
+        return _attack3Timing;
     }
 
     private void Update()
     {
-        if (IsSpawned == false || IsServer == false || _activeProfile == null)
+        // 원격 플레이어의 입력 View는 비활성화되어도 공격 표시는 갱신합니다.
+        _view?.UpdateAttackPresentation();
+        if (IsSpawned == false || IsServer == false)
         {
             return;
         }
@@ -187,6 +337,19 @@ public class PlayerRuneAttackController : NetworkBehaviour
         }
 
         double now = NetworkManager.ServerTime.Time;
+
+        if (_activeProfile == null)
+        {
+            if ((_attackHeld || _queuedAttack) && now >= _nextAttackTime)
+            {
+                bool held = _attackHeld;
+                _queuedAttack = false;
+                _attackHeld = false; // 시작 실패 시 매 프레임 재시도하지 않습니다.
+                TryStartAttack(_requestedFaceRight);
+                if (_activeProfile != null) _attackHeld = held;
+            }
+            return;
+        }
 
         while (_activeProfile != null && _remainingHits > 0 && now >= _nextHitTime)
         {
@@ -205,10 +368,40 @@ public class PlayerRuneAttackController : NetworkBehaviour
             }
         }
 
+        if (_activeProfile != null && _remainingHits == 0 &&
+            (_attackHeld || _queuedAttack) && now >= _comboAvailableTime)
+        {
+            if (TryContinueAttack(now)) return;
+        }
+
         if (_activeProfile != null && _remainingHits == 0 && now >= _attackEndTime)
         {
-            ClearActiveAttack();
+            _lastAttackEndTime = _attackEndTime;
+            _activeProfile = null;
+            _queuedAttack = false;
+            _attackHeld = false;
+            PublishAttackStopped();
         }
+    }
+
+    private bool TryContinueAttack(double now)
+    {
+        AttackProfile previousProfile = _activeProfile;
+        double previousLastEnd = _lastAttackEndTime;
+        double previousNextTime = _nextAttackTime;
+        _activeProfile = null;
+        _queuedAttack = false;
+        _lastAttackEndTime = now;
+        _nextAttackTime = now;
+        TryStartAttack(_attackDirection > 0);
+        if (_activeProfile != null) return true;
+
+        // 발판 이탈 등으로 다음 공격이 거절되면 현재 모션을 끝까지 마무리합니다.
+        _activeProfile = previousProfile;
+        _lastAttackEndTime = previousLastEnd;
+        _nextAttackTime = previousNextTime;
+        _attackHeld = false;
+        return false;
     }
 
     private bool TryGetProfile(out AttackProfile profile)
@@ -315,5 +508,24 @@ public class PlayerRuneAttackController : NetworkBehaviour
     {
         _activeProfile = null;
         _remainingHits = 0;
+        _attackHeld = false;
+        _queuedAttack = false;
+        _comboStep = 0;
+        _lastAttackEndTime = double.NegativeInfinity;
+        if (IsSpawned && IsServer) PublishAttackStopped();
+    }
+
+    public void CancelPendingInputOnServer()
+    {
+        if (!IsServer) return;
+        _attackHeld = false;
+        _queuedAttack = false;
+    }
+
+    private void PublishAttackStopped()
+    {
+        PlayerAttackState state = _attackState.Value;
+        state.Step = 0;
+        _attackState.Value = state;
     }
 }

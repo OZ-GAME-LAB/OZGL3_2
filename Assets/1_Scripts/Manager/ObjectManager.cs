@@ -25,6 +25,7 @@ public class ObjectManager : MonoBehaviour
 
     [Header("필드 드롭 아이템 프리팹")]
     [SerializeField] private FieldItemObject Prefab_FieldDropItem;
+    public bool IsFieldItemPrefabReady => Prefab_FieldDropItem != null;
 
     [Header("보스 프리팹")]
     [SerializeField] private Boss Prefab_Boss;
@@ -129,6 +130,20 @@ public class ObjectManager : MonoBehaviour
 
     public InteractableObject SpawnInteractionObject(string id, Vector3 position, Quaternion rotation)
     {
+        return SpawnInteractionObject(id, position, rotation, default);
+    }
+
+    public InteractableObject SpawnPlacedInteractionObject(string id, Vector3 position, Quaternion rotation,
+        Vector2 size, Vector2 offset, bool usesResourceLayout = false)
+    {
+        var placement = new PlacedInteractionSettings { UsesPlacedVisual = true, Size = size, Offset = offset, UsesResourceLayout = usesResourceLayout };
+        if (!placement.IsValid) return null;
+        return SpawnInteractionObject(id, position, rotation, placement);
+    }
+
+    private InteractableObject SpawnInteractionObject(string id, Vector3 position, Quaternion rotation,
+        PlacedInteractionSettings placement)
+    {
         if (!CanSpawn())
             return null;
 
@@ -179,7 +194,9 @@ public class ObjectManager : MonoBehaviour
 
         InteractableObject instance = Instantiate(prefab, position, rotation);
 
-        instance.GetComponent<InteractionNetwork>().SetObjectId(id);
+        InteractionNetwork interactionNetwork = instance.GetComponent<InteractionNetwork>();
+        interactionNetwork.SetObjectId(id);
+        interactionNetwork.SetPlacementBeforeSpawn(placement);
         instance.GetComponent<NetworkObject>().Spawn();
 
         return instance;
@@ -298,7 +315,7 @@ public class ObjectManager : MonoBehaviour
         return item;
     }
 
-    public Boss SpawnBoss(string id, Vector3 position)
+    public Boss SpawnBoss(string id, Vector3 position, bool startCombat = true)
     {
         if (!CanSpawn())
             return null;
@@ -330,7 +347,7 @@ public class ObjectManager : MonoBehaviour
 
         networkObject.Spawn();
 
-        if (!bossNetwork.InitializeStatsOnServer(id))
+        if (!bossNetwork.InitializeStatsOnServer(id, startCombat))
         {
             Debug.LogError($"보스 초기화에 실패했습니다: {id}", instance);
 

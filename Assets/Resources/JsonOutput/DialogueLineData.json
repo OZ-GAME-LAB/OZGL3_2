@@ -1,0 +1,18 @@
+[
+  {
+    "Id": "NPCGirlEncounterDialogue_01",
+    "DialogueId": "NPCGirlEncounterDialogue",
+    "Order": 1,
+    "SpeakerName": "",
+    "Text": "퍼즐 이벤트 대화입니다.",
+    "NpcSpriteAddress": ""
+  },
+  {
+    "Id": "NPCGirlEncounterDialogue_02",
+    "DialogueId": "NPCGirlEncounterDialogue",
+    "Order": 2,
+    "SpeakerName": "",
+    "Text": "해당 위치에 처음 진입하면 NPC구출 이벤트가 열립니다.",
+    "NpcSpriteAddress": ""
+  }
+]
