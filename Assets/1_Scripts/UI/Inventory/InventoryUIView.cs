@@ -25,6 +25,7 @@ public class InventoryUIView : UIBase
 
     [SerializeField] private TMP_Text _nameText;
     [SerializeField] private TMP_Text _descriptionText;
+    [SerializeField] private Button _popupCloseButton;
 
 
     InventoryUIViewModel _InventoryUIViewModel;
@@ -41,6 +42,12 @@ public class InventoryUIView : UIBase
             _closeButton.onClick.AddListener(OnClickCloseButton);
 
         }
+        if (_popupCloseButton != null)
+        {
+            _popupCloseButton.onClick.AddListener(OnClickPopupCloseButton);
+
+        }
+
 
         if (_ItemUseButton!= null)
         {
@@ -63,6 +70,11 @@ public class InventoryUIView : UIBase
         if (_closeButton != null)
         {
             _closeButton.onClick.RemoveListener(OnClickCloseButton);
+        }
+        if (_popupCloseButton != null)
+        {
+            _popupCloseButton.onClick.RemoveListener(OnClickPopupCloseButton);
+
         }
 
         if (_ItemUseButton != null)
@@ -181,28 +193,36 @@ public class InventoryUIView : UIBase
         _nameText.text = item.Name;
         _descriptionText.text = item.Description;
 
+        _ItemUseButton.gameObject.SetActive(false);
+        _ItemAddQuickSlotButton.gameObject.SetActive(false);
         // 아이템 타입에 따른 사용 버튼 텍스트 설정
-        if (item.ItemType == nameof(ItemType.Equipment))
+
+        switch (item.ItemType)
         {
-            if (ServiceManager.Inst.InventoryService.IsEquippedItem(item))
-            {
-                _ItemUseText.text = "장비 해제";
-            }
-            else
-            {
-                _ItemUseText.text = "장비 장착";
-            }
-        }
-        else
-        {
-            _ItemUseText.text = "아이템 사용";
+            case nameof(ItemType.Equipment):
+                _ItemUseButton.gameObject.SetActive(true);
+
+                bool isEquipped =
+                    ServiceManager.Inst.InventoryService.IsEquippedItem(item);
+
+                _ItemUseText.text = isEquipped ? "장비 해제" : "장비 장착";
+                break;
+
+            case nameof(ItemType.Consumable):
+                _ItemUseButton.gameObject.SetActive(true);
+                _ItemAddQuickSlotButton.gameObject.SetActive(true);
+
+                _ItemUseText.text = "아이템 사용";
+                _ItemAddQuickSlotText.text = "아이템 퀵슬롯 등록";
+                break;
         }
 
-        _ItemAddQuickSlotText.text = "아이템 퀵슬롯 등록";
         _ItemRemoveText.text = "아이템 제거";
 
-
         _itemPopupUI.SetActive(true);
+
+        _itemPopupUI.transform.position =
+            UnityEngine.InputSystem.Mouse.current.position.ReadValue();
     }
 
     private void CloseItemPopup()
@@ -255,7 +275,10 @@ public class InventoryUIView : UIBase
         if (_selectedItem == null)
             return;
 
-        // TODO: 아이템 제거 로직
+        InventoryItemViewModel item = _selectedItem;
+
+        CloseItemPopup();
+        RemoveItemRequest(item);
     }
     private void RemoveItemRequest(InventoryItemViewModel item)
     {
@@ -322,5 +345,10 @@ public class InventoryUIView : UIBase
     private void OnClickCloseButton()
     {
         UIManager.Inst.CloseInventoryUI();
+    }
+
+    private void OnClickPopupCloseButton()
+    {
+        CloseItemPopup();
     }
 }
