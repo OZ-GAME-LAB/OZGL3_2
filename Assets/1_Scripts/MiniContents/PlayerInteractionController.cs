@@ -12,6 +12,7 @@ public class PlayerInteractionController : NetworkBehaviour
 
     private Camera _playerCamera;
     private bool _isLocalPlayer;
+    private bool _scenarioInputBlocked;
 
     private readonly Dictionary<Collider2D, InteractableObject> _contacts = new();
 
@@ -214,7 +215,7 @@ public class PlayerInteractionController : NetworkBehaviour
 
     private void RefreshInfoTarget()
     {
-        InteractableObject nextInfoTarget = ReferenceEquals(_lockedTarget, null) ? _selectedTarget : null;
+        InteractableObject nextInfoTarget = !_scenarioInputBlocked && ReferenceEquals(_lockedTarget, null) ? _selectedTarget : null;
 
         if (nextInfoTarget != null)
             nextInfoTarget.ViewModel.HasRequiredTool = CanInteractWithTool(nextInfoTarget, out _, false);
@@ -317,7 +318,7 @@ public class PlayerInteractionController : NetworkBehaviour
 
     public bool TryRequestInteraction()
     {
-        if (!IsSpawned || !IsOwner || _hasLocalRequest)
+        if (!IsSpawned || !IsOwner || _hasLocalRequest || _scenarioInputBlocked)
             return false;
 
         if (!TryLockSelectedTarget(out InteractableObject target))
@@ -359,6 +360,12 @@ public class PlayerInteractionController : NetworkBehaviour
         RequestStartServerRpc(new NetworkObjectReference(network.NetworkObject), _activeRequestId);
 
         return true;
+    }
+
+    public void SetScenarioInputBlocked(bool blocked)
+    {
+        _scenarioInputBlocked = blocked;
+        RefreshInfoTarget();
     }
 
     //공통 시작 함수 추가

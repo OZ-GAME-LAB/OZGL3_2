@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
+using System.Threading;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -7,6 +8,9 @@ using UnityEngine.AddressableAssets;
 public abstract class InteractableObject : MonoBehaviour
 {
     private InteractableInfoUI _infoUI;
+    private UIManager _infoUIManager;
+    private CancellationTokenSource _infoCancellation;
+    private int _infoRequestVersion;
     protected UIBase _openUI;
     private InteractionNetwork _interactionNetwork;
     public abstract InteractionVMBase ViewModel { get; }
@@ -22,6 +26,7 @@ public abstract class InteractableObject : MonoBehaviour
     private bool _isDormant;
 
     public virtual bool UsesMiniGameInput => false;
+    public virtual bool KeepInteractionOnRelease => UsesMiniGameInput;
 
     public virtual bool RequiresServerReservation => true;
 
@@ -91,42 +96,64 @@ public abstract class InteractableObject : MonoBehaviour
 
     public virtual void ShowInteractionInfo(Transform[] playerUIAnchors, Camera playerCamera)
     {
-        OpenInteractionInfoAsync(playerUIAnchors, playerCamera).Forget();
+        HideInteractionInfo();
+        _infoCancellation = new CancellationTokenSource();
+        OpenInteractionInfoAsync(playerUIAnchors, playerCamera, _infoRequestVersion, _infoCancellation.Token).Forget();
     }
 
-    private async UniTask OpenInteractionInfoAsync(Transform[] playerUIAnchors, Camera playerCamera)
+    private async UniTask OpenInteractionInfoAsync(Transform[] playerUIAnchors, Camera playerCamera, int version, CancellationToken token)
     {
-        UIBase ui = await UIManager.Inst.OpenMainRootAsync(UIType.InteractableInfoUI);
-
-        if (ui == null)
-            return;
-
-        if (ui is not InteractableInfoUI infoUI)
+        UIManager manager = UIManager.Inst;
+        try
         {
-            Debug.LogError("프리팹에 InteractableInfoUI 컴포넌트가 필요합니다.");
-            return;
+            if (manager == null)
+                return;
+            InteractableInfoUI infoUI = await manager.OpenInteractableInfoUIAsync(token);
+            if (this == null || token.IsCancellationRequested || version != _infoRequestVersion || !isActiveAndEnabled)
+                return;
+            if (infoUI == null)
+            {
+                if (manager.IsOpen(UIType.InteractableInfoUI))
+                    manager.Close(UIType.InteractableInfoUI);
+                Debug.LogError("프리팹에 InteractableInfoUI 컴포넌트가 필요합니다.");
+                return;
+            }
+            _infoUIManager = manager;
+            _infoUI = infoUI;
+            _infoUI.Bind(ViewModel);
+            if (_infoUI.TryGetComponent(out InteractionUIPositioner positioner))
+                positioner.SetTargets(playerUIAnchors, playerCamera);
+            else
+            {
+                Debug.LogError("안내 UI에 InteractionUIPositioner가 필요합니다.");
+                HideInteractionInfo();
+            }
         }
-
-        _infoUI = infoUI;
-        _infoUI.Bind(ViewModel);
-
-        if (_infoUI.TryGetComponent(out InteractionUIPositioner positioner))
+        catch (OperationCanceledException)
         {
-            positioner.SetTargets(playerUIAnchors, playerCamera);
+            // 숨김/대상 전환 이후의 생성 결과는 UIManager의 비활성 캐시에만 남깁니다.
         }
-        else
+        catch (Exception exception)
         {
-            Debug.LogError("안내 UI에 InteractionUIPositioner가 필요합니다.");
+            Debug.LogException(exception);
+            if (version == _infoRequestVersion)
+                HideInteractionInfo();
         }
     }
 
     public virtual void HideInteractionInfo()
     {
-        if (_infoUI == null)
-            return;
-
-        UIManager.Inst.Close(UIType.InteractableInfoUI);
+        _infoRequestVersion++;
+        if (_infoCancellation != null)
+        {
+            _infoCancellation.Cancel();
+            _infoCancellation.Dispose();
+            _infoCancellation = null;
+        }
+        if (_infoUI != null && _infoUIManager != null && _infoUIManager.IsOpen(UIType.InteractableInfoUI))
+            _infoUIManager.Close(UIType.InteractableInfoUI);
         _infoUI = null;
+        _infoUIManager = null;
     }
 
     protected void NotifyCompleted(float accuracy = 1f)

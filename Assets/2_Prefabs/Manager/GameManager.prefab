@@ -48,3 +48,4 @@ MonoBehaviour:
   _workspacePrefab_2: {fileID: 811833984826786760, guid: 911e804a2ddc8894b8cf7c100589ccb6, type: 3}
   _workspacePrefab_3: {fileID: 4681297586215620497, guid: efadb3c310611134c93a29263fc50440, type: 3}
   _workspacePrefab_4: {fileID: 924080154454399066, guid: 33b6d6e7a356b0042ace333333505f30, type: 3}
+  _scenarioManagerPrefab: {fileID: 4963385017320556158, guid: f8525030313f06b478b77ba901ebc0af, type: 3}

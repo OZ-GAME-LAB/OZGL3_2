@@ -38,20 +38,8 @@ public sealed class EventDoorOpen : MonoBehaviour
         if (!isActiveAndEnabled || _isOpen || _openRoutine != null)
             return;
 
-        if (!_hasStarted)
-        {
-            if (_spriteRenderer == null || _spriteRenderer.sprite == null)
-            {
-                Debug.LogWarning("문을 열려면 SpriteRenderer에 문 이미지가 필요합니다.", this);
-                return;
-            }
-
-            _startPosition = transform.position;
-            float distance = _spriteRenderer.bounds.size.y * Mathf.Clamp(_movePercent, 0f, 100f) * 0.01f;
-            _targetPosition = _startPosition + Vector3.up * distance;
-            _duration = Mathf.Max(0f, _openDuration);
-            _hasStarted = true;
-        }
+        if (!InitializeMovement())
+            return;
 
         if (_duration <= 0f || _startPosition == _targetPosition)
         {
@@ -60,6 +48,47 @@ public sealed class EventDoorOpen : MonoBehaviour
         }
 
         _openRoutine = StartCoroutine(OpenRoutine());
+    }
+
+    /// <summary>현재 공유 상태를 즉시 반영합니다. 닫힘 기준 위치는 최초 한 번만 기억합니다.</summary>
+    public void SetOpenImmediate(bool open)
+    {
+        if (!InitializeMovement())
+            return;
+
+        StopOpening();
+        if (open)
+        {
+            _elapsed = _duration;
+            CompleteOpen();
+        }
+        else
+        {
+            transform.position = _startPosition;
+            _elapsed = 0f;
+            _isOpen = false;
+        }
+    }
+
+    private bool InitializeMovement()
+    {
+        if (_hasStarted)
+            return true;
+        // 다른 컴포넌트의 OnEnable에서 Awake보다 먼저 호출되어도 초기화합니다.
+        if (_spriteRenderer == null)
+            _spriteRenderer = GetComponent<SpriteRenderer>();
+        if (_spriteRenderer == null || _spriteRenderer.sprite == null)
+        {
+            Debug.LogWarning("문을 열려면 SpriteRenderer에 문 이미지가 필요합니다.", this);
+            return false;
+        }
+
+        _startPosition = transform.position;
+        float distance = _spriteRenderer.bounds.size.y * Mathf.Clamp(_movePercent, 0f, 100f) * 0.01f;
+        _targetPosition = _startPosition + Vector3.up * distance;
+        _duration = Mathf.Max(0f, _openDuration);
+        _hasStarted = true;
+        return true;
     }
 
     private IEnumerator OpenRoutine()
@@ -82,6 +111,11 @@ public sealed class EventDoorOpen : MonoBehaviour
     }
 
     private void OnDisable()
+    {
+        StopOpening();
+    }
+
+    private void StopOpening()
     {
         if (_openRoutine == null)
             return;

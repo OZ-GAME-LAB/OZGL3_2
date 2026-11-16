@@ -1,0 +1,20 @@
+[
+  {
+    "Id": "UndergroundAncientPlateSolved",
+    "CompletionType": "SlidingPuzzle",
+    "DialogueId": null,
+    "RequiredCompletedScenarioId": null,
+    "BlockedByCompletedScenarioId": null,
+    "CompleteWorldOnFinish": true,
+    "PlayOncePerPlayer": true
+  },
+  {
+    "Id": "NPCGirlEncounter",
+    "CompletionType": "Dialogue",
+    "DialogueId": "NPCGirlEncounterDialogue",
+    "RequiredCompletedScenarioId": null,
+    "BlockedByCompletedScenarioId": null,
+    "CompleteWorldOnFinish": false,
+    "PlayOncePerPlayer": true
+  }
+]

@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 8002829297160629572}
   - component: {fileID: 5662621510283287333}
   - component: {fileID: 1526265444325519169}
+  - component: {fileID: 3116201902829505797}
+  - component: {fileID: 4611778106904971915}
   m_Layer: 0
   m_Name: AncientPlate
   m_TagString: Untagged
@@ -139,6 +141,38 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 13.494286, y: 5.7583437}
   m_EdgeRadius: 0
+--- !u!114 &3116201902829505797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3223627775913071348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cde229b62e8782141b296de06681a31f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlidingPuzzleInteractable
+  _interactionText: "\uD37C\uC990 \uD480\uAE30 (F)"
+  _activateOnComplete: {fileID: 4531846673951759558}
+  _interactionArea: {fileID: 1526265444325519169}
+  _sharedSource: {fileID: 4611778106904971915}
+--- !u!114 &4611778106904971915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3223627775913071348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67639d76c5ad83249ab12016be7f3b7d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ScenarioSource
+  _sourceId: AncientPlate_Underground_01
+  _scenarioId: UndergroundAncientPlateSolved
+  _activationArea: {fileID: 1526265444325519169}
+  _positionTolerance: 2
 --- !u!1 &4531846673951759558
 GameObject:
   m_ObjectHideFlags: 0

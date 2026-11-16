@@ -14,6 +14,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject _workspacePrefab_3;
     [SerializeField] private GameObject _workspacePrefab_4;
 
+    [Header("시나리오 네트워크 프리팹")]
+    [SerializeField] private NetworkObject _scenarioManagerPrefab;
+
     private bool _worldInitialized;
     private GameObject _mapWorkspace;
 
@@ -32,7 +35,10 @@ public class GameManager : MonoBehaviour
     public void StartGame()
     {
         if (_worldInitialized)
+        {
+            InitializeScenarioManager();
             return;
+        }
 
         if (_workspacePrefab_1 == null ||
             _workspacePrefab_2 == null ||
@@ -55,10 +61,24 @@ public class GameManager : MonoBehaviour
         _mapWorkspace = Instantiate(_workspacePrefab_4);
 
         _worldInitialized = true;
+        InitializeScenarioManager();
 
         NetworkManager network = NetworkManager.Singleton;
         if (network != null && network.IsClient)
             StartCoroutine(ConnectLocalPlayer());
+    }
+
+    private void InitializeScenarioManager()
+    {
+        NetworkManager network = NetworkManager.Singleton;
+        if (network == null || !network.IsServer || ScenarioManager.Inst != null || _scenarioManagerPrefab == null)
+            return;
+        if (ObjectManager.Inst == null || !_scenarioManagerPrefab.TryGetComponent<ScenarioManager>(out _))
+        {
+            Debug.LogError("ObjectManager 및 ScenarioManager 컴포넌트가 있는 네트워크 프리팹을 확인해 주세요.", this);
+            return;
+        }
+        ObjectManager.Inst.SpawnObject(_scenarioManagerPrefab, Vector3.zero, Quaternion.identity);
     }
 
     private IEnumerator ConnectLocalPlayer()

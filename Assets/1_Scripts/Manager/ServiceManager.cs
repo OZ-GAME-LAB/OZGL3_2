@@ -10,6 +10,8 @@ public class ServiceManager : MonoBehaviour
     public NetworkCraftingService CraftingService { get; private set; }
     public PlayerService PlayerService { get; private set; }
     public NetworkRuneService NetworkRuneService { get; private set; }
+    public ScenarioService ScenarioService { get; private set; }
+    private DialoguePresenter _dialoguePresenter;
 
     private void Awake()
     {
@@ -24,6 +26,21 @@ public class ServiceManager : MonoBehaviour
         InventoryService = new InventoryService();
         PlayerService = new PlayerService();
         NetworkRuneService = new NetworkRuneService(InventoryService);
+        ScenarioService = new ScenarioService();
+        _dialoguePresenter = new DialoguePresenter(ScenarioService);
+    }
+
+    private void Update()
+    {
+        ScenarioService?.Tick(Time.unscaledDeltaTime);
+    }
+
+    private void OnDestroy()
+    {
+        _dialoguePresenter?.Dispose();
+        ScenarioService?.Dispose();
+        if (Inst == this)
+            Inst = null;
     }
 
     public void InitInventory()

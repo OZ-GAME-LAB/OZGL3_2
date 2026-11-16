@@ -31,11 +31,53 @@ public enum UIType
     LobbyUI,
     SettingUI,
     BossHealthUI,
+    DialogueUI,
+    SlidingPuzzleUI,
 }
 
 
 public static class UIManagerExtension
 {
+    public static async UniTask<SlidingPuzzleUI> OpenSlidingPuzzleUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        while (uiManager != null && uiManager.IsLoading(UIType.SlidingPuzzleUI))
+            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (uiManager == null)
+            return null;
+        UIBase uiBase = await uiManager.OpenPopupRootAsync(UIType.SlidingPuzzleUI, cancellationToken);
+        return GetView<SlidingPuzzleUI>(uiBase, UIType.SlidingPuzzleUI);
+    }
+
+    public static async UniTask<InteractableInfoUI> OpenInteractableInfoUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        while (uiManager != null && uiManager.IsLoading(UIType.InteractableInfoUI))
+            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (uiManager == null)
+            return null;
+        UIBase uiBase = await uiManager.OpenMainRootAsync(UIType.InteractableInfoUI, cancellationToken);
+        return GetView<InteractableInfoUI>(uiBase, UIType.InteractableInfoUI);
+    }
+
+    public static async UniTask<DialogueUI> OpenDialogueUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        // 취소된 이전 Addressables 생성이 끝나면 그 캐시를 사용합니다.
+        // 실제 로드 실패(null)와 로딩 중을 구분하며 다른 UI의 동시 호출 규칙은 유지합니다.
+        while (uiManager != null && uiManager.IsLoading(UIType.DialogueUI))
+            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (uiManager == null)
+            return null;
+        UIBase uiBase = await uiManager.OpenPopupRootAsync(UIType.DialogueUI, cancellationToken);
+        return GetView<DialogueUI>(uiBase, UIType.DialogueUI);
+    }
+
+    public static void CloseDialogueUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.DialogueUI);
+    }
+
     public static async UniTask OpenMainUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
     {
         await uiManager.OpenMainRootAsync(UIType.MainUI, cancellationToken);
