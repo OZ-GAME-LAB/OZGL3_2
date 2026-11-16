@@ -264,6 +264,7 @@ public class InventoryService
     {
         var inventoryViewModel = new InventoryUIViewModel
         {
+            InventoryMaxSlotNumber = 24,
             TalismanItemViewModel = new(),
             FishingItemViewModel = new(),
             LoggingItemViewModel = new(),

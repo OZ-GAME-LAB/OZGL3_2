@@ -11,6 +11,7 @@ public class InventorySlotUIView : MonoBehaviour
     [SerializeField] private TMP_Text _itemName;
     [SerializeField] private TMP_Text _itemCount;
     [SerializeField] private Image Image_ItemIcon;
+    [SerializeField] private Image Image_BackGround;
 
     private InventoryItemViewModel _viewModel;
     public event Action<InventorySlotUIView, InventoryItemViewModel> ItemOnClickEvent;
@@ -25,6 +26,13 @@ public class InventorySlotUIView : MonoBehaviour
             _viewModel.PropertyChanged += OnItemPropertyChanged;
         _viewModel.InvokeOnceOnInit();
 
+    }
+    public void SetBackground(Sprite background)
+    {
+        if (Image_BackGround == null || background == null)
+            return;
+
+        Image_BackGround.sprite = background;
     }
 
     private void OnItemPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -52,10 +60,11 @@ public class InventorySlotUIView : MonoBehaviour
                 }
             case nameof(_viewModel.IconPath):
                 {
+                    Image_ItemIcon.gameObject.SetActive(true);
                     Image_ItemIcon.sprite = null;
 
                     if (!string.IsNullOrEmpty(_viewModel.IconPath))
-                        LoadItemIconAsync(_viewModel.IconPath).Forget();
+                        LoadItemIconAsync(Image_ItemIcon, _viewModel.IconPath).Forget();
 
                     break;
                 }
@@ -100,9 +109,9 @@ public class InventorySlotUIView : MonoBehaviour
 
 
 
-    private async UniTaskVoid LoadItemIconAsync(string iconPath)
+    private async UniTaskVoid LoadItemIconAsync(Image Image, string iconPath)
     {
-        await GameUtil.LoadAndSetSpriteImage(Image_ItemIcon, _viewModel.IconPath);
+        await GameUtil.LoadAndSetSpriteImage(Image, _viewModel.IconPath);
 
     }
 }

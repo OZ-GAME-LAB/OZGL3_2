@@ -27,6 +27,11 @@ public class InventoryUIView : UIBase
     [SerializeField] private TMP_Text _descriptionText;
     [SerializeField] private Button _popupCloseButton;
 
+    [Header("장비 슬롯 배경")]
+    [SerializeField] private Sprite _talismanSlotBackground;
+    [SerializeField] private Sprite _loggingSlotBackground;
+    [SerializeField] private Sprite _fishingSlotBackground;
+    [SerializeField] private Sprite _miningSlotBackground;
 
     InventoryUIViewModel _InventoryUIViewModel;
     private readonly Dictionary<InventorySlotUIView, InventoryItemViewModel> _inventorySlots = new();
@@ -158,6 +163,12 @@ public class InventoryUIView : UIBase
 
     private void MakeItemSlot(InventoryItemViewModel item)
     {
+        if(_inventorySlots.Count > _InventoryUIViewModel.InventoryMaxSlotNumber)
+        {
+            Debug.Log($"인벤토리 갯수가 {_InventoryUIViewModel.InventoryMaxSlotNumber}개를 초과했습니다");
+            return;
+        }
+
         var slotObject = Instantiate(_inventorySlotPrefab, _inventorySlotRoot);
         var slotView = slotObject.GetComponent<InventorySlotUIView>();
 
@@ -302,13 +313,32 @@ public class InventoryUIView : UIBase
     private void RebuildEquipmentSlots()
     {
         ClearEquipmentSlots();
-        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.TalismanItemViewModel);
-        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.LoggingItemViewModel);
-        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.FishingItemViewModel);
-        CreateEquipmentSlot(_EquipmentSlotRoot, _InventoryUIViewModel.MiningItemViewModel);
+
+        CreateEquipmentSlot(
+            _EquipmentSlotRoot,
+            _InventoryUIViewModel.TalismanItemViewModel,
+            _talismanSlotBackground);
+
+        CreateEquipmentSlot(
+            _EquipmentSlotRoot,
+            _InventoryUIViewModel.LoggingItemViewModel,
+            _loggingSlotBackground);
+
+        CreateEquipmentSlot(
+            _EquipmentSlotRoot,
+            _InventoryUIViewModel.FishingItemViewModel,
+            _fishingSlotBackground);
+
+        CreateEquipmentSlot(
+            _EquipmentSlotRoot,
+            _InventoryUIViewModel.MiningItemViewModel,
+            _miningSlotBackground);
     }
 
-    private void CreateEquipmentSlot(Transform root, InventoryItemViewModel inventoryItemViewModel)
+    private void CreateEquipmentSlot(
+        Transform root,
+        InventoryItemViewModel inventoryItemViewModel,
+        Sprite background)
     {
         if (root == null)
             return;
@@ -319,11 +349,15 @@ public class InventoryUIView : UIBase
         if (slotView == null)
         {
             Destroy(slotObject);
-            Debug.LogError("InventorySlotUIView가 프리팹에 없습니다.", _inventorySlotPrefab);
+            Debug.LogError(
+                "InventorySlotUIView가 프리팹에 없습니다.",
+                _inventorySlotPrefab);
             return;
         }
 
         slotView.Bind(inventoryItemViewModel);
+        slotView.SetBackground(background);
+
         slotView.ItemOnClickEvent += ItemOnClick;
         _equipmentSlots.Add(slotView);
     }
