@@ -38,6 +38,32 @@ public class PlayerControllerView : MonoBehaviour
     private bool _jumpInProgress;
     private bool _wasGroundedForAnimation = true;
     private PlayerAnimationPresenter _animationPresenter;
+    private bool _wasAttackLocked;
+    private bool IsAttackLocked => _runeAttackController != null && _runeAttackController.IsAttackActive;
+    public bool CanStartGroundAttack => gameObject.activeInHierarchy && !_isSpectatorMode && !_isMiniGameMode &&
+        !_isCrouching && !_jumpInProgress && _rigidbody2D != null && _rigidbody2D.simulated && IsGroundedForAttack() &&
+        (_wallCling == null || !_wallCling.IsClinging);
+    private readonly RaycastHit2D[] _attackGroundHits = new RaycastHit2D[4];
+
+    private bool IsGroundedForAttack()
+    {
+        if (_rigidbody2D == null || _groundCheck == null) return false;
+        if (_networkObject == null || !_networkObject.IsSpawned || _networkObject.IsOwner)
+            return HasGroundContact();
+        // 원격 캐릭터는 Kinematic이라 정적 바닥과 접촉 정보가 없을 수 있습니다.
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(_groundLayer);
+        filter.useTriggers = false;
+        int count = Physics2D.Raycast((Vector2)_groundCheck.position + Vector2.up * _checkRadius,
+            Vector2.down, filter, _attackGroundHits, _checkRadius * 2f);
+        for (int i = 0; i < count; i++)
+        {
+            if (_attackGroundHits[i].collider != _bodyCollider &&
+                _attackGroundHits[i].normal.y >= MinimumGroundNormalY)
+                return true;
+        }
+        return false;
+    }
     private readonly ContactPoint2D[] _groundContacts = new ContactPoint2D[16];
 
     [Header("애니메이션 진단")]
@@ -186,6 +212,7 @@ public class PlayerControllerView : MonoBehaviour
         _consumableAction.performed += OnConsumable;
         _fieldInteractAction.performed += OnFieldInteract;
         _attackAction.performed += OnAttack;
+        _attackAction.canceled += OnAttackCanceled;
         _specialAttackAction.performed += OnSpecialAttack;
         _switchConsumableAction.performed += OnSwitchConsumable;
         _inventoryAction.performed += OnOpenInventory;
@@ -219,6 +246,7 @@ public class PlayerControllerView : MonoBehaviour
     private void OnDisable()
     {
         EndHitControlLock();
+        _runeAttackController?.CancelAttackInput();
         RestoreThinPlatformCollisions();
         // Awake에서 필수 참조를 찾지 못해 비활성화된 경우에는 구독한 입력이 없습니다.
         if (!_inputActionsInitialized)
@@ -238,6 +266,7 @@ public class PlayerControllerView : MonoBehaviour
         _consumableAction.performed -= OnConsumable;
         _fieldInteractAction.performed -= OnFieldInteract;
         _attackAction.performed -= OnAttack;
+        _attackAction.canceled -= OnAttackCanceled;
         _specialAttackAction.performed -= OnSpecialAttack;
         _switchConsumableAction.performed -= OnSwitchConsumable;
         _inventoryAction.performed -= OnOpenInventory;
@@ -273,6 +302,9 @@ public class PlayerControllerView : MonoBehaviour
         {
             return;
         }
+
+        if (!CanReadAttackInput())
+            _runeAttackController?.CancelAttackInput();
 
         if (IsHitControlLocked)
             return;
@@ -333,6 +365,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void SetSpectatorMode(bool enabled)
     {
+        if (enabled && IsAttackLocked) return;
         if (_isSpectatorMode == enabled)
             return;
 
@@ -367,9 +400,21 @@ public class PlayerControllerView : MonoBehaviour
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
 
+        // 공격 중 이동 제한이 피격으로 밀려나는 속도를 지우지 않도록 먼저 처리합니다.
         if (UpdateHitControlLock())
         {
             UpdateThinPlatformCollisions();
+            UpdateGroundStateAndAnimation();
+            return;
+        }
+
+        if (IsAttackLocked)
+        {
+            SetMoveInput(0f);
+            ResetRunUp();
+            Vector2 attackVelocity = _rigidbody2D.linearVelocity;
+            attackVelocity.x = 0f;
+            _rigidbody2D.linearVelocity = attackVelocity;
             UpdateGroundStateAndAnimation();
             return;
         }
@@ -594,6 +639,7 @@ public class PlayerControllerView : MonoBehaviour
     {
         get
         {
+            if (IsAttackLocked) return 0f;
             float input = _moveInput;
             Keyboard keyboard = Keyboard.current;
             // Move의 2D 합성 입력은 S+A/D에서 X가 0.707로 줄어들므로 키보드 앉기 이동만 보정합니다.
@@ -959,7 +1005,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnMove(InputAction.CallbackContext context)
     {
-        if (_isSpectatorMode || IsHitControlLocked)
+        if (_isSpectatorMode || IsHitControlLocked || IsAttackLocked)
             return;
 
         SetMoveInput(context.ReadValue<Vector2>().x);
@@ -1228,7 +1274,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (_isSpectatorMode || IsHitControlLocked)
+        if (_isSpectatorMode || IsHitControlLocked || IsAttackLocked)
             return;
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
@@ -1327,7 +1373,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnFieldInteract(InputAction.CallbackContext context)
     {
-        if (IsHitControlLocked)
+        if (IsHitControlLocked || IsAttackLocked)
             return;
 
         Debug.Log($"{nameof(OnFieldInteract)} 실행");
@@ -1353,7 +1399,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void OnAttack(InputAction.CallbackContext context)
     {
-        if (IsHitControlLocked || _isSpectatorMode || _networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false || _runeAttackController == null)
+        if (!CanReadAttackInput() || _runeAttackController == null || (!IsAttackLocked && !CanStartGroundAttack))
         {
             return;
         }
@@ -1362,6 +1408,60 @@ public class PlayerControllerView : MonoBehaviour
 
         Debug.Log($"{nameof(OnAttack)} 실행");
 
+    }
+
+    private bool CanReadAttackInput()
+    {
+        return !IsHitControlLocked && !_isSpectatorMode && !_isMiniGameMode && _networkObject != null &&
+            _networkObject.IsSpawned && _networkObject.IsOwner && _playerInput != null &&
+            _playerInput.isActiveAndEnabled && _playerInput.inputIsActive &&
+            _attackAction != null && _attackAction.enabled && Application.isFocused;
+    }
+
+    private void OnAttackCanceled(InputAction.CallbackContext context)
+    {
+        if (CanReadAttackInput()) _runeAttackController?.ReleaseAttack();
+        else _runeAttackController?.CancelAttackInput();
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus) _runeAttackController?.CancelAttackInput();
+    }
+
+    public void UpdateAttackPresentation()
+    {
+        bool locked = IsAttackLocked;
+        if (_runeAttackController != null && _runeAttackController.IsSpawned)
+        {
+            if (locked)
+            {
+                bool faceRight = _runeAttackController.AttackState.Direction > 0;
+                _lookRight = faceRight;
+                Vector3 scale = transform.localScale;
+                float facingX = Mathf.Abs(scale.x) * (faceRight ? 1f : -1f);
+                if (scale.x != facingX)
+                {
+                    scale.x = facingX;
+                    transform.localScale = scale;
+                    if (_wallCling != null) _wallCling.SyncSensorTransform();
+                }
+            }
+            _animationPresenter?.UpdateAttack(_runeAttackController.AttackState,
+                _runeAttackController.AttackClock, locked || !_wasAttackLocked || IsGroundedForAttack());
+        }
+        else
+            _animationPresenter?.UpdateAttack(default, 0, true);
+
+        if (_wasAttackLocked && !locked && _networkObject != null && _networkObject.IsOwner)
+        {
+            float input = _moveAction != null && _moveAction.enabled && _playerInput.inputIsActive &&
+                !_isMiniGameMode && !_isSpectatorMode ? _moveAction.ReadValue<Vector2>().x : 0f;
+            SetMoveInput(input);
+            if ((input > 0f && !_lookRight) || (input < 0f && _lookRight)) Flip();
+            UpdateMovementAnimation();
+        }
+        _wasAttackLocked = locked;
     }
 
     private void OnSpecialAttack(InputAction.CallbackContext context)
@@ -1552,6 +1652,7 @@ public class PlayerControllerView : MonoBehaviour
 
     private void EnterMiniGameMode()
     {
+        _runeAttackController?.CancelAttackInput();
         if (_isMiniGameMode)
             return;
 
@@ -1595,4 +1696,5 @@ public class PlayerControllerView : MonoBehaviour
 
         _interactionController?.CancelRequestedInteraction();
     }
+
 }

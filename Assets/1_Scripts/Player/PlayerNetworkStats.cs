@@ -13,6 +13,10 @@ public class PlayerNetworkStats : NetworkUnit
     [SerializeField, Min(0f)] private float _initialMoveSpeed = 12f;
     [SerializeField, Min(0f)] private float _initialJumpForce = 17.5f;
 
+    [Header("기본 공격 간격")]
+    [Tooltip("3타별 모션 시간의 기준 간격(초)입니다. 룬 공격속도 배율은 공격 시 적용합니다.")]
+    [SerializeField, Min(0.01f)] private float _initialBaseAttackInterval = 0.75f;
+
     [Header("상태 이상")]
     [SerializeField, Range(-1f, 1f)] private float _initialPoisonResistance;
 
@@ -26,10 +30,13 @@ public class PlayerNetworkStats : NetworkUnit
 
     private NetworkVariable<float> _jumpForce = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    private NetworkVariable<float> _baseAttackInterval = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     // 플레이어마다 서로 다른 VM 인스턴스를 가짐.
     public PlayerStatViewModel ViewModel { get; } = new();
 
     public float Hp => CurrentHp;
+    public float BaseAttackInterval => _baseAttackInterval.Value;
 
     public override void OnNetworkSpawn()
     {
@@ -43,6 +50,7 @@ public class PlayerNetworkStats : NetworkUnit
 
             _moveSpeed.Value = ValidOrDefault(_initialMoveSpeed, 12f, 0f);
             _jumpForce.Value = ValidOrDefault(_initialJumpForce, 17.5f, 0f);
+            _baseAttackInterval.Value = ValidOrDefault(_initialBaseAttackInterval, 0.75f, 0.01f);
             SetPoisonResistanceOnServer(ValidOrDefault(_initialPoisonResistance, 0f, -1f));
         }
 
