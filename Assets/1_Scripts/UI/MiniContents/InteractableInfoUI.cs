@@ -37,7 +37,9 @@ public class InteractableInfoUI : UIBase
         object sender,
         PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(InteractionVMBase.IsAvailable)
+        if (e.PropertyName == nameof(InteractionVMBase.HasRequiredTool)
+            || e.PropertyName == nameof(InteractionVMBase.IsAvailable)
+            || e.PropertyName == nameof(InteractionVMBase.IsUsedByOtherPlayer)
             || e.PropertyName == nameof(InteractionVMBase.InteractionInfoText))
         {
             RefreshInfo();
@@ -46,7 +48,21 @@ public class InteractableInfoUI : UIBase
 
     private void RefreshInfo()
     {
-        _infoText.text = _viewModel.IsAvailable ? _viewModel.InteractionInfoText : "상호작용 불가";
+        if (!_viewModel.HasRequiredTool)
+        {
+            _infoText.text = "상호작용 불가\n(관련 도구 없음)";
+            return;
+        }
+
+        if (_viewModel.IsAvailable)
+        {
+            _infoText.text = _viewModel.InteractionInfoText;
+            return;
+        }
+
+        _infoText.text = _viewModel.IsUsedByOtherPlayer
+            ? "상호작용 불가\n(다른 유저 사용 중)"
+            : "상호작용 불가";
     }
 
     private void OnDisable()

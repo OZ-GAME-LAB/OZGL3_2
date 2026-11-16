@@ -7,8 +7,10 @@ using Unity.Behavior;
 public class BossNetwork : NetworkUnit
 {
     private bool _statsInitialized;
+    private MonsterData _monsterData;
     private Boss _boss;
     public bool IsReady { get; private set; }
+    public event System.Action Despawned;
     protected override bool IsReadyForCombat => IsReady;
     private BehaviorGraphAgent _bt;
     private readonly Dictionary<string, List<BossThornAttackObject>> _thornVisualPools = new();
@@ -71,6 +73,7 @@ public class BossNetwork : NetworkUnit
         IsReady = false;
 
         base.OnNetworkDespawn();
+        Despawned?.Invoke();
     }
 
     public bool InitializeStatsOnServer(string id)
@@ -116,6 +119,7 @@ public class BossNetwork : NetworkUnit
                 data.IceResistance, data.ElectricalResistance, data.PoisonResistance))
             return false;
 
+        _monsterData = data;
         _statsInitialized = true;
 
         InitializeSkillsOnServerAsync(data).Forget();
@@ -130,9 +134,18 @@ public class BossNetwork : NetworkUnit
         if (_bt != null)
             _bt.enabled = false;
 
-        // TODO: 보스 소멸 연출이 완료된 뒤 Despawn하도록 연결.
-        if (IsSpawned)
-            NetworkObject.Despawn();
+        int playerCount = NetworkManager.ConnectedClientsList.Count;
+
+        try
+        {
+            DropRewardUtil.SpawnMonsterRewardsOnServer(_monsterData, transform.position, playerCount, this);
+        }
+        finally
+        {
+            // TODO: 보스 소멸 연출이 완료된 뒤 Despawn하도록 연결.
+            if (IsSpawned)
+                NetworkObject.Despawn();
+        }
     }
 
     private async UniTask InitializeSkillsOnServerAsync(MonsterData data)

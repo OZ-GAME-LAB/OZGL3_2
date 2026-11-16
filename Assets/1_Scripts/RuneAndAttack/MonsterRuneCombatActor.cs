@@ -35,6 +35,16 @@ public class MonsterRuneCombatActor : RuneCombatActor
         }
     }
 
+    public override RuneDamageResult ReceiveDirectDamageOnServer(RuneDamageInfo damageInfo)
+    {
+        RuneDamageResult result = base.ReceiveDirectDamageOnServer(damageInfo);
+
+        if (result.Accepted && result.ActualDamage > 0f && _unit is MonsterNetwork monster)
+            monster.ApplyHitStaggerOnServer();
+
+        return result;
+    }
+
     public override bool CanHit(RuneCombatActor target)
     {
         return CanAttack &&

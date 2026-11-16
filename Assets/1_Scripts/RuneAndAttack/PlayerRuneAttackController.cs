@@ -115,7 +115,8 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
         Debug.Log($"[서버 Actor] 종류: {_actor.GetType().Name}, " + $"Spawned: {_actor.IsSpawned}, " + $"Alive: {_actor.IsAlive}, " + $"CanAttack: {_actor.CanAttack}, " + $"공격력: {_actor.AttackPower}", this);
 
-        if (_actor.IsSpawned == false || _actor.IsAlive == false || _actor.CanAttack == false)
+        if (_actor.IsSpawned == false || _actor.IsAlive == false || _actor.CanAttack == false
+            || (_actor is PlayerRuneCombatActor playerActor && playerActor.IsHitControlLocked))
         {
             Debug.LogWarning("[공격 중단] Actor가 공격 가능한 상태가 아닙니다.", this);
             return;

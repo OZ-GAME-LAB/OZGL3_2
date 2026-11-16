@@ -20,6 +20,20 @@ public class InventoryService
         };
     }
 
+    public string GetEquipmentItemId(EquipmentSlot slot)
+    {
+        var inventory = GetInvantoryViewModel();
+
+        return slot switch
+        {
+            EquipmentSlot.Talisman => inventory.TalismanItemViewModel?.Id,
+            EquipmentSlot.FishingRod => inventory.FishingItemViewModel?.Id,
+            EquipmentSlot.Axe => inventory.LoggingItemViewModel?.Id,
+            EquipmentSlot.PickAxe => inventory.MiningItemViewModel?.Id,
+            _ => null
+        };
+    }
+
     public bool AddItem(string itemDataId)
     {
         if (!DataManager.Inst.ReadData<ItemData>().TryGetValue(itemDataId, out var data))

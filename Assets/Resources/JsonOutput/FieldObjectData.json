@@ -18,9 +18,9 @@
     "Description": null,
     "InteractionType": "Logging",
     "DestroyAfterUse": true,
-    "RequiredToolAction": null,
+    "RequiredToolAction": "Logging",
     "Tier": 1,
-    "IsMandatoryDropItem": false,
+    "IsMandatoryDropItem": null,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": "Drop_Gather_01",
     "PrefabPath": "Prefab/Mesh/TestLoggingMiningPrefab"
@@ -33,7 +33,7 @@
     "DestroyAfterUse": false,
     "RequiredToolAction": "Fishing",
     "Tier": 1,
-    "IsMandatoryDropItem": false,
+    "IsMandatoryDropItem": null,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": "drop_fishing_01",
     "PrefabPath": null
@@ -46,7 +46,7 @@
     "DestroyAfterUse": true,
     "RequiredToolAction": "Logging",
     "Tier": 1,
-    "IsMandatoryDropItem": false,
+    "IsMandatoryDropItem": null,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": "drop_logging_01",
     "PrefabPath": null
@@ -57,9 +57,9 @@
     "Description": null,
     "InteractionType": "Gathering",
     "DestroyAfterUse": true,
-    "RequiredToolAction": null,
+    "RequiredToolAction": "Logging",
     "Tier": 1,
-    "IsMandatoryDropItem": false,
+    "IsMandatoryDropItem": null,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": "drop_berry_01",
     "PrefabPath": null
@@ -70,9 +70,9 @@
     "Description": null,
     "InteractionType": "Gathering",
     "DestroyAfterUse": true,
-    "RequiredToolAction": null,
+    "RequiredToolAction": "Logging",
     "Tier": 1,
-    "IsMandatoryDropItem": false,
+    "IsMandatoryDropItem": null,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": "drop_berry_02",
     "PrefabPath": null
@@ -85,7 +85,7 @@
     "DestroyAfterUse": true,
     "RequiredToolAction": "Mining",
     "Tier": 1,
-    "IsMandatoryDropItem": false,
+    "IsMandatoryDropItem": null,
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": "drop_mining_01",
     "PrefabPath": null

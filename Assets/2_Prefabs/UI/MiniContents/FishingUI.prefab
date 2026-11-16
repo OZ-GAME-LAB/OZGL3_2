@@ -563,6 +563,7 @@ GameObject:
   - component: {fileID: 7139464179556319200}
   - component: {fileID: 3152913909760269572}
   - component: {fileID: 6669768159921354342}
+  - component: {fileID: 2624840119755750839}
   m_Layer: 0
   m_Name: FishingUI
   m_TagString: Untagged
@@ -616,6 +617,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FishingUI
   _pointerPivot: {fileID: 8329824916923468098}
+  _successZone: {fileID: 5309401400846963666}
+  _fillGauge: {fileID: 2285841752644005302}
+  _failureImages:
+  - Remaining: {fileID: 2178674228660518692}
+    Failed: {fileID: 3623731372769897972}
+  - Remaining: {fileID: 5542168635088049449}
+    Failed: {fileID: 123840738024611131}
+  - Remaining: {fileID: 1304157849341272901}
+    Failed: {fileID: 2280691293408132933}
 --- !u!114 &6669768159921354342
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -646,6 +656,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2624840119755750839
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5034411707566232951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ab52d8d87ebb634abec5bc48e0e2d39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionUIPositioner
+  _edgePadding: 12
+  _returnPadding: 16
 --- !u!1 &5542168635088049449
 GameObject:
   m_ObjectHideFlags: 0

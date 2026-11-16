@@ -30,6 +30,7 @@ public enum UIType
     FishingUI,
     LobbyUI,
     SettingUI,
+    BossHealthUI,
 }
 
 

@@ -2,6 +2,7 @@
 using System;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 public abstract class InteractableObject : MonoBehaviour
 {
@@ -69,6 +70,11 @@ public abstract class InteractableObject : MonoBehaviour
         HideInteractionInfo();
     }
 
+    protected virtual void OnDestroy()
+    {
+        ReleaseVisual();
+    }
+
     public abstract UniTask InitObject(string id);
 
     public void PlayerInteract(/*장비 타입을 검사할 수 있는 장비 ID(string 타입) 매개변수 추가*/)
@@ -78,6 +84,8 @@ public abstract class InteractableObject : MonoBehaviour
 
     private void HandleAvailabilityChanged(bool isAvailable)
     {
+        ViewModel.IsUsedByOtherPlayer = !isAvailable && RequiresServerReservation
+            && _interactionNetwork != null && _interactionNetwork.IsUsedByOtherPlayer;
         ViewModel.IsAvailable = isAvailable;
     }
 
@@ -128,10 +136,31 @@ public abstract class InteractableObject : MonoBehaviour
 
     protected void RegisterVisual(GameObject visualObject)
     {
-        _visualObject = visualObject;
+        if (this == null)
+        {
+            if (visualObject is not null)
+                Addressables.Release(visualObject);
+
+            return;
+        }
+
+        if (!ReferenceEquals(_visualObject, visualObject))
+        {
+            ReleaseVisual();
+            _visualObject = visualObject;
+        }
 
         if (_visualObject != null)
             _visualObject.SetActive(!_isDormant);
+    }
+
+    private void ReleaseVisual()
+    {
+        GameObject visualObject = _visualObject;
+        _visualObject = null;
+
+        if (visualObject is not null)
+            Addressables.Release(visualObject);
     }
 
     public void ApplyDormantState(bool isDormant)
