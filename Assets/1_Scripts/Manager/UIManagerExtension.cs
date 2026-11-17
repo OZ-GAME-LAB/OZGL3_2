@@ -37,6 +37,7 @@ public enum UIType
     CinematicEffectUI,
     BossEntryUI,
     SaveSelectionUI,
+    PlayerHudUI
 }
 
 
@@ -109,12 +110,14 @@ public static class UIManagerExtension
 
     public static async UniTask<InventoryUIView> OpenInventoryUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
     {
+        ServiceManager.Inst.PlayerService.SetUIInputAction(true);
         UIBase uiBase = await uiManager.OpenMainRootAsync(UIType.InventoryUI, cancellationToken);
         return GetView<InventoryUIView>(uiBase, UIType.InventoryUI);
     }
 
     public static void CloseInventoryUI(this UIManager uiManager)
     {
+        ServiceManager.Inst.PlayerService.SetUIInputAction(false);
         uiManager.Close(UIType.InventoryUI);
     }
 
@@ -171,6 +174,16 @@ public static class UIManagerExtension
     public static void CloseSettingUI(this UIManager uiManager)
     {
         uiManager.Close(UIType.SettingUI);
+    }
+
+    public static async UniTask OpenPlayerHudUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        await uiManager.OpenMainRootAsync(UIType.PlayerHudUI, cancellationToken);
+    }
+
+    public static void ClosePlayerHudUI(this UIManager uiManager)
+    {
+        uiManager.Close(UIType.PlayerHudUI);
     }
 
     //UI를 생성하고 View를 가져오고 싶을 때 사용

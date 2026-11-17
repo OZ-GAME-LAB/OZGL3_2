@@ -147,16 +147,20 @@ public class NetworkCraftingService
             }
         }
 
-        /*
+        
         foreach (var material in materials)
         {
-            InventoryManager.Inst.RemoveItem(
-                material.Key,
-                material.Value);
+
+            for(int i = 0; i < material.Value; i++)
+            {
+
+            }
+            ServiceManager.Inst.InventoryService.RemoveItem(
+                material.Key);
         }
 
-        InventoryManager.Inst.AddItem(recipe.Item_Id, 1);
-        */
+        ServiceManager.Inst.InventoryService.AddItem(recipe.Item_Id);
+        
         Debug.LogWarning("재료는 충분하지만 실제 재료 차감과 결과물 지급은 아직 연결되지 않았습니다.");
         RefreshInventoryState();
         return true;

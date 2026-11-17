@@ -42,7 +42,7 @@ public class InventoryService
         }
 
 
-        if(_inventoryViewModel.InventoryItemViewModelDictionary != null)
+        if (_inventoryViewModel.InventoryItemViewModelDictionary != null)
         {
             foreach (var pair in _inventoryViewModel.InventoryItemViewModelDictionary)
             {
@@ -58,43 +58,53 @@ public class InventoryService
                 return true;
             }
         }
+
+        if (_inventoryViewModel.InventoryItemViewModelDictionary.Count >= _inventoryViewModel.InventoryMaxSlotNumber)
+        {
+            Debug.Log($"인벤토리 갯수가 {_inventoryViewModel.InventoryMaxSlotNumber}개를 초과했습니다");
+
+            return false;
+        }
+
         var itemViewModel = CreateInventoryItemViewModel(data);
 
         string slotKey = _nextSlotNumber.ToString();
         _inventoryViewModel.InventoryItemViewModelDictionary.Add(slotKey, itemViewModel);
         _nextSlotNumber++;
-        
+
         return true;
     }
-    public bool RemoveItem(InventoryItemViewModel item)
+    public bool RemoveItem(string itemId)
     {
         var items = _inventoryViewModel?.InventoryItemViewModelDictionary;
-        if (item == null || items == null)
+
+        if (string.IsNullOrEmpty(itemId) || items == null)
             return false;
 
-        string key = null;
+        string slotKey = null;
+        InventoryItemViewModel targetItem = null;
 
         foreach (var pair in items)
         {
-            if (ReferenceEquals(pair.Value, item))
+            if (pair.Value != null && pair.Value.Id == itemId)
             {
-                key = pair.Key;
+                slotKey = pair.Key;
+                targetItem = pair.Value;
                 break;
             }
         }
 
-        if (key == null)
+        if (targetItem == null)
             return false;
 
-        if (item.Count > 1)
+        if (targetItem.Count > 1)
         {
-            item.Count--;
-
+            targetItem.Count--;
         }
         else
         {
-            items.Remove(key);
-            Debug.Log($"{item.Name}아이템 제거함");
+            items.Remove(slotKey);
+            Debug.Log($"{targetItem.Name}아이템 제거함");
         }
 
         return true;
@@ -102,6 +112,23 @@ public class InventoryService
 
     public void UseItem(InventoryItemViewModel item)
     {
+        if (!DataManager.Inst.ReadData<ConsumableData>()
+            .TryGetValue(item.Id, out var consumableData))
+        {
+            return;
+        }
+
+
+        switch (consumableData.EffectType)
+        {
+            case nameof(ConsumableEffectType.RestoreHp):
+                ServiceManager.Inst.PlayerService.HealOnPlayerSelf(consumableData.EffectValue);
+
+                break;
+            default:
+                break;
+        }
+
         Debug.Log($"{item.Name}아이템 사용됨");
     }
 
@@ -112,8 +139,8 @@ public class InventoryService
             Debug.LogError("InventoryUIView가 null입니다.");
             return;
         }
-        
-        
+
+
         inventoryView.Bind(_inventoryViewModel);
     }
 
@@ -122,8 +149,7 @@ public class InventoryService
         if (item == null || string.IsNullOrEmpty(item.Id))
             return false;
 
-        if (!DataManager.Inst.ReadData<EquipmentData>()
-            .TryGetValue(item.Id, out var equipmentData))
+        if (!DataManager.Inst.ReadData<EquipmentData>().TryGetValue(item.Id, out var equipmentData))
         {
             return false;
         }
@@ -182,12 +208,13 @@ public class InventoryService
 
             case EquipmentSlot.Talisman:
                 inventory.TalismanItemViewModel = item;
+                CheckTalismanEffectType(inventory.TalismanItemViewModel,true);
                 break;
         }
 
         return true;
     }
-    
+
     public bool UnequipItem(InventoryItemViewModel item)
     {
         if (item == null || string.IsNullOrEmpty(item.Id))
@@ -214,6 +241,7 @@ public class InventoryService
         switch (slot)
         {
             case EquipmentSlot.Talisman:
+                CheckTalismanEffectType(inventory.TalismanItemViewModel, false);
                 inventory.TalismanItemViewModel = new InventoryItemViewModel();
                 break;
 
@@ -252,7 +280,7 @@ public class InventoryService
 
     private InventoryUIViewModel GetInvantoryViewModel()
     {
-        if( _inventoryViewModel == null)
+        if (_inventoryViewModel == null)
         {
             _inventoryViewModel = CreateInvantoryViewModel();
         }
@@ -307,6 +335,34 @@ public class InventoryService
             || ReferenceEquals(inventory.MiningItemViewModel, item);
     }
 
+    private bool CheckTalismanEffectType(InventoryItemViewModel item, bool isEquipment)
+    {
+        if (!DataManager.Inst.ReadData<EquipmentData>().TryGetValue(item.Id, out var equipmentData))
+        {
+            return false;
+        }
+
+
+        switch (equipmentData.EquipmentEffectType)
+        {
+            case EquipmentEffectType.None:
+                break;
+            case EquipmentEffectType.InstantHeal:
+                break;
+            case EquipmentEffectType.StatusDamage:
+                break;
+            case EquipmentEffectType.ReducePoisonDamageTaken:
+                ServiceManager.Inst.PlayerService.SetPlayerPoisonProtectionAmulet(isEquipment);
+                break;
+
+            default:
+                return false;
+
+        }
+        return true;
+    }
+
+
     //인벤토리 아이템들을 반환하는 메서드 추가
     public IEnumerable<InventoryItemViewModel> GetInventoryItems()
     {
@@ -327,5 +383,5 @@ public class InventoryService
         }
     }
 
-   
+
 }

@@ -1,7 +1,49 @@
-﻿using UnityEngine;
+﻿using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerService
 {
+
+
+    public bool HealOnPlayerSelf(float value)
+    {
+
+        if (!NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent<PlayerNetworkStats>(out var stats))
+        {
+            return false;
+        }
+
+        stats.HealOnServer(value);
+        Debug.Log($"{value}만큼 회복됨");
+        return true;
+    }
+
+    public void SetUIInputAction(bool open)
+    {
+
+        if (!NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent<PlayerInput>(out var input))
+        {
+            return;
+        }
+        
+        input.SwitchCurrentActionMap(open ? "UI" : "Player");
+
+    }
+
+    public void SetPlayerPoisonProtectionAmulet(bool isEquipment)
+    {
+
+        if (!NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent<PlayerNetworkStats>(out var stats))
+        {
+            return;
+        }
+
+        stats.SetPoisonProtectionAmuletOnServer(isEquipment);
+
+        Debug.Log($"독 저항 탈리스만 {isEquipment}");
+    }
+
     // 서버에서 호출해야 실제로 적용됨.
     // TO USE : 서버에서 지정한 플레이어를 회복할 때 사용. target으로 회복할 플레이어를 구분.
     public bool AddHp(PlayerNetworkStats target, float value)

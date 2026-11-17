@@ -203,7 +203,24 @@ public class FieldItemObject : NetworkBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (IsServer == false || CanMerge == false)
+        if (IsServer == false)
+        {
+            return;
+        }
+
+        // Player와 충돌했을 때
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Player"))
+        {
+            if (IsSpawned == false || Count <= 0)
+            {
+                return;
+            }
+
+            OnPlayerCollision(Count);
+            return;
+        }
+
+        if (CanMerge == false)
         {
             return;
         }
@@ -263,6 +280,23 @@ public class FieldItemObject : NetworkBehaviour
         if (donor.Count == 0)
         {
             donor.NetworkObject.Despawn(destroy: true);
+        }
+    }
+
+    private void OnPlayerCollision(int itemCount)
+    {
+        for (int i = 0; i < itemCount; i++)
+        {
+            if (!ServiceManager.Inst.InventoryService.AddItem(ItemDataId))
+            {
+                break;
+            }
+            _count.Value--;
+        }
+
+        if (Count == 0)
+        {
+            NetworkObject.Despawn(destroy: true);
         }
     }
 }
