@@ -163,12 +163,6 @@ public class InventoryUIView : UIBase
 
     private void MakeItemSlot(InventoryItemViewModel item)
     {
-        if(_inventorySlots.Count > _InventoryUIViewModel.InventoryMaxSlotNumber)
-        {
-            Debug.Log($"인벤토리 갯수가 {_InventoryUIViewModel.InventoryMaxSlotNumber}개를 초과했습니다");
-            return;
-        }
-
         var slotObject = Instantiate(_inventorySlotPrefab, _inventorySlotRoot);
         var slotView = slotObject.GetComponent<InventorySlotUIView>();
 
@@ -293,7 +287,7 @@ public class InventoryUIView : UIBase
     }
     private void RemoveItemRequest(InventoryItemViewModel item)
     {
-        ServiceManager.Inst.InventoryService.RemoveItem(item);
+        ServiceManager.Inst.InventoryService.RemoveItem(item.Id);
     }
 
     private void ClearInventorySlots()

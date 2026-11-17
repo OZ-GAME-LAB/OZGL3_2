@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 
@@ -36,6 +37,7 @@ public class StageEntryPoint : MonoBehaviour
         }
 
         WorldManager.Inst.RegisterStageEntryPoint(this);
+        UIManager.Inst.OpenPlayerHudUIAsync().Forget();
     }
 
     private void OnDisable()
