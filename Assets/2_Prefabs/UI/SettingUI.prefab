@@ -331,6 +331,7 @@ MonoBehaviour:
   _bgmSlider: {fileID: 399779203056865039}
   _sfxSlider: {fileID: 917375444052834828}
   Button_Close: {fileID: 3516491561014224900}
+  Button_QuitGame: {fileID: 8404872770943894405}
 --- !u!1 &2644822815736061869
 GameObject:
   m_ObjectHideFlags: 0
