@@ -7,12 +7,15 @@ public class SettingUI : UIBase
     [SerializeField] private Slider _bgmSlider;
     [SerializeField] private Slider _sfxSlider;
     [SerializeField] private Button Button_Close;
+    [SerializeField] private Button Button_QuitGame;
 
     private SoundManager _boundManager;
+    private bool _isQuitting;
 
     private void Awake()
     {
         Button_Close.onClick.AddListener(OnClose);
+        Button_QuitGame.onClick.AddListener(OnQuitGame);
     }
     
     private void OnEnable()
@@ -52,6 +55,7 @@ public class SettingUI : UIBase
         if (Button_Close != null)
         {
             Button_Close.onClick.RemoveListener(OnClose);
+            Button_QuitGame.onClick.RemoveListener(OnQuitGame);
         }
     }
 
@@ -100,5 +104,28 @@ public class SettingUI : UIBase
         {
             UIManager.Inst.CloseSettingUI();
         }
+    }
+
+    private void OnQuitGame()
+    {
+        if (_isQuitting)
+        {
+            return;
+        }
+
+        _isQuitting = true;
+
+        if (Button_QuitGame != null)
+        {
+            Button_QuitGame.interactable = false;
+        }
+
+        // 현재는 사운드 설정만 저장.
+        if (SoundManager.Inst != null)
+        {
+            SoundManager.Inst.SaveSettings();
+        }
+
+        Application.Quit();
     }
 }
