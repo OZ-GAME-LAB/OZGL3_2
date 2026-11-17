@@ -1,8 +1,38 @@
 [
   {
+    "Id": "con_fish_01",
+    "EffectType": "RestoreHp",
+    "EffectValue": 30,
+    "ValueBasis": "Flat",
+    "ValueOperation": "Flat",
+    "CooldownSec": 2,
+    "UseEffectPrefabPath": null
+  },
+  {
+    "Id": "con_fish_02",
+    "EffectType": "RestoreHp",
+    "EffectValue": -10,
+    "ValueBasis": "Flat",
+    "ValueOperation": "Flat",
+    "CooldownSec": 2,
+    "UseEffectPrefabPath": null
+  },
+  {
     "Id": "con_red_berry",
-    "EffectId": "effect_heal_hp",
-    "EffectValue": 20,
-    "CooldownSec": 0
+    "EffectType": "RestoreHp",
+    "EffectValue": 10,
+    "ValueBasis": "Flat",
+    "ValueOperation": "Flat",
+    "CooldownSec": 2,
+    "UseEffectPrefabPath": null
+  },
+  {
+    "Id": "con_berry_02",
+    "EffectType": "RestoreHp",
+    "EffectValue": 50,
+    "ValueBasis": "Flat",
+    "ValueOperation": "Flat",
+    "CooldownSec": 2,
+    "UseEffectPrefabPath": null
   }
 ]

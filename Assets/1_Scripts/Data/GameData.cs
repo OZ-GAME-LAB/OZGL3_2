@@ -79,7 +79,10 @@ public enum DamageType
     Electric,
 }
 
-
+public enum ConsumableEffectType
+{
+    RestoreHp,
+}
 
 
 [Serializable]
@@ -229,4 +232,15 @@ public class MonsterSkillData : GameDataBase
         damageType = parsedType;
         return true;
     }
+}
+
+[Serializable]
+public class ConsumableData : GameDataBase
+{
+    public string EffectType;
+    public float EffectValue;
+    public string ValueBasls;
+    public string ValueOperatlon;
+    public float CooldownSec;
+    public string UseEffectPrefabPath;
 }
