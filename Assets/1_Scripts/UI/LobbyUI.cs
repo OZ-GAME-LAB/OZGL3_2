@@ -25,7 +25,7 @@ public class LobbyUI : UIBase
     {
         RefreshButtons();
 
-        if (_lobbyBgm != null)
+        if (_lobbyBgm != null && SoundManager.Inst != null)
         {
             SoundManager.Inst.PlayBgm(_lobbyBgm);
         }
