@@ -2,6 +2,8 @@
 using UnityEngine.UI;
 using TMPro;
 using Cysharp.Threading.Tasks;
+using System.Net;
+using System.Net.Sockets;
 
 public class NetworkSelectUI : UIBase
 {
@@ -21,6 +23,7 @@ public class NetworkSelectUI : UIBase
     [SerializeField] private Button Button_BackToLobby;
 
     private bool _returningToLobby;
+    private bool _openingSaveSelection;
 
     private NetCodeNetworkManager _boundManager;
 
@@ -129,7 +132,14 @@ public class NetworkSelectUI : UIBase
 
     private void RefreshInteractable()
     {
-        bool canStart = (_boundManager != null) && (_boundManager.CanStartConnection) && (_returningToLobby == false);
+        bool selectionOpen = UIManager.Inst != null && UIManager.Inst.IsOpen(UIType.SaveSelectionUI);
+
+        bool canStart =
+            _boundManager != null &&
+            _boundManager.CanStartConnection &&
+            !_returningToLobby &&
+            !_openingSaveSelection &&
+            !selectionOpen;
 
         Button_CreateRoom.interactable = canStart;
         Button_JoinRoom.interactable = canStart;
@@ -151,6 +161,11 @@ public class NetworkSelectUI : UIBase
 
     private void OnCreateRoom()
     {
+        if (_openingSaveSelection || _returningToLobby)
+        {
+            return;
+        }
+
         if (TryReadPort(Input_HostPort.text, out ushort port) == false)
         {
             SetMessage("호스트 포트는 1~65535 범위로 입력하세요.");
@@ -158,49 +173,49 @@ public class NetworkSelectUI : UIBase
         }
 
         TryBindManager();
-        var manager = _boundManager;
 
-        if (manager == null)
+        if (_boundManager == null || _boundManager.CanStartConnection == false)
         {
-            SetMessage("네트워크 매니저가 없습니다.");
+            SetMessage("네트워크가 실행 중이거나 준비되지 않았습니다.");
             return;
         }
 
-        SetMessage("방을 생성하고 있습니다.");
-
-        if (manager.TryStartHost(port, out string error) == false)
-        {
-            SetMessage(error);
-        }
-
-        RefreshInteractable();
+        OpenSaveSelectionAsync(true, null, port).Forget();
     }
 
     private void OnJoinRoom()
     {
+        if (_openingSaveSelection || _returningToLobby)
+        {
+            return;
+        }
+
         if (TryReadPort(Input_JoinPort.text, out ushort port) == false)
         {
             SetMessage("접속 포트는 1~65535 범위로 입력하세요.");
             return;
         }
 
-        TryBindManager();
-        var manager = _boundManager;
+        string address = Input_HostAddress.text?.Trim();
 
-        if (manager == null)
+        if (!IPAddress.TryParse(address, out IPAddress ip) ||
+        ip.AddressFamily != AddressFamily.InterNetwork ||
+        ip.Equals(IPAddress.Any) ||
+        ip.Equals(IPAddress.Broadcast))
         {
-            SetMessage("네트워크 매니저가 없습니다.");
+            SetMessage("올바른 호스트 IPv4 주소를 입력하세요.");
             return;
         }
 
-        SetMessage("호스트에 접속하고 있습니다.");
+        TryBindManager();
 
-        if (manager.TryStartClient(Input_HostAddress.text, port, out string error) == false)
+        if (_boundManager == null || !_boundManager.CanStartConnection)
         {
-            SetMessage(error);
+            SetMessage("네트워크가 실행 중이거나 준비되지 않았습니다.");
+            return;
         }
 
-        RefreshInteractable();
+        OpenSaveSelectionAsync(false, ip.ToString(), port).Forget();
     }
 
     private static bool TryReadPort(string text, out ushort port)
@@ -245,7 +260,7 @@ public class NetworkSelectUI : UIBase
         {
             LobbyUI lobby = await uiManager.OpenLobbyUIAsync();
 
-            if (this == null || uiManager == null | lobby == null)
+            if (this == null || uiManager == null || lobby == null)
             {
                 return;
             }
@@ -259,6 +274,142 @@ public class NetworkSelectUI : UIBase
                 _returningToLobby = false;
                 RefreshInteractable();
             }
+        }
+    }
+
+    private async UniTask OpenSaveSelectionAsync(bool isHost, string address, ushort port)
+    {
+        UIManager uiManager = UIManager.Inst;
+
+        if (uiManager == null || _openingSaveSelection)
+        {
+            return;
+        }
+
+        _openingSaveSelection = true;
+        RefreshInteractable();
+
+        try
+        {
+            UIBase ui = await uiManager.OpenVeryFrontRootAsync(UIType.SaveSelectionUI);
+
+            if (this == null || uiManager == null)
+            {
+                return;
+            }
+
+            if (isActiveAndEnabled == false)
+            {
+                uiManager.Close(UIType.SaveSelectionUI);
+                return;
+            }
+
+            if (ui is not SaveSelectionUI selectionUI)
+            {
+                if (ui != null)
+                {
+                    uiManager.Close(UIType.SaveSelectionUI);
+                }
+
+                SetMessage("선택 UI 프리팹과 SaveSelectionUI 컴포넌트를 확인하세요.");
+                return;
+            }
+
+            // 같은 VeryFront Root 내에서 네트워크 UI보다 앞에 표시.
+            selectionUI.transform.SetAsLastSibling();
+
+            if (isHost)
+            {
+                selectionUI.BeginHost(port, OnSaveSelectionConfirmed);
+            }
+            else
+            {
+                selectionUI.BeginClient(address, port, OnSaveSelectionConfirmed);
+            }
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception);
+
+            if (this != null)
+            {
+                SetMessage("선택창을 열지 못했습니다. Console을 확인하세요.");
+            }
+        }
+        finally
+        {
+            if (this != null)
+            {
+                _openingSaveSelection = false;
+                RefreshInteractable();
+            }
+        }
+    }
+
+    private void OnSaveSelectionConfirmed()
+    {
+        if (this == null || !isActiveAndEnabled)
+            return;
+
+        if (!GameStartSelection.HasSelection || GameStartSelection.Character == null)
+        {
+            SetMessage("먼저 캐릭터를 선택해 주세요.");
+            return;
+        }
+
+        TryBindManager();
+
+        // 접속 성공 처리 중 NetworkSelectUI가 닫히면
+        // OnDisable에서 _boundManager가 해제될 수 있으므로
+        // 사용할 매니저를 지역 변수에 보관.
+        NetCodeNetworkManager manager = _boundManager;
+
+        if (manager == null || manager.CanStartConnection == false)
+        {
+            SetMessage("네트워크가 실행 중이거나 준비되지 않았습니다.");
+            return;
+        }
+
+        string characterName = GameStartSelection.Character.CharacterName;
+
+        bool started;
+        string error;
+
+        if (GameStartSelection.IsHost)
+        {
+            if (GameStartSelection.World == null)
+            {
+                SetMessage("먼저 월드를 선택해 주세요.");
+                return;
+            }
+
+            SetMessage(
+                $"월드: {GameStartSelection.World.WorldName}\n" +
+                $"캐릭터: {characterName}\n" +
+                "방을 생성하고 있습니다.");
+
+            started = manager.TryStartHost(GameStartSelection.Port, out error);
+        }
+        else
+        {
+            SetMessage($"캐릭터: {characterName}\n" + "호스트에 접속하고 있습니다.");
+
+            started = manager.TryStartClient(GameStartSelection.Address, GameStartSelection.Port, out error);
+        }
+
+        if (this == null)
+        {
+            return;
+        }
+
+        if (started == false)
+        {
+            SetMessage(string.IsNullOrWhiteSpace(error) ? "네트워크 시작에 실패했습니다." : error);
+        }
+
+        if (isActiveAndEnabled)
+        {
+            RefreshInteractable();
         }
     }
 }

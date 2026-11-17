@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
@@ -153,6 +153,7 @@ public partial class PlayerControllerView : MonoBehaviour
     private bool _isDialogueMode;
     private int _dialogueEnteredFrame;
     private string _previousDialogueActionMap;
+    private bool _openingSettings;
 
     void Awake()
     {
@@ -1568,13 +1569,54 @@ public partial class PlayerControllerView : MonoBehaviour
             return;
         }
 
-        if (UIManager.Inst != null &&
-            UIManager.Inst.TryCloseLoggingMiningResult())
+        UIManager uiManager = UIManager.Inst;
+
+        if (uiManager == null || _openingSettings)
+            return;
+
+        if (uiManager.IsOpen(UIType.SettingUI))
         {
+            uiManager.CloseSettingUI();
             return;
         }
 
-        Debug.Log($"{nameof(OnOpenSettings)} 실행");
+        if (uiManager.TryCloseLoggingMiningResult())
+            return;
+
+        OpenSettingsAsync().Forget();
+    }
+
+    private async UniTask OpenSettingsAsync()
+    {
+        UIManager uiManager = UIManager.Inst;
+
+        if (uiManager == null || _openingSettings)
+            return;
+
+        _openingSettings = true;
+
+        try
+        {
+            SettingUI view = await uiManager.OpenSettingUIAsync();
+
+            if (uiManager == null || view == null)
+                return;
+
+            // 로딩 도중 플레이어가 사라지거나 비활성화된 경우.
+            if (this == null ||
+                !isActiveAndEnabled ||
+                _networkObject == null ||
+                !_networkObject.IsSpawned ||
+                !_networkObject.IsOwner)
+            {
+                uiManager.CloseSettingUI();
+            }
+        }
+        finally
+        {
+            if (this != null)
+                _openingSettings = false;
+        }
     }
 
     private void OnOpenRuneInventory(InputAction.CallbackContext context)

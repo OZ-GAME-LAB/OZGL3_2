@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+ï»¿using Cysharp.Threading.Tasks;
 using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Threading;
@@ -28,26 +28,26 @@ public class UIManager : MonoBehaviour
 
     }
 
-    //¸ŞÀÎ
+    //ë©”ì¸
     public async UniTask<UIBase> OpenMainRootAsync(UIType uiType, CancellationToken cancellationToken = default)
     {
         UIBase baseUI = await OpenUIAsync(uiType, UIRootType.Main, cancellationToken);
         return baseUI;
     }
 
-    //ÄÜÅÙÃ÷
+    //ì½˜í…ì¸ 
     public async UniTask<UIBase> OpenContentRootAsync(UIType uiType, CancellationToken cancellationToken = default)
     {
         return await OpenUIAsync(uiType, UIRootType.Content, cancellationToken);
     }
 
-    // ÆË¾÷
+    // íŒì—…
     public async UniTask<UIBase> OpenPopupRootAsync(UIType uiType, CancellationToken cancellationToken = default)
     {
         return await OpenUIAsync(uiType, UIRootType.Popup, cancellationToken);
     }
 
-    // º£¸®ÇÁ·ĞÆ®
+    // ë² ë¦¬í”„ë¡ íŠ¸
     public async UniTask<UIBase> OpenVeryFrontRootAsync(UIType uiType, CancellationToken cancellationToken = default)
     {
         return await OpenUIAsync(uiType, UIRootType.VeryFront, cancellationToken);
@@ -64,7 +64,11 @@ public class UIManager : MonoBehaviour
 
     private bool IsOpenOrLoading(UIType uiType)
     {
-        return _openedUISet.Contains(uiType) || _loadingUISet.Contains(uiType);
+        //return _openedUISet.Contains(uiType) || _loadingUISet.Contains(uiType);
+        return _openedUISet.Contains(uiType)
+        && _createdUICacheDictionary.TryGetValue(uiType, out UIBase ui)
+        && ui != null
+        && ui.gameObject.activeInHierarchy;
     }
 
     public bool IsLoading(UIType uiType)
@@ -96,14 +100,14 @@ public class UIManager : MonoBehaviour
         cancellationToken.ThrowIfCancellationRequested();
         if (!TryGetRootRectTransform(uiRoot, out RectTransform rootRectTransform))
         {
-            Debug.LogError($"[{nameof(UIManager)}:{nameof(OpenUIAsync)}] '{uiRoot}'¿¡ ÇØ´çÇÏ´Â Root RectTransformÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+            Debug.LogError($"[{nameof(UIManager)}:{nameof(OpenUIAsync)}] '{uiRoot}'ì— í•´ë‹¹í•˜ëŠ” Root RectTransformì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
             return null;
         }
 
 
         if (_loadingUISet.Contains(uiType))
         {
-            Debug.LogWarning($"[{nameof(UIManager)}:{nameof(OpenUIAsync)}] '{uiType}' UI°¡ ÀÌ¹Ì ·Îµù ÁßÀÔ´Ï´Ù.");
+            Debug.LogWarning($"[{nameof(UIManager)}:{nameof(OpenUIAsync)}] '{uiType}' UIê°€ ì´ë¯¸ ë¡œë”© ì¤‘ì…ë‹ˆë‹¤.");
             return null;
         }
 
@@ -128,7 +132,7 @@ public class UIManager : MonoBehaviour
 
             if (createdUI == null)
             {
-                Debug.LogError($"[{nameof(UIManager)}:{nameof(OpenUIAsync)}] '{uiType}' UI »ı¼º¿¡ ½ÇÆĞÇÏ¿© UI¸¦ ¿­ ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogError($"[{nameof(UIManager)}:{nameof(OpenUIAsync)}] '{uiType}' UI ìƒì„±ì— ì‹¤íŒ¨í•˜ì—¬ UIë¥¼ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 return null;
             }
 
@@ -162,13 +166,13 @@ public class UIManager : MonoBehaviour
 
         if (uiPrefab == null)
         {
-            Debug.LogError($"[{nameof(UIManager)}:{nameof(CreateUIAsync)}] '{uiType}' UI ÇÁ¸®ÆÕÀ» ·ÎµåÇÏÁö ¸øÇß½À´Ï´Ù.");
+            Debug.LogError($"[{nameof(UIManager)}:{nameof(CreateUIAsync)}] '{uiType}' UI í”„ë¦¬íŒ¹ì„ ë¡œë“œí•˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.");
             return null;
         }
 
         if (!uiPrefab.TryGetComponent(out UIBase uiBase))
         {
-            Debug.LogError($"[{nameof(UIManager)}:{nameof(CreateUIAsync)}] '{uiType}' UI ÇÁ¸®ÆÕ¿¡¼­ UIBase ÄÄÆ÷³ÍÆ®°¡ ¾ø½À´Ï´Ù.");
+            Debug.LogError($"[{nameof(UIManager)}:{nameof(CreateUIAsync)}] '{uiType}' UI í”„ë¦¬íŒ¹ì—ì„œ UIBase ì»´í¬ë„ŒíŠ¸ê°€ ì—†ìŠµë‹ˆë‹¤.");
             return uiBase;
         }
 
@@ -179,7 +183,7 @@ public class UIManager : MonoBehaviour
     {
         if (!_openedUISet.Contains(uiType))
         {
-            Debug.LogWarning($"[{nameof(UIManager)}:{nameof(CloseUI)}] '{uiType}' UI°¡ ¿­·Á ÀÖÁö ¾Ê½À´Ï´Ù.");
+            Debug.LogWarning($"[{nameof(UIManager)}:{nameof(CloseUI)}] '{uiType}' UIê°€ ì—´ë ¤ ìˆì§€ ì•ŠìŠµë‹ˆë‹¤.");
             return;
         }
 
@@ -202,7 +206,7 @@ public class UIManager : MonoBehaviour
     {
         if (!_rootCacheDictionary.TryAdd(uiRoot, rectTransform))
         {
-            Debug.LogError($"[{nameof(UIManager)}:{nameof(CacheUIRoot)}] UIRoot '{uiRoot}'°¡ ÀÌ¹Ì ·çÆ® Ä³½Ã¿¡ µî·ÏµÇ¾î ÀÖ½À´Ï´Ù.");
+            Debug.LogError($"[{nameof(UIManager)}:{nameof(CacheUIRoot)}] UIRoot '{uiRoot}'ê°€ ì´ë¯¸ ë£¨íŠ¸ ìºì‹œì— ë“±ë¡ë˜ì–´ ìˆìŠµë‹ˆë‹¤.");
         }
     }
 

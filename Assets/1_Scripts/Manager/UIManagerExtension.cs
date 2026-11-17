@@ -36,6 +36,7 @@ public enum UIType
     ScreenTransitionUI,
     CinematicEffectUI,
     BossEntryUI,
+    SaveSelectionUI,
 }
 
 

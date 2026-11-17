@@ -21,7 +21,8 @@ public class NetCodeNetworkManager : MonoBehaviour
     public bool IsConnecting => _isConnecting;
 
     private bool _isStarting;
-    public bool CanStartConnection => 
+    public bool CanStartConnection =>
+        _netCodeNetworkManager != null &&
         _isStarting == false && 
         _isConnecting == false &&
         _isConnectingStopped == false &&

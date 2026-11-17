@@ -17,11 +17,12 @@ public class SaveManager : MonoBehaviour
     public static SaveManager Inst { get; private set; }
 
     public const int CurrentVersion = 1;
-    public const int SlotCount = 3;
 
     private string _saveDirectory;
-
     public string SaveDirectory => _saveDirectory;
+
+    private string WorldDirectory => Path.Combine(_saveDirectory, "Worlds");
+    private string CharacterDirectory => Path.Combine(_saveDirectory, "Characters");
 
     private void Awake()
     {
@@ -45,51 +46,109 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    public bool TrySave(int slot, SaveData data, out string error)
+    public bool SaveWorld(WorldSaveData data, out string error)
+    {
+        return SaveFile(
+            WorldDirectory,
+            data?.WorldId,
+            data,
+            ValidateWorld,
+            value => value.SavedAtUtc = DateTime.UtcNow.ToString("O"),
+            out error);
+    }
+
+    public bool SaveCharacter(CharacterSaveData data, out string error)
+    {
+        return SaveFile(
+            CharacterDirectory,
+            data?.CharacterId,
+            data,
+            ValidateCharacter,
+            value => value.SavedAtUtc = DateTime.UtcNow.ToString("O"),
+            out error);
+    }
+
+    public SaveLoadResult LoadWorld(string id, out WorldSaveData data, out string message)
+    {
+        return LoadFile(WorldDirectory, id, ValidateWorld, out data, out message);
+    }
+
+    public SaveLoadResult LoadCharacter(string id, out CharacterSaveData data, out string message)
+    {
+        return LoadFile(CharacterDirectory, id, ValidateCharacter, out data, out message);
+    }
+
+    public List<WorldSaveData> GetWorldList(out string warnings)
+    {
+        List<WorldSaveData> list = ReadList<WorldSaveData>(WorldDirectory, ValidateWorld, out warnings);
+
+        list.Sort((a, b) => string.CompareOrdinal(b.SavedAtUtc, a.SavedAtUtc));
+
+        return list;
+    }
+
+    public List<CharacterSaveData> GetCharacterList(out string warnings)
+    {
+        List<CharacterSaveData> list = ReadList<CharacterSaveData>(CharacterDirectory, ValidateCharacter, out warnings);
+
+        list.Sort((a, b) => string.CompareOrdinal(b.SavedAtUtc, a.SavedAtUtc));
+
+        return list;
+    }
+
+    private bool SaveFile<T>(
+        string directory,
+        string id,
+        T data,
+        Action<T, string> validate,
+        Action<T> stampTime,
+        out string error) where T : class
     {
         error = null;
-
-        if (IsValidSlot(slot) == false)
-        {
-            error = "저장 슬롯은 0~2 범위로 지정하세요.";
-            return false;
-        }
-
-        if (Validate(data, out error) == false)
-        {
-            return false;
-        }
-
-        string path = GetSavePath(slot);
-        string tempPath = path + ".tmp";
-        string backupPath = path + ".bak";
+        string tempPath = null;
 
         try
         {
-            Directory.CreateDirectory(_saveDirectory);
+            ValidateId(id);
+            validate(data, id);
 
-            // 호출자가 전달한 객체의 저장 시각은 직접 변경하지 않음.
-            string sourceJson = JsonUtility.ToJson(data);
-            SaveData snapshot = JsonUtility.FromJson<SaveData>(sourceJson);
+            Directory.CreateDirectory(directory);
 
-            snapshot.SavedAtUtc = DateTime.UtcNow.ToString("O");
+            string path = Path.Combine(directory, id + ".json");
+            string backupPath = path + ".bak";
+            tempPath = path + ".tmp";
 
-            string json = JsonUtility.ToJson(snapshot, true);
-
-            File.WriteAllText(tempPath, json, new UTF8Encoding(false));
-
-            // 작성된 임시 파일도 다시 읽어 검사.
-            if (TryReadFile(tempPath, out _, out error) == false)
-            {
-                return false;
-            }
+            // 현재 본 파일이 다른 버전이면 덮어쓰지 않는다.
+            bool currentFileValid = false;
 
             if (File.Exists(path))
             {
-                // 정상적인 기존 파일만 새로운 백업으로 남김.
-                // 기존 본 파일이 손상됐다면 이전 백업은 보존.
-                bool currentFileValid = TryReadFile(path, out _, out _);
+                try
+                {
+                    ReadFile(path, id, validate);
+                    currentFileValid = true;
+                }
+                catch (NotSupportedException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    // 손상된 본 파일을 백업으로 덮어쓰지 않음.
+                    currentFileValid = false;
+                }
+            }
 
+            T snapshot = JsonUtility.FromJson<T>(JsonUtility.ToJson(data));
+
+            stampTime(snapshot);
+
+            File.WriteAllText(tempPath, JsonUtility.ToJson(snapshot, true), new UTF8Encoding(false));
+
+            ReadFile(tempPath, id, validate);
+
+            if (File.Exists(path))
+            {
                 File.Replace(tempPath, path, currentFileValid ? backupPath : null);
             }
             else
@@ -107,111 +166,186 @@ public class SaveManager : MonoBehaviour
         }
         finally
         {
-            TryDeleteTemporaryFile(tempPath);
+            if (tempPath != null)
+            {
+                TryDeleteTemporaryFile(tempPath);
+            }
         }
     }
 
-    public SaveLoadResult Load(int slot, out SaveData data, out string message)
+    private SaveLoadResult LoadFile<T>(
+        string directory,
+        string id,
+        Action<T, string> validate,
+        out T data,
+        out string message) where T : class
     {
         data = null;
         message = null;
 
-        if (IsValidSlot(slot) == false)
-        {
-            message = "저장 슬롯은 0~2 범위로 지정하세요.";
-            return SaveLoadResult.Failed;
-        }
-
-        string path = GetSavePath(slot);
-        string backupPath = path + ".bak";
-
-        if (File.Exists(path) == false && File.Exists(backupPath) == false)
-        {
-            message = "저장된 데이터가 없습니다.";
-            return SaveLoadResult.NotFound;
-        }
-
-        if (TryReadFile(path, out data, out string mainError))
-        {
-            message = "불러오기 완료.";
-            return SaveLoadResult.Success;
-        }
-
-        if (TryReadFile(backupPath, out data, out string backupError))
-        {
-            message = "본 파일을 읽지 못해 이전 백업을 불러왔습니다.";
-            return SaveLoadResult.RecoveredFromBackup;
-        }
-
-        message = $"불러오기 실패.\n본 파일: {mainError}\n백업: {backupError}";
-
-        return SaveLoadResult.Failed;
-    }
-
-    private bool TryReadFile(string path, out SaveData data, out string error)
-    {
-        data = null;
-        error = null;
-
         try
         {
-            if (File.Exists(path) == false)
+            ValidateId(id);
+
+            string path = Path.Combine(directory, id + ".json");
+            string backupPath = path + ".bak";
+
+            if (File.Exists(path) && !File.Exists(backupPath) == false)
             {
-                error = "파일이 없습니다.";
-                return false;
+                message = "저장 파일이 없습니다.";
+                return SaveLoadResult.NotFound;
             }
 
-            string json = File.ReadAllText(path, Encoding.UTF8);
+            string mainError;
 
-            if (string.IsNullOrWhiteSpace(json))
+            try
             {
-                error = "파일 내용이 비어 있습니다.";
-                return false;
+                data = ReadFile(path, id, validate);
+                message = "불러오기 완료.";
+                return SaveLoadResult.Success;
+            }
+            catch (NotSupportedException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                mainError = exception.Message;
             }
 
-            SaveData loaded = JsonUtility.FromJson<SaveData>(json);
-
-            if (Validate(loaded, out error) == false)
+            try
             {
-                return false;
+                data = ReadFile(backupPath, id, validate);
+                message = "본 파일 대신 이전 백업을 불러왔습니다.";
+                return SaveLoadResult.RecoveredFromBackup;
             }
+            catch (Exception exception)
+            {
+                message = $"본 파일: {mainError}\n백업: {exception.Message}";
 
-            data = loaded;
-            return true;
+                return SaveLoadResult.Failed;
+            }
         }
         catch (Exception exception)
         {
-            error = exception.Message;
-            return false;
+            message = exception.Message;
+            return SaveLoadResult.Failed;
         }
     }
 
-    private static bool Validate(SaveData data, out string error)
+    private List<T> ReadList<T>(string directory, Action<T, string> validate, out string warnings) where T : class
     {
-        error = null;
+        var result = new List<T>();
+        var errors = new List<string>();
+        var ids = new HashSet<string>();
 
+        try
+        {
+            if (Directory.Exists(directory))
+            {
+                foreach (string path in Directory.GetFiles(directory, "*.json"))
+                {
+                    ids.Add(Path.GetFileNameWithoutExtension(path));
+                }
+
+                // 본 파일이 없어도 백업에서 목록을 복구할 수 있음.
+                foreach (string path in Directory.GetFiles(directory, "*.json.bak"))
+                {
+                    string jsonFileName = Path.GetFileNameWithoutExtension(path);
+                    ids.Add(Path.GetFileNameWithoutExtension(jsonFileName));
+                }
+
+                foreach (string id in ids)
+                {
+                    SaveLoadResult status = LoadFile(directory, id, validate, out T data, out string message);
+
+                    if (status == SaveLoadResult.Success || status == SaveLoadResult.RecoveredFromBackup)
+                    {
+                        result.Add(data);
+                    }
+
+                    if (status != SaveLoadResult.Success)
+                    {
+                        errors.Add($"{id}: {message}");
+                    }
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            errors.Add(exception.Message);
+        }
+
+        warnings = string.Join("\n", errors);
+        return result;
+    }
+
+    private static T ReadFile<T>(string path, string expectedId, Action<T, string> validate) where T : class
+    {
+        string json = File.ReadAllText(path, Encoding.UTF8);
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new InvalidDataException("파일이 비어 있습니다.");
+        }
+
+        T data = JsonUtility.FromJson<T>(json);
+        validate(data, expectedId);
+
+        return data;
+    }
+
+    private static void ValidateId(string id)
+    {
+        if (Guid.TryParseExact(id, "N", out _) == false)
+        {
+            throw new InvalidDataException("저장 ID 형식이 올바르지 않습니다.");
+        }
+    }
+
+    private static void ValidateWorld(WorldSaveData data, string expectedId)
+    {
         if (data == null)
         {
-            error = "저장 데이터가 없습니다.";
-            return false;
+            throw new InvalidDataException("월드 데이터가 없습니다.");
         }
 
         if (data.Version != CurrentVersion)
         {
-            error = $"지원하지 않는 저장 버전입니다: {data.Version}";
-            return false;
+            throw new NotSupportedException($"지원하지 않는 월드 버전입니다: {data.Version}");
         }
 
-        if (data.Items == null || data.EquippedRuneIds == null || data.ProgressIds == null)
+        if (data.WorldId != expectedId ||
+            string.IsNullOrWhiteSpace(data.WorldName) ||
+            string.IsNullOrWhiteSpace(data.MapId) ||
+            data.ProgressIds == null)
         {
-            error = "필수 데이터 목록이 없습니다.";
-            return false;
+            throw new InvalidDataException("월드 데이터가 올바르지 않습니다.");
+        }
+    }
+
+    private static void ValidateCharacter(
+        CharacterSaveData data,
+        string expectedId)
+    {
+        if (data == null)
+        {
+            throw new InvalidDataException("캐릭터 데이터가 없습니다.");
         }
 
-        if (data.EquippedRuneIds.Count != 3)
+        if (data.Version != CurrentVersion)
         {
-            error = "룬 슬롯 개수가 올바르지 않습니다.";
-            return false;
+            throw new NotSupportedException($"지원하지 않는 캐릭터 버전입니다: {data.Version}");
+        }
+
+        if (data.CharacterId != expectedId ||
+            string.IsNullOrWhiteSpace(data.CharacterName) ||
+            data.Items == null ||
+            data.EquippedRuneIds == null ||
+            data.EquippedRuneIds.Count != 3 ||
+            data.ProgressIds == null)
+        {
+            throw new InvalidDataException("캐릭터 데이터가 올바르지 않습니다.");
         }
 
         var instanceIds = new HashSet<string>();
@@ -222,47 +356,23 @@ public class SaveManager : MonoBehaviour
             if (item == null ||
                 string.IsNullOrWhiteSpace(item.InstanceId) ||
                 string.IsNullOrWhiteSpace(item.ItemId) ||
-                item.Count <= 0)
+                item.Count <= 0 ||
+                !instanceIds.Add(item.InstanceId))
             {
-                error = "아이템 저장 데이터가 올바르지 않습니다.";
-                return false;
-            }
-
-            if (instanceIds.Add(item.InstanceId) == false)
-            {
-                error = $"중복된 아이템 식별자입니다: {item.InstanceId}";
-                return false;
+                throw new InvalidDataException("아이템 데이터가 올바르지 않습니다.");
             }
 
             if (Enum.IsDefined(typeof(EquipmentSlot), item.EquippedSlot) == false)
             {
-                error = "알 수 없는 장비 슬롯입니다.";
-                return false;
+                throw new InvalidDataException("알 수 없는 장비 슬롯입니다.");
             }
 
-            if (item.EquippedSlot == EquipmentSlot.None)
+            if (item.EquippedSlot != EquipmentSlot.None &&
+                (item.Count != 1 || !equipmentSlots.Add(item.EquippedSlot)))
             {
-                continue;
-            }
-
-            if (item.Count != 1 || equipmentSlots.Add(item.EquippedSlot) == false)
-            {
-                error = "장비 수량 또는 장비 슬롯이 중복되었습니다.";
-                return false;
+                throw new InvalidDataException("장비 수량 또는 슬롯이 올바르지 않습니다.");
             }
         }
-
-        return true;
-    }
-
-    private string GetSavePath(int slot)
-    {
-        return Path.Combine(_saveDirectory, $"slot_{slot}.json");
-    }
-
-    private static bool IsValidSlot(int slot)
-    {
-        return slot >= 0 && slot < SlotCount;
     }
 
     private static void TryDeleteTemporaryFile(string path)
@@ -276,7 +386,7 @@ public class SaveManager : MonoBehaviour
         }
         catch (Exception exception)
         {
-            Debug.LogWarning($"임시 저장 파일 정리 실패: {exception.Message}");
+            Debug.LogWarning($"임시 파일 정리 실패: {exception.Message}");
         }
     }
 }
