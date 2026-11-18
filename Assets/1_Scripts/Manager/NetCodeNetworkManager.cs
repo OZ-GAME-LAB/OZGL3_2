@@ -48,6 +48,7 @@ public class NetCodeNetworkManager : MonoBehaviour
 
     private NetCodeCliendtSideService _clientSideService = new NetCodeCliendtSideService();
     private NetCodeServerSideService _serverSideService = new NetCodeServerSideService();
+    private NetworkSessionSaveService _sessionSaveService;
 
     private void Awake()
     {
@@ -59,6 +60,9 @@ public class NetCodeNetworkManager : MonoBehaviour
         {
             _transport = _netCodeNetworkManager.GetComponent<UnityTransport>();
         }
+
+        _sessionSaveService = new NetworkSessionSaveService(_netCodeNetworkManager, this);
+        _sessionSaveService.Initialize();
     }
 
     private void Start()
@@ -77,6 +81,7 @@ public class NetCodeNetworkManager : MonoBehaviour
         Application.quitting -= OnApplicationQuitting;
         _clientSideService.EndClientService();
         _serverSideService.EndServerService();
+        _sessionSaveService?.Dispose();
 
         if (_hostDisconnected)
         {
@@ -95,6 +100,9 @@ public class NetCodeNetworkManager : MonoBehaviour
 
     private void Update()
     {
+        if (!_isQuitting)
+            _sessionSaveService?.Tick(Time.unscaledDeltaTime);
+
         if (_netCodeNetworkManager == null)
         {
             return;
@@ -119,6 +127,11 @@ public class NetCodeNetworkManager : MonoBehaviour
         {
             StopConnectionAttempt("접속 시간이 초과되었습니다. 호스트의 IP와 포트를 확인하세요.");
         }
+    }
+
+    public bool RequestSessionSave()
+    {
+        return _sessionSaveService != null && _sessionSaveService.RequestSessionSave();
     }
 
     public void CancelConnection()
