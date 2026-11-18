@@ -83,7 +83,7 @@ public sealed class NetworkSessionSaveService : IDisposable
             return;
 
         _autoSaveRemaining = AutoSaveInterval;
-        // TODO : 저장 함수 구현 후 아래 로그를 RequestSessionSave() 호출로 교체한다.
+        // TODO(저장 연결) : 저장 함수 구현 후 아래 로그를 RequestSessionSave() 호출로 교체한다.
         Debug.Log("60초 저장", _logContext);
     }
 
@@ -157,14 +157,14 @@ public sealed class NetworkSessionSaveService : IDisposable
             return;
 
         _lastCharacterRequestId = requestId;
-        // TODO : 저장 함수 구현 후 현재 로컬 캐릭터 데이터를 수집하여 저장하고, 성공·실패 결과를 호스트에 전달한다.
+        // TODO(저장 연결) : 저장 함수 구현 후 현재 로컬 캐릭터 데이터를 수집하여 저장하고, 성공·실패 결과를 호스트에 전달한다.
         Debug.Log($"[캐릭터 저장 요청] 요청: {requestId}, 클라이언트: {_network.LocalClientId}, 실제 저장 연결 대기", _logContext);
     }
 
     private void RequestWorldSave(ulong requestId)
     {
         // TODO : 시나리오 상황 저장 구현 후 월드 진행도를 수집하는 처리를 연결한다. 기존 진행도는 유지한다.
-        // TODO : 저장 함수 구현 후 호스트의 월드 데이터를 저장하고 결과를 확인한다.
+        // TODO(저장 연결) : 저장 함수 구현 후 호스트의 월드 데이터를 저장하고 결과를 확인한다.
         Debug.Log($"[월드 저장 요청] 요청: {requestId}, 실제 저장 연결 대기", _logContext);
     }
 }

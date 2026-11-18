@@ -180,7 +180,7 @@ public class NetCodeNetworkManager : MonoBehaviour
         _hostDisconnected = true;
         _connectedAsClient = false;
 
-        // TODO : 캐릭터 저장 기능 완성 후 여기서 로컬 캐릭터 데이터를 확보하고 한 번 저장한다.
+        // TODO(저장 연결) : 캐릭터 저장 기능 완성 후 여기서 로컬 캐릭터 데이터를 확보하고 한 번 저장한다.
         // NetworkObject가 정리되기 전이므로 확인 버튼이 아닌 이 위치에 저장 처리를 연결한다.
 
         _previousTimeScale = Time.timeScale;
