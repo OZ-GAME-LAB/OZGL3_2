@@ -47,6 +47,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetCodeNetworkManager
   _netCodeNetworkManager: {fileID: 3216449121980172412}
+  _hostDisconnectedUIPrefab: {fileID: 105, guid: 71090b00cf624607931651530df821c8, type: 3}
 --- !u!114 &3216449121980172412
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,7 +111,7 @@ MonoBehaviour:
   m_HeartbeatTimeoutMS: 500
   m_ConnectTimeoutMS: 1000
   m_MaxConnectAttempts: 60
-  m_DisconnectTimeoutMS: 30000
+  m_DisconnectTimeoutMS: 5000
   ConnectionData:
     Address: 127.0.0.1
     Port: 7777

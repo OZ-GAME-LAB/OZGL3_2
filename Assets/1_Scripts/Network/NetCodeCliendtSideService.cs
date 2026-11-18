@@ -5,28 +5,37 @@ using UnityEngine;
 public class NetCodeCliendtSideService
 {
     public ulong CurrentClientId { get; private set; }
+    private NetworkManager _network;
 
     public void InitClientService()
     {
-        if (NetworkManager.Singleton != null)
+        EndClientService();
+        _network = NetworkManager.Singleton;
+        if (_network != null)
         {
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+            _network.OnClientConnectedCallback += OnClientConnected;
+            _network.OnClientDisconnectCallback += OnClientDisconnect;
+            _network.OnPreShutdown += OnPreShutdown;
+            _network.OnClientStopped += OnClientStopped;
         }
     }
 
     public void EndClientService()
     {
-        if (NetworkManager.Singleton != null)
+        if (_network != null)
         {
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            _network.OnClientDisconnectCallback -= OnClientDisconnect;
+            _network.OnClientConnectedCallback -= OnClientConnected;
+            _network.OnPreShutdown -= OnPreShutdown;
+            _network.OnClientStopped -= OnClientStopped;
         }
+        _network = null;
+        CurrentClientId = 0;
     }
 
     private void OnClientConnected(ulong clientId)
     {
-        NetworkManager network = NetworkManager.Singleton;
+        NetworkManager network = _network;
 
         if (network == null)
         {
@@ -54,7 +63,7 @@ public class NetCodeCliendtSideService
 
     private void OnClientDisconnect(ulong clientId)
     {
-        NetworkManager network = NetworkManager.Singleton;
+        NetworkManager network = _network;
 
         if (network == null)
         {
@@ -63,26 +72,26 @@ public class NetCodeCliendtSideService
 
         if (clientId == network.LocalClientId)
         {
-            string reason = network.DisconnectReason;
-
-            if (NetCodeNetworkManager.Inst != null && NetCodeNetworkManager.Inst.HandleConnectionAttemptDisconnected(reason))
-            {
-                return;
-            }
-
-            string message = string.IsNullOrWhiteSpace(reason) ? "서버와의 연결이 종료되었습니다." : $"서버와의 연결이 종료되었습니다: {reason}";
-
-            if (UIManager.Inst != null)
-            {
-                UIManager.Inst.OpenSimplePopup(message).Forget();
-            }
+            NetCodeNetworkManager.Inst?.HandleLocalClientDisconnected(network.DisconnectReason);
         }
         else
         {
-            if (UIManager.Inst != null)
+            if (!network.ShutdownInProgress && UIManager.Inst != null)
             {
                 UIManager.Inst.OpenSimplePopup($"다른 클라이언트가 접속 해제했습니다! {clientId}").Forget();
             }
         }
+    }
+
+    private void OnPreShutdown()
+    {
+        if (_network != null && !_network.IsServer)
+            NetCodeNetworkManager.Inst?.HandleLocalClientDisconnected(_network.DisconnectReason);
+    }
+
+    private void OnClientStopped(bool wasHost)
+    {
+        if (!wasHost && _network != null)
+            NetCodeNetworkManager.Inst?.HandleLocalClientDisconnected(_network.DisconnectReason);
     }
 }
