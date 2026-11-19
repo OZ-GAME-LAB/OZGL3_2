@@ -1458,6 +1458,11 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private bool CanReadAttackInput()
     {
+        if (IsAttackBlockedByUI())
+        {
+            return false;
+        }
+
         return !IsEncounterControlLocked && (_interactionController == null || !_interactionController.HasLocalRequest) &&
             !IsHitControlLocked && !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode && _networkObject != null &&
             _networkObject.IsSpawned && _networkObject.IsOwner && _playerInput != null &&
@@ -1915,5 +1920,24 @@ public partial class PlayerControllerView : MonoBehaviour
             _playerInput.SwitchCurrentActionMap(_previousDialogueActionMap);
         _previousDialogueActionMap = null;
         _interactionController?.SetScenarioInputBlocked(false);
+    }
+
+    private bool IsAttackBlockedByUI()
+    {
+        if (_openingRuneInventory || _openingSettings)
+        {
+            return true;
+        }
+
+        UIManager ui = UIManager.Inst;
+
+        if (ui == null)
+        {
+            return false;
+        }
+
+        return ui.IsOpen(UIType.InventoryUI)
+            || ui.IsOpen(UIType.RuneInventoryUI)
+            || ui.IsOpen(UIType.SettingUI);
     }
 }

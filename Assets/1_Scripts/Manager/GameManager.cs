@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
@@ -22,6 +22,8 @@ public class GameManager : MonoBehaviour
     private FieldInteractionPoint[] _fieldPoints;
     private Coroutine _connectLocalPlayerRoutine;
     private NetworkObject _connectedLocalPlayer;
+
+    private readonly GameObject[] _sessionWorkspaces = new GameObject[4];
 
     private void Awake()
     {
@@ -60,10 +62,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        Instantiate(_workspacePrefab_1);
-        Instantiate(_workspacePrefab_2);
-        Instantiate(_workspacePrefab_3);
-        _mapWorkspace = Instantiate(_workspacePrefab_4);
+        _sessionWorkspaces[0] = Instantiate(_workspacePrefab_1);
+        _sessionWorkspaces[1] = Instantiate(_workspacePrefab_2);
+        _sessionWorkspaces[2] = Instantiate(_workspacePrefab_3);
+        _sessionWorkspaces[3] = Instantiate(_workspacePrefab_4);
+
+        _mapWorkspace = _sessionWorkspaces[3];
         _fieldPoints = _mapWorkspace.GetComponentsInChildren<FieldInteractionPoint>(true);
 
         _worldInitialized = true;
@@ -130,6 +134,16 @@ public class GameManager : MonoBehaviour
             Debug.LogError("플레이어 프리팹의 필수 컴포넌트를 확인해 주세요.");
             yield break;
         }
+
+        CharacterSaveData character = GameStartSelection.Character;
+
+        if (character == null || playerObject.TryGetComponent(out PlayerRuneEquipmentController runeEquipment) == false)
+        {
+            Debug.LogError("선택한 캐릭터 또는 플레이어의 룬 장착 컴포넌트가 없습니다.");
+            yield break;
+        }
+
+        runeEquipment.RequestRestoreRunes(character.EquippedRuneIds);
 
         // LocalClient.PlayerObject이므로 본인 플레이어만 활성화합니다.
         _connectedLocalPlayer = playerObject;
@@ -207,6 +221,34 @@ public class GameManager : MonoBehaviour
                     "장식 Parallax 초기화에 실패했습니다.",
                     groups[i]);
             }
+        }
+    }
+
+    public void ClearSessionWorld()
+    {
+        if (_connectLocalPlayerRoutine != null)
+        {
+            StopCoroutine(_connectLocalPlayerRoutine);
+            _connectLocalPlayerRoutine = null;
+        }
+
+        _connectedLocalPlayer = null;
+        _fieldPoints = null;
+        _mapWorkspace = null;
+        _worldInitialized = false;
+
+        for (int i = 0; i < _sessionWorkspaces.Length; i++)
+        {
+            GameObject workspace = _sessionWorkspaces[i];
+            _sessionWorkspaces[i] = null;
+
+            if (workspace == null)
+            {
+                continue;
+            }
+
+            workspace.SetActive(false);
+            Destroy(workspace);
         }
     }
 }

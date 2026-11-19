@@ -227,9 +227,9 @@ public class NetworkRuneService : IDisposable
         runeIds = null;
         error = null;
 
-        if (TryConnectLocalPlayer() == false)
+        if (TryConnectLocalPlayer() == false || _localEquipment.CanCaptureRunes == false)
         {
-            error = "플레이어가 없어 장착 룬을 읽을 수 없습니다.";
+            error = "룬 복원 또는 장착 변경이 완료되지 않아 저장하지 않았습니다.";
             return false;
         }
 
@@ -237,7 +237,7 @@ public class NetworkRuneService : IDisposable
 
         for (int i = 0; i < PlayerRuneEquipmentController.SlotCount; i++)
         {
-            runeIds.Add(_localEquipment.GetEquippedRuneId(i) ?? "");
+            runeIds.Add(_localEquipment.GetConfirmedRuneId(i));
         }
 
         return true;

@@ -45,23 +45,23 @@ public class InventoryUIView : UIBase
         if (_closeButton != null)
         {
             _closeButton.onClick.AddListener(OnClickCloseButton);
-
         }
+
         if (_popupCloseButton != null)
         {
             _popupCloseButton.onClick.AddListener(OnClickPopupCloseButton);
-
         }
-
 
         if (_ItemUseButton!= null)
         {
-        _ItemUseButton.onClick.AddListener(OnClickItemUseButton);
+            _ItemUseButton.onClick.AddListener(OnClickItemUseButton);
         }
+
         if (_ItemAddQuickSlotButton != null)
         {
             _ItemAddQuickSlotButton.onClick.AddListener(OnClickItemAddQuickSlotButton);
         }
+
         if (_ItemRemoveButton != null)
         {
             _ItemRemoveButton.onClick.AddListener(OnClickItemRemoveButton);
@@ -76,20 +76,22 @@ public class InventoryUIView : UIBase
         {
             _closeButton.onClick.RemoveListener(OnClickCloseButton);
         }
+
         if (_popupCloseButton != null)
         {
             _popupCloseButton.onClick.RemoveListener(OnClickPopupCloseButton);
-
         }
 
         if (_ItemUseButton != null)
         {
             _ItemUseButton.onClick.RemoveListener(OnClickItemUseButton);
         }
+
         if (_ItemAddQuickSlotButton != null)
         {
             _ItemAddQuickSlotButton.onClick.RemoveListener(OnClickItemAddQuickSlotButton);
         }
+        
         if (_ItemRemoveButton != null)
         {
             _ItemRemoveButton.onClick.RemoveListener(OnClickItemRemoveButton);
@@ -146,8 +148,6 @@ public class InventoryUIView : UIBase
                 break;
 
         }
-
-
     }
 
     private void RebuildSlots()

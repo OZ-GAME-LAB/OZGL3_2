@@ -11,6 +11,8 @@ public class SaveSelectionSlotUI : MonoBehaviour
     [SerializeField] private Button Button_Select;
     [SerializeField] private GameObject SelectedMark;
 
+    private string _pendingDeleteId;
+
     private SaveSelectionSlotViewModel _viewModel;
     private Action<string> _onSelected;
 
@@ -47,9 +49,7 @@ public class SaveSelectionSlotUI : MonoBehaviour
             SelectedMark.SetActive(false);
     }
 
-    private void OnPropertyChanged(
-        object sender,
-        PropertyChangedEventArgs e)
+    private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         if (_viewModel == null)
             return;
@@ -82,6 +82,8 @@ public class SaveSelectionSlotUI : MonoBehaviour
         Unbind();
 
         if (Button_Select != null)
+        {
             Button_Select.onClick.RemoveListener(OnClickSelect);
+        }
     }
 }

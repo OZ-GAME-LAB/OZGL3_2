@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using Unity.Netcode;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class SettingUI : UIBase
@@ -8,6 +10,7 @@ public class SettingUI : UIBase
     [SerializeField] private Slider _sfxSlider;
     [SerializeField] private Button Button_Close;
     [SerializeField] private Button Button_QuitGame;
+    [SerializeField] private Button Button_ReturnToLobby;
 
     private SoundManager _boundManager;
     private bool _isQuitting;
@@ -16,10 +19,17 @@ public class SettingUI : UIBase
     {
         Button_Close.onClick.AddListener(OnClose);
         Button_QuitGame.onClick.AddListener(OnQuitGame);
+        Button_ReturnToLobby.onClick.AddListener(OnClickReturnToLobby);
     }
     
     private void OnEnable()
     {
+        NetworkManager network = NetworkManager.Singleton;
+        bool inGame = network != null && network.IsListening && GameStartSelection.HasSelection;
+
+        Button_ReturnToLobby.gameObject.SetActive(inGame);
+        Button_ReturnToLobby.interactable = inGame;
+
         _boundManager = SoundManager.Inst;
         
         if (_boundManager == null)
@@ -56,6 +66,16 @@ public class SettingUI : UIBase
         {
             Button_Close.onClick.RemoveListener(OnClose);
             Button_QuitGame.onClick.RemoveListener(OnQuitGame);
+        }
+
+        if (Button_QuitGame != null)
+        {
+            Button_QuitGame.onClick.RemoveListener(OnQuitGame);
+        }
+
+        if (Button_ReturnToLobby != null)
+        {
+            Button_ReturnToLobby.onClick.RemoveListener(OnClickReturnToLobby);
         }
     }
 
@@ -127,5 +147,34 @@ public class SettingUI : UIBase
         }
 
         Application.Quit();
+    }
+
+    private void OnClickReturnToLobby()
+    {
+        ReturnToLobbyAsync().Forget();
+    }
+
+    private async UniTask ReturnToLobbyAsync()
+    {
+        NetCodeNetworkManager manager = NetCodeNetworkManager.Inst;
+
+        if (manager == null || manager.IsReturningToLobby)
+        {
+            return;
+        }
+
+        Button_ReturnToLobby.interactable = false;
+
+        try
+        {
+            await manager.TryReturnToLobbyAsync();
+        }
+        finally
+        {
+            if (this != null && Button_ReturnToLobby != null)
+            {
+                Button_ReturnToLobby.interactable = true;
+            }
+        }
     }
 }
