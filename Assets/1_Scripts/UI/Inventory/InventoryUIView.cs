@@ -227,8 +227,49 @@ public class InventoryUIView : UIBase
 
         _itemPopupUI.SetActive(true);
 
-        _itemPopupUI.transform.position =
-            UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+        Canvas.ForceUpdateCanvases();
+        PositionPopupAtMouse();
+    }
+
+    private void PositionPopupAtMouse()
+    {
+        RectTransform popup = (RectTransform)_itemPopupUI.transform;
+        Canvas canvas = popup.GetComponentInParent<Canvas>().rootCanvas;
+        RectTransform canvasRect = (RectTransform)canvas.transform;
+
+        Camera camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : canvas.worldCamera;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            canvasRect,
+            UnityEngine.InputSystem.Mouse.current.position.ReadValue(),
+            camera,
+            out Vector2 position))
+        {
+            return;
+        }
+
+        // 중간 부모의 크기 배율까지 반영
+        Vector2 size = new Vector2(
+            popup.rect.width * Mathf.Abs(
+                popup.lossyScale.x / canvasRect.lossyScale.x),
+            popup.rect.height * Mathf.Abs(
+                popup.lossyScale.y / canvasRect.lossyScale.y));
+
+        Rect area = canvasRect.rect;
+        Vector2 pivot = popup.pivot;
+
+        position.x = Mathf.Clamp(position.x,
+            area.xMin + size.x * pivot.x,
+            area.xMax - size.x * (1f - pivot.x));
+
+        position.y = Mathf.Clamp(position.y,
+            area.yMin + size.y * pivot.y,
+            area.yMax - size.y * (1f - pivot.y));
+
+        popup.position = canvasRect.TransformPoint(
+            new Vector3(position.x, position.y, 0f));
     }
 
     private void CloseItemPopup()
