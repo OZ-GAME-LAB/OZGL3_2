@@ -5,6 +5,8 @@ using System.Net;
 using System.Net.Sockets;
 using Unity.Netcode.Transports.UTP;
 using Cysharp.Threading.Tasks;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class NetCodeNetworkManager : MonoBehaviour
 {
@@ -13,6 +15,16 @@ public class NetCodeNetworkManager : MonoBehaviour
     [SerializeField] private NetworkManager _netCodeNetworkManager;
     [SerializeField] private UnityTransport _transport;
     [SerializeField, Min(1f)] private float _connectionTimeout = 8f;
+    [SerializeField] private HostDisconnectedUI _hostDisconnectedUIPrefab;
+
+    private HostDisconnectedUI _hostDisconnectedUI;
+    private string _lobbyScenePath;
+    private bool _connectedAsClient;
+    private bool _hostDisconnected;
+    private bool _returningToLobby;
+    private bool _isQuitting;
+    private float _previousTimeScale;
+    private bool _previousAudioPause;
 
     private double _connectionDeadLine;
 
@@ -26,6 +38,9 @@ public class NetCodeNetworkManager : MonoBehaviour
         _isStarting == false && 
         _isConnecting == false &&
         _isConnectingStopped == false &&
+        _hostDisconnected == false &&
+        _returningToLobby == false &&
+        _netCodeNetworkManager != null &&
         _netCodeNetworkManager.IsListening == false && 
         _netCodeNetworkManager.ShutdownInProgress == false;
 
@@ -33,15 +48,21 @@ public class NetCodeNetworkManager : MonoBehaviour
 
     private NetCodeCliendtSideService _clientSideService = new NetCodeCliendtSideService();
     private NetCodeServerSideService _serverSideService = new NetCodeServerSideService();
+    private NetworkSessionSaveService _sessionSaveService;
 
     private void Awake()
     {
         Inst = this;
+        _lobbyScenePath = SceneManager.GetActiveScene().path;
+        Application.quitting += OnApplicationQuitting;
 
         if (_transport == null && _netCodeNetworkManager != null)
         {
             _transport = _netCodeNetworkManager.GetComponent<UnityTransport>();
         }
+
+        _sessionSaveService = new NetworkSessionSaveService(_netCodeNetworkManager, this);
+        _sessionSaveService.Initialize();
     }
 
     private void Start()
@@ -57,13 +78,31 @@ public class NetCodeNetworkManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        Application.quitting -= OnApplicationQuitting;
         _clientSideService.EndClientService();
         _serverSideService.EndServerService();
-        // _serverSideService.End
+        _sessionSaveService?.Dispose();
+
+        if (_hostDisconnected)
+        {
+            Time.timeScale = _returningToLobby ? 1f : _previousTimeScale;
+            AudioListener.pause = _previousAudioPause;
+        }
+
+        if (Inst == this)
+            Inst = null;
+    }
+
+    private void OnApplicationQuitting()
+    {
+        _isQuitting = true;
     }
 
     private void Update()
     {
+        if (!_isQuitting)
+            _sessionSaveService?.Tick(Time.unscaledDeltaTime);
+
         if (_netCodeNetworkManager == null)
         {
             return;
@@ -88,6 +127,11 @@ public class NetCodeNetworkManager : MonoBehaviour
         {
             StopConnectionAttempt("접속 시간이 초과되었습니다. 호스트의 IP와 포트를 확인하세요.");
         }
+    }
+
+    public bool RequestSessionSave()
+    {
+        return _sessionSaveService != null && _sessionSaveService.RequestSessionSave();
     }
 
     public void CancelConnection()
@@ -121,7 +165,110 @@ public class NetCodeNetworkManager : MonoBehaviour
         }
 
         _isConnecting = false;
+        _connectedAsClient = _netCodeNetworkManager != null && !_netCodeNetworkManager.IsServer;
         return true;
+    }
+
+    public void HandleLocalClientDisconnected(string reason)
+    {
+        if (_isQuitting || !Application.isPlaying || Application.exitCancellationToken.IsCancellationRequested)
+            return;
+
+        if (HandleConnectionAttemptDisconnected(reason) || !_connectedAsClient || _hostDisconnected)
+            return;
+
+        _hostDisconnected = true;
+        _connectedAsClient = false;
+
+        // TODO(저장 연결) : 캐릭터 저장 기능 완성 후 여기서 로컬 캐릭터 데이터를 확보하고 한 번 저장한다.
+        // NetworkObject가 정리되기 전이므로 확인 버튼이 아닌 이 위치에 저장 처리를 연결한다.
+
+        _previousTimeScale = Time.timeScale;
+        _previousAudioPause = AudioListener.pause;
+        Time.timeScale = 0f;
+        AudioListener.pause = true;
+
+        NetworkObject player = _netCodeNetworkManager.LocalClient?.PlayerObject;
+        if (player != null)
+        {
+            if (player.TryGetComponent(out PlayerControllerView controller))
+                controller.enabled = false;
+            if (player.TryGetComponent(out PlayerInput input))
+            {
+                input.DeactivateInput();
+                input.enabled = false;
+            }
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        _hostDisconnectedUI = Instantiate(_hostDisconnectedUIPrefab, transform);
+        _hostDisconnectedUI.Show(OnConfirmHostDisconnected);
+    }
+
+    private void OnConfirmHostDisconnected()
+    {
+        ReturnToLobbyAsync().Forget();
+    }
+
+    private async UniTask ReturnToLobbyAsync()
+    {
+        if (!_hostDisconnected || _returningToLobby)
+            return;
+
+        _returningToLobby = true;
+        _hostDisconnectedUI.SetReturning(true);
+        var cancellationToken = this.GetCancellationTokenOnDestroy();
+        bool sceneReloadStarted = false;
+
+        try
+        {
+            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+
+            if (_netCodeNetworkManager.IsListening && !_netCodeNetworkManager.ShutdownInProgress)
+                _netCodeNetworkManager.Shutdown(true);
+
+            while (_netCodeNetworkManager.IsListening || _netCodeNetworkManager.ShutdownInProgress)
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+
+            if (!Application.CanStreamedLevelBeLoaded(_lobbyScenePath))
+            {
+                Debug.LogError($"로비로 돌아갈 씬이 빌드 목록에 없습니다: {_lobbyScenePath}", this);
+                return;
+            }
+
+            _clientSideService.EndClientService();
+            _serverSideService.EndServerService();
+            SceneManager.MoveGameObjectToScene(gameObject, SceneManager.GetActiveScene());
+            AsyncOperation load = SceneManager.LoadSceneAsync(_lobbyScenePath, LoadSceneMode.Single);
+
+            if (load == null)
+            {
+                Debug.LogError($"로비 씬을 불러오지 못했습니다: {_lobbyScenePath}", this);
+                DontDestroyOnLoad(gameObject);
+                return;
+            }
+
+            sceneReloadStarted = true;
+            await load.ToUniTask(cancellationToken: cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            if (this != null)
+                DontDestroyOnLoad(gameObject);
+        }
+        finally
+        {
+            if (this != null && !cancellationToken.IsCancellationRequested && !sceneReloadStarted && !_isQuitting)
+            {
+                _returningToLobby = false;
+                _hostDisconnectedUI.ShowReturnError();
+            }
+        }
     }
 
     public bool HandleConnectionAttemptDisconnected(string reason)
@@ -268,6 +415,12 @@ public class NetCodeNetworkManager : MonoBehaviour
         if (_netCodeNetworkManager == null || _transport == null)
         {
             error = "NetworkManager와 UnityTransport를 연결하세요.";
+            return false;
+        }
+
+        if (_hostDisconnectedUIPrefab == null)
+        {
+            error = "호스트 연결 종료 팝업 프리팹을 연결하세요.";
             return false;
         }
 

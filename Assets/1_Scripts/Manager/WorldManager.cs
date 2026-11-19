@@ -8,6 +8,7 @@ public class WorldManager : MonoBehaviour
     private StageEntryPoint _startSpawnPoint;
 
     public static WorldManager Inst { get; private set; }
+    public string LocalSpawnPointId { get; set; } = CharacterSaveData.DefaultSpawnPointId;
 
     private void Awake()
     {
@@ -37,6 +38,44 @@ public class WorldManager : MonoBehaviour
     {
         if (Inst == this)
             Inst = null;
+    }
+
+    public bool SaveLocalSpawnPoint(CharacterSaveData data)
+    {
+        if (data == null)
+        {
+            Debug.LogWarning("스폰포인트 ID를 기록할 캐릭터 저장 데이터가 없습니다.", this);
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(LocalSpawnPointId))
+        {
+            Debug.LogWarning("로컬 캐릭터의 스폰포인트 ID가 비어 있습니다.", this);
+            return false;
+        }
+
+        data.SpawnPointId = LocalSpawnPointId;
+        return true;
+    }
+
+    public bool TryLoadLocalSpawnPoint(CharacterSaveData data, out StageEntryPoint entryPoint)
+    {
+        entryPoint = null;
+
+        if (data == null)
+        {
+            Debug.LogWarning("스폰포인트 ID를 불러올 캐릭터 저장 데이터가 없습니다.", this);
+            return false;
+        }
+
+        string entryPointId = string.IsNullOrWhiteSpace(data.SpawnPointId)
+            ? CharacterSaveData.DefaultSpawnPointId : data.SpawnPointId;
+
+        if (!TryGetStageEntryPoint(entryPointId, out entryPoint))
+            return false;
+
+        LocalSpawnPointId = entryPointId;
+        return true;
     }
 
     public bool PlacePlayerAtStart(PlayerControllerView player)
