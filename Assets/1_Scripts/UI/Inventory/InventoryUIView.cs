@@ -1,4 +1,4 @@
-using ObservableCollections;
+ï»¿using ObservableCollections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using TMPro;
@@ -27,7 +27,7 @@ public class InventoryUIView : UIBase
     [SerializeField] private TMP_Text _descriptionText;
     [SerializeField] private Button _popupCloseButton;
 
-    [Header("Àåºñ ½½·Ô ¹è°æ")]
+    [Header("ì¥ë¹„ ìŠ¬ë¡¯ ë°°ê²½")]
     [SerializeField] private Sprite _talismanSlotBackground;
     [SerializeField] private Sprite _loggingSlotBackground;
     [SerializeField] private Sprite _fishingSlotBackground;
@@ -169,13 +169,13 @@ public class InventoryUIView : UIBase
         if (slotView == null)
         {
             Destroy(slotObject);
-            Debug.LogError("InventorySlotUIView°¡ ÇÁ¸®ÆÕ¿¡ ¾ø½À´Ï´Ù.", _inventorySlotPrefab);
+            Debug.LogError("InventorySlotUIViewê°€ í”„ë¦¬íŒ¹ì— ì—†ìŠµë‹ˆë‹¤.", _inventorySlotPrefab);
             return;
         }
 
+        _inventorySlots.Add(slotView, item);
         slotView.Bind(item);
         slotView.ItemOnClickEvent += ItemOnClick;
-        _inventorySlots.Add(slotView, item);
     }
 
     private void ItemOnClick(InventorySlotUIView slot, InventoryItemViewModel item)
@@ -194,13 +194,13 @@ public class InventoryUIView : UIBase
     {
         _selectedItem = item;
 
-        // ¾ÆÀÌÅÛ Á¤º¸ Ç¥½Ã
+        // ì•„ì´í…œ ì •ë³´ í‘œì‹œ
         _nameText.text = item.Name;
         _descriptionText.text = item.Description;
 
         _ItemUseButton.gameObject.SetActive(false);
         _ItemAddQuickSlotButton.gameObject.SetActive(false);
-        // ¾ÆÀÌÅÛ Å¸ÀÔ¿¡ µû¸¥ »ç¿ë ¹öÆ° ÅØ½ºÆ® ¼³Á¤
+        // ì•„ì´í…œ íƒ€ì…ì— ë”°ë¥¸ ì‚¬ìš© ë²„íŠ¼ í…ìŠ¤íŠ¸ ì„¤ì •
 
         switch (item.ItemType)
         {
@@ -210,19 +210,19 @@ public class InventoryUIView : UIBase
                 bool isEquipped =
                     ServiceManager.Inst.InventoryService.IsEquippedItem(item);
 
-                _ItemUseText.text = isEquipped ? "Àåºñ ÇØÁ¦" : "Àåºñ ÀåÂø";
+                _ItemUseText.text = isEquipped ? "ì¥ë¹„ í•´ì œ" : "ì¥ë¹„ ì¥ì°©";
                 break;
 
             case nameof(ItemType.Consumable):
                 _ItemUseButton.gameObject.SetActive(true);
                 _ItemAddQuickSlotButton.gameObject.SetActive(true);
 
-                _ItemUseText.text = "¾ÆÀÌÅÛ »ç¿ë";
-                _ItemAddQuickSlotText.text = "¾ÆÀÌÅÛ Äü½½·Ô µî·Ï";
+                _ItemUseText.text = "ì•„ì´í…œ ì‚¬ìš©";
+                _ItemAddQuickSlotText.text = "ì•„ì´í…œ í€µìŠ¬ë¡¯ ë“±ë¡";
                 break;
         }
 
-        _ItemRemoveText.text = "¾ÆÀÌÅÛ Á¦°Å";
+        _ItemRemoveText.text = "ì•„ì´í…œ ì œê±°";
 
         _itemPopupUI.SetActive(true);
 
@@ -238,43 +238,54 @@ public class InventoryUIView : UIBase
             _itemPopupUI.SetActive(false);
     }
 
-    // ¾ÆÀÌÅÛ »ç¿ë / ÀåÂø ¹öÆ°
+    // ì•„ì´í…œ ì‚¬ìš© / ì¥ì°© ë²„íŠ¼
     private void OnClickItemUseButton()
     {
         if (_selectedItem == null)
             return;
 
         InventoryItemViewModel item = _selectedItem;
+        InventoryService inventory = ServiceManager.Inst.InventoryService;
 
         if (item.ItemType == nameof(ItemType.Equipment))
         {
-            // Àåºñ ¾ÆÀÌÅÛ ÀåÂø
-            if (!ServiceManager.Inst.InventoryService.TryEquipItem(item))
+            bool wasEquipped = inventory.IsEquippedItem(item);
+
+            // ì¥ë¹„ ì•„ì´í…œ ì¥ì°©
+            if (inventory.TryEquipItem(item) == false)
             {
-                Debug.LogWarning($"{item.Name} Àº ÀåÂø ¾ÆÀÌÅÛÀÌ ¾Æ´Õ´Ï´Ù");
+                Debug.LogWarning($"{item.Name}ì€ ì¥ì°© ì•„ì´í…œì´ ì•„ë‹™ë‹ˆë‹¤ ì¥ì°© ìƒíƒœë¥¼ ë³€ê²½í•˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.");
                 return;
             }
+
+            CloseItemPopup();
+
+            // ì¥ì°©í•  ë•Œë§Œ ê°€ë°©ì—ì„œ ì œê±°.
+            // í•´ì œí•  ë•ŒëŠ” UnequipItemì´ ê°€ë°© ë°˜í™˜ê¹Œì§€ ì²˜ë¦¬í•¨.
+            if (wasEquipped == false)
+            {
+                RemoveItemRequest(item);
+            }
+
+            return;
         }
-        else
-        {
-            // ÀÏ¹İ ¾ÆÀÌÅÛ »ç¿ë
-            ServiceManager.Inst.InventoryService.UseItem(item);
-        }
+
+        inventory.UseItem(item);
 
         CloseItemPopup();
         RemoveItemRequest(item);
     }
 
-    // ¾ÆÀÌÅÛ Äü½½·Ô µî·Ï ¹öÆ°
+    // ì•„ì´í…œ í€µìŠ¬ë¡¯ ë“±ë¡ ë²„íŠ¼
     private void OnClickItemAddQuickSlotButton()
     {
         if (_selectedItem == null)
             return;
 
-        // TODO: ¾ÆÀÌÅÛ Äü½½·Ô µî·Ï ·ÎÁ÷
+        // TODO: ì•„ì´í…œ í€µìŠ¬ë¡¯ ë“±ë¡ ë¡œì§
     }
 
-    // ¾ÆÀÌÅÛ Á¦°Å ¹öÆ°
+    // ì•„ì´í…œ ì œê±° ë²„íŠ¼
     private void OnClickItemRemoveButton()
     {
         if (_selectedItem == null)
@@ -298,6 +309,7 @@ public class InventoryUIView : UIBase
                 continue;
 
             slot.ItemOnClickEvent -= ItemOnClick;
+            slot.Unbind();
             Destroy(slot.gameObject);
         }
 
@@ -344,16 +356,17 @@ public class InventoryUIView : UIBase
         {
             Destroy(slotObject);
             Debug.LogError(
-                "InventorySlotUIView°¡ ÇÁ¸®ÆÕ¿¡ ¾ø½À´Ï´Ù.",
+                "InventorySlotUIViewê°€ í”„ë¦¬íŒ¹ì— ì—†ìŠµë‹ˆë‹¤.",
                 _inventorySlotPrefab);
             return;
         }
+
+        _equipmentSlots.Add(slotView);
 
         slotView.Bind(inventoryItemViewModel);
         slotView.SetBackground(background);
 
         slotView.ItemOnClickEvent += ItemOnClick;
-        _equipmentSlots.Add(slotView);
     }
 
     private void ClearEquipmentSlots()
@@ -363,6 +376,7 @@ public class InventoryUIView : UIBase
             if (slot != null)
             {
                 slot.ItemOnClickEvent -= ItemOnClick;
+                slot.Unbind();
                 Destroy(slot.gameObject);
             }
         }

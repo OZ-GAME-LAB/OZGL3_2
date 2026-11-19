@@ -190,7 +190,7 @@ public class SaveManager : MonoBehaviour
             string path = Path.Combine(directory, id + ".json");
             string backupPath = path + ".bak";
 
-            if (File.Exists(path) && !File.Exists(backupPath) == false)
+            if (File.Exists(path) == false && File.Exists(backupPath) == false)
             {
                 message = "저장 파일이 없습니다.";
                 return SaveLoadResult.NotFound;
