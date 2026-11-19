@@ -215,10 +215,11 @@ public class InventoryUIView : UIBase
 
             case nameof(ItemType.Consumable):
                 _ItemUseButton.gameObject.SetActive(true);
-                _ItemAddQuickSlotButton.gameObject.SetActive(true);
-
                 _ItemUseText.text = "아이템 사용";
-                _ItemAddQuickSlotText.text = "아이템 퀵슬롯 등록";
+
+                //_ItemAddQuickSlotButton.gameObject.SetActive(true);
+                //_ItemAddQuickSlotText.text = "아이템 퀵슬롯 등록";
+
                 break;
         }
 
@@ -271,7 +272,6 @@ public class InventoryUIView : UIBase
         if (_selectedItem == null)
             return;
 
-        // TODO: 아이템 퀵슬롯 등록 로직
     }
 
     // 아이템 제거 버튼
@@ -283,7 +283,13 @@ public class InventoryUIView : UIBase
         InventoryItemViewModel item = _selectedItem;
 
         CloseItemPopup();
+        DropItemRequest(item);
         RemoveItemRequest(item);
+    }
+
+    private void DropItemRequest(InventoryItemViewModel item)
+    {
+        ServiceManager.Inst.InventoryService.DropItem(item.Id);
     }
     private void RemoveItemRequest(InventoryItemViewModel item)
     {

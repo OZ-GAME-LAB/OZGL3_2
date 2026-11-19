@@ -8,7 +8,7 @@ public class FieldItemObject : NetworkBehaviour
 {
     [Header("땅 충돌용 콜라이더")]
     [SerializeField] private BoxCollider2D Collider_Body;
-    
+
     [SerializeField] private SpriteRenderer _spriteRenderer;
     [SerializeField] private TMP_Text Text_ItemCount;
     [SerializeField] private bool _showCountWhenOne = true;
@@ -22,6 +22,11 @@ public class FieldItemObject : NetworkBehaviour
 
     private int _visualVersion;
     private int _maxStack;
+
+    [Header("생성 후 획득 대기 시간")]
+    [SerializeField, Min(0f)] private float _pickupDelay = 1f;
+
+    private float _pickupAllowedAt;
 
     private void Awake()
     {
@@ -44,6 +49,8 @@ public class FieldItemObject : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        _pickupAllowedAt = Time.time + _pickupDelay;
+
         RefreshStackLimit();
 
         _itemDataId.OnValueChanged += OnItemDataIdChanged;
@@ -201,24 +208,18 @@ public class FieldItemObject : NetworkBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        OnPlayerCollision(Count, collision);
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (IsServer == false)
+        if (IsServer == false || CanMerge == false)
         {
             return;
         }
 
-        // Player와 충돌했을 때
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Player"))
-        {
-            if (IsSpawned == false || Count <= 0)
-            {
-                return;
-            }
-
-            OnPlayerCollision(Count);
-            return;
-        }
 
         if (CanMerge == false)
         {
@@ -283,8 +284,24 @@ public class FieldItemObject : NetworkBehaviour
         }
     }
 
-    private void OnPlayerCollision(int itemCount)
+    private void OnPlayerCollision(int itemCount, Collider2D collision)
     {
+        if (!IsServer || !IsSpawned || Count <= 0)
+        {
+            return;
+        }
+
+        if (Time.time < _pickupAllowedAt)
+        {
+            return;
+        }
+
+        if (collision.gameObject.layer != LayerMask.NameToLayer("Player"))
+        {
+            return;
+        }
+
+
         for (int i = 0; i < itemCount; i++)
         {
             if (!ServiceManager.Inst.InventoryService.AddItem(ItemDataId))
