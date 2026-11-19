@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class InventoryService
 {
@@ -75,6 +76,19 @@ public class InventoryService
         string slotKey = _nextSlotNumber.ToString();
         _inventoryViewModel.InventoryItemViewModelDictionary.Add(slotKey, itemViewModel);
         _nextSlotNumber++;
+
+        return true;
+    }
+
+    public bool DropItem(string itemId)
+    {
+
+         var position =  ServiceManager.Inst.PlayerService.GetPlayerVectorSelf();
+        if (ObjectManager.Inst.SpawnItem(itemId, 1, position) == null)
+        {
+            Debug.LogError($"아이템 드롭 실패: {itemId}");
+            return false;
+        }
 
         return true;
     }
