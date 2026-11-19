@@ -18,6 +18,14 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
     public event Action<string> RequestMessageReceived;
     public event Action Despawned;
 
+    private readonly string[] _confirmedRuneIds = new string[SlotCount];
+    private bool _restoreRequested;
+    private bool _restoreCompleted;
+    private bool _changePending;
+    private bool _serverRestoreCompleted;
+
+    public bool CanCaptureRunes => IsSpawned && IsOwner && _restoreCompleted && _changePending == false;
+
     private void Awake()
     {
         _equippedRuneIds = new NetworkList<FixedString128Bytes>();
@@ -25,6 +33,17 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        _restoreRequested = false;
+        _restoreCompleted = false;
+        _changePending = false;
+        _serverRestoreCompleted = false;
+        Array.Clear(_confirmedRuneIds, 0, _confirmedRuneIds.Length);
+
+        if (IsClient && IsOwner && SaveManager.Inst != null)
+        {
+            SaveManager.Inst.ClearConfirmedRunes();
+        }
+
         _cachedAttackProfile = null;
 
         if (IsServer)
@@ -54,7 +73,7 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
 
         if (IsClient && IsOwner && ServiceManager.Inst != null)
         {
-            ServiceManager.Inst.NetworkRuneService.ConnectLocalPlayer();
+            ServiceManager.Inst.NetworkRuneService.ConnectLocalPlayer(); 
         }
     }
 
@@ -87,12 +106,12 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
     // 반환값은 요청을 보냈는지이며, 서버의 장착 승인 여부가 아님.
     public bool RequestSetRune(int slotIndex, string runeId)
     {
-        if (!IsSpawned || !IsOwner)
+        if (CanCaptureRunes == false || slotIndex < 0 || slotIndex >= SlotCount)
+        {
             return false;
+        }
 
-        if (slotIndex < 0 || slotIndex >= SlotCount)
-            return false;
-
+        _changePending = true;
         RequestSetRuneServerRpc(slotIndex, runeId ?? "");
         return true;
     }
@@ -103,6 +122,12 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
         // 이 플레이어의 소유자만 장착 변경 가능.
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
         {
+            return;
+        }
+
+        if (_serverRestoreCompleted == false)
+        {
+            SendMessageToOwner("장착 룬 복원이 끝나지 않았습니다.");
             return;
         }
 
@@ -253,12 +278,134 @@ public class PlayerRuneEquipmentController : NetworkBehaviour
             }
         };
 
-        ReceiveMessageClientRpc(message, rpcParams);
+        ReceiveMessageClientRpc(message, _serverRestoreCompleted,
+            GetEquippedRuneId(0), GetEquippedRuneId(1), GetEquippedRuneId(2), rpcParams);
     }
 
     [ClientRpc]
-    private void ReceiveMessageClientRpc(string message, ClientRpcParams rpcParams = default)
+    private void ReceiveMessageClientRpc(string message, bool restored, string first, string second, string third, ClientRpcParams rpcParams = default)
     {
+        _changePending = false;
+        _restoreCompleted = restored;
+
+        if (restored)
+        {
+            _confirmedRuneIds[0] = first;
+            _confirmedRuneIds[1] = second;
+            _confirmedRuneIds[2] = third;
+            SaveManager.Inst?.RememberConfirmedRunes(first, second, third);
+        }
+        else
+        {
+            _restoreRequested = false;
+            Debug.LogWarning(message, this);
+        }
+
         RequestMessageReceived?.Invoke(message);
+    }
+
+    public void RequestRestoreRunes(System.Collections.Generic.List<string> runeIds)
+    {
+        if (IsSpawned == false || IsOwner == false || _restoreRequested)
+        {
+            return;
+        }
+
+        if (runeIds == null || runeIds.Count != SlotCount)
+        {
+            Debug.LogError("캐릭터의 장착 룬 데이터는 3칸이어야 합니다.", this);
+            return;
+        }
+
+        // 호스트에서는 응답이 즉시 올 수 있으므로 요청 전에 설정.
+        _restoreRequested = true;
+        RestoreRunesServerRpc(runeIds[0] ?? "", runeIds[1] ?? "", runeIds[2] ?? "");
+    }
+
+    [ServerRpc]
+    private void RestoreRunesServerRpc(string first, string second, string third, ServerRpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+        {
+            return;
+        }
+
+        if (_serverRestoreCompleted)
+        {
+            SendMessageToOwner("룬이 이미 복원되었습니다.");
+            return;
+        }
+
+        string[] ids = { first, second, third };
+
+        if (TryRestoreRunesOnServer(ids, out string error) == false)
+        {
+            SendMessageToOwner(error);
+            return;
+        }
+
+        _serverRestoreCompleted = true;
+        SendMessageToOwner("장착 룬을 복원했습니다.");
+    }
+
+    private bool TryRestoreRunesOnServer(string[] ids, out string error)
+    {
+        error = null;
+
+        if (DataManager.Inst == null || _equippedRuneIds.Count != SlotCount)
+        {
+            error = "룬 데이터 또는 장착 슬롯이 준비되지 않았습니다.";
+            return false;
+        }
+
+        var slots = new RuneData[SlotCount];
+        var runeTable = DataManager.Inst.ReadData<RuneData>();
+        var itemTable = DataManager.Inst.ReadData<ItemData>();
+        FixedString128Bytes networkId = default;
+
+        for (int i = 0; i < SlotCount; i++)
+        {
+            string id = ids[i];
+
+            if (string.IsNullOrEmpty(id))
+            {
+                continue;
+            }
+
+            if (Encoding.UTF8.GetByteCount(id) > networkId.Capacity ||
+                runeTable.TryGetValue(id, out RuneData rune) == false || rune == null ||
+                itemTable.TryGetValue(id, out ItemData item) == false || item == null)
+            {
+                error = $"{i + 1}번 슬롯의 룬 데이터를 확인해 주세요: {id}";
+                return false;
+            }
+
+            if (CanEquipOwnedRuneOnServer(id) == false)
+            {
+                error = $"{i + 1}번 슬롯의 룬 장착이 서버에서 허용되지 않았습니다: {id}";
+                return false;
+            }
+
+            slots[i] = rune;
+        }
+
+        if (AttackProfileBuilder.TryBuild(slots, out AttackProfile profile, out error) == false)
+        {
+            return false;
+        }
+
+        _cachedAttackProfile = profile;
+
+        for (int i = 0; i < SlotCount; i++)
+        {
+            _equippedRuneIds[i] = new FixedString128Bytes(ids[i]);
+        }
+
+        return true;
+    }
+
+    public string GetConfirmedRuneId(int slotIndex)
+    {
+        return _confirmedRuneIds[slotIndex];
     }
 }

@@ -27,6 +27,8 @@ public class SaveSelectionUI : UIBase
     [Header("현재 프로젝트의 고정 맵 식별자")]
     [SerializeField] private string _defaultMapId = "main_map";
 
+    [SerializeField] private Button Button_Delete;
+
     private readonly List<SaveSelectionSlotUI> _saveSlots = new();
     private readonly List<SaveSelectionSlotViewModel> _slotViewModels = new();
     private readonly List<WorldSaveData> _worlds = new();
@@ -39,6 +41,7 @@ public class SaveSelectionUI : UIBase
     private int _selectedIndex = -1;
     private ushort _port;
     private string _address;
+    private string _pendingDeleteId;
 
     private WorldSaveData _selectedWorld;
     private Action _onConfirmed;
@@ -48,6 +51,7 @@ public class SaveSelectionUI : UIBase
         Button_Create.onClick.AddListener(OnCreate);
         Button_Select.onClick.AddListener(OnSelect);
         Button_Back.onClick.AddListener(OnBack);
+        Button_Delete.onClick.AddListener(OnDelete);
     }
 
     private void OnDisable()
@@ -65,13 +69,24 @@ public class SaveSelectionUI : UIBase
     private void OnDestroy()
     {
         if (Button_Create != null)
+        {
             Button_Create.onClick.RemoveListener(OnCreate);
+        }
 
         if (Button_Select != null)
+        {
             Button_Select.onClick.RemoveListener(OnSelect);
+        }
 
         if (Button_Back != null)
+        {
             Button_Back.onClick.RemoveListener(OnBack);
+        }
+
+        if (Button_Delete != null)
+        {
+            Button_Delete.onClick.RemoveListener(OnDelete);
+        }
     }
 
     public void BeginHost(ushort port, Action onConfirmed)
@@ -164,14 +179,14 @@ public class SaveSelectionUI : UIBase
 
         // 생성 직후에는 새 데이터를 선택.
         // 월드 선택으로 돌아왔을 때는 이전 선택을 복원.
-        if (!string.IsNullOrEmpty(preferredId))
+        if (string.IsNullOrEmpty(preferredId) == false)
+        {
             OnSelectSaveSlot(preferredId);
+        }
 
-        string message = _slotViewModels.Count == 0
-            ? "저장된 데이터가 없습니다. 이름을 입력하고 생성해 주세요."
-            : "사용할 슬롯을 선택하세요.";
+        string message = _slotViewModels.Count == 0 ? "저장된 데이터가 없습니다. 이름을 입력하고 생성해 주세요." : "사용할 슬롯을 선택하세요.";
 
-        if (!string.IsNullOrEmpty(warnings))
+        if (string.IsNullOrEmpty(warnings) == false)
         {
             Debug.LogWarning(warnings, this);
 
@@ -193,19 +208,20 @@ public class SaveSelectionUI : UIBase
     {
         bool ready = _configured && SaveManager.Inst != null;
 
-        bool hasSelection =
-            _selectedIndex >= 0 &&
-            _selectedIndex < _slotViewModels.Count;
+        bool hasSelection = _selectedIndex >= 0 && _selectedIndex < _slotViewModels.Count;
 
         Button_Select.interactable = ready && hasSelection;
         Button_Create.interactable = ready;
         Input_NewName.interactable = ready;
+        Button_Delete.interactable = ready && hasSelection;
     }
 
     private void OnCreate()
     {
-        if (!_configured || SaveManager.Inst == null)
+        if (_configured == false || SaveManager.Inst == null)
+        {
             return;
+        }
 
         string newName = Input_NewName.text?.Trim();
 
@@ -221,6 +237,22 @@ public class SaveSelectionUI : UIBase
             return;
         }
 
+        if (SaveManager.TryValidateSaveName(newName, out string nameError) == false)
+        {
+            SetMessage(nameError);
+            return;
+        }
+
+        bool nameExists = _selectingWorld
+            ? _worlds.Exists(world => string.Equals(world.WorldName, newName, StringComparison.OrdinalIgnoreCase))
+            : _characters.Exists(character => string.Equals(character.CharacterName, newName, StringComparison.OrdinalIgnoreCase));
+
+        if (nameExists)
+        {
+            SetMessage(_selectingWorld ? "같은 이름의 월드가 이미 있습니다." : "같은 이름의 캐릭터가 이미 있습니다.");
+            return;
+        }
+
         if (_selectingWorld)
         {
             if (string.IsNullOrWhiteSpace(_defaultMapId))
@@ -231,7 +263,7 @@ public class SaveSelectionUI : UIBase
 
             WorldSaveData world = WorldSaveData.CreateNew(newName, _defaultMapId);
 
-            if (SaveManager.Inst.SaveWorld(world, out string error) == false)
+            if (SaveManager.Inst.SaveWorld(world, out string error, createOnly: true) == false)
             {
                 SetMessage(error);
                 return;
@@ -243,7 +275,7 @@ public class SaveSelectionUI : UIBase
         {
             CharacterSaveData character = CharacterSaveData.CreateNew(newName);
 
-            if (SaveManager.Inst.SaveCharacter(character, out string error) == false)
+            if (SaveManager.Inst.SaveCharacter(character, out string error, createOnly: true) == false)
             {
                 SetMessage(error);
                 return;
@@ -255,29 +287,32 @@ public class SaveSelectionUI : UIBase
 
     private void OnSelect()
     {
-        if (!_configured || SaveManager.Inst == null)
+        if (_configured == false || SaveManager.Inst == null)
+        {
             return;
+        }
 
         int index = _selectedIndex;
 
         if (_selectingWorld)
         {
             if (index < 0 || index >= _worlds.Count)
+            {
                 return;
+            }
 
-            SaveLoadResult result = SaveManager.Inst.LoadWorld(
-                _worlds[index].WorldId,
-                out WorldSaveData world,
-                out string message);
+            SaveLoadResult result = SaveManager.Inst.LoadWorld(_worlds[index], out WorldSaveData world, out string message);
 
-            if (!IsLoadSuccess(result))
+            if (IsLoadSuccess(result) == false)
             {
                 SetMessage(message);
                 return;
             }
 
             if (result == SaveLoadResult.RecoveredFromBackup)
+            {
                 Debug.LogWarning(message, this);
+            }
 
             _selectedWorld = world;
             _selectingWorld = false;
@@ -287,15 +322,13 @@ public class SaveSelectionUI : UIBase
         }
 
         if (index < 0 || index >= _characters.Count)
+        {
             return;
+        }
 
-        SaveLoadResult characterResult =
-            SaveManager.Inst.LoadCharacter(
-                _characters[index].CharacterId,
-                out CharacterSaveData character,
-                out string characterMessage);
+        SaveLoadResult characterResult = SaveManager.Inst.LoadCharacter(_characters[index], out CharacterSaveData character, out string characterMessage);
 
-        if (!IsLoadSuccess(characterResult))
+        if (IsLoadSuccess(characterResult) == false)
         {
             SetMessage(characterMessage);
             return;
@@ -312,13 +345,11 @@ public class SaveSelectionUI : UIBase
                 return;
             }
 
-            GameStartSelection.SetHost(
-                _port, _selectedWorld, character);
+            GameStartSelection.SetHost(_port, _selectedWorld, character);
         }
         else
         {
-            GameStartSelection.SetClient(
-                _address, _port, character);
+            GameStartSelection.SetClient(_address, _port, character);
         }
 
         Action callback = _onConfirmed;
@@ -350,25 +381,28 @@ public class SaveSelectionUI : UIBase
     private void CloseWindow()
     {
         if (UIManager.Inst != null)
+        {
             UIManager.Inst.Close(UIType.SaveSelectionUI);
+        }
     }
 
     private void SetMessage(string message)
     {
         if (Text_Message != null)
+        {
             Text_Message.text = message;
+        }
     }
+
 
     private static bool IsLoadSuccess(SaveLoadResult result)
     {
-        return result == SaveLoadResult.Success
-            || result == SaveLoadResult.RecoveredFromBackup;
+        return result == SaveLoadResult.Success || result == SaveLoadResult.RecoveredFromBackup;
     }
 
     private static string FormatSavedTime(string utcText)
     {
-        if (!DateTimeOffset.TryParse(
-                utcText, out DateTimeOffset savedTime))
+        if (DateTimeOffset.TryParse(utcText, out DateTimeOffset savedTime) == false)
         {
             return "저장 시각 없음";
         }
@@ -376,19 +410,11 @@ public class SaveSelectionUI : UIBase
         return savedTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
     }
 
-    private void AddSaveSlot(
-    string id,
-    string displayName,
-    string savedTime)
+    private void AddSaveSlot(string id, string displayName, string savedTime)
     {
-        var viewModel = new SaveSelectionSlotViewModel(
-            id,
-            displayName,
-            savedTime);
+        var viewModel = new SaveSelectionSlotViewModel(id, displayName, savedTime);
 
-        SaveSelectionSlotUI slot = Instantiate(
-            Prefab_SaveSlot,
-            Transform_SaveSlotRoot);
+        SaveSelectionSlotUI slot = Instantiate(Prefab_SaveSlot, Transform_SaveSlotRoot);
 
         slot.Bind(viewModel, OnSelectSaveSlot);
 
@@ -398,32 +424,76 @@ public class SaveSelectionUI : UIBase
 
     private void OnSelectSaveSlot(string saveId)
     {
-        if (!_configured)
+        if (_configured == false)
+        {
             return;
+        }
 
-        int index = _slotViewModels.FindIndex(
-            vm => vm.SaveId == saveId);
+        int index = _slotViewModels.FindIndex(vm => vm.SaveId == saveId);
 
         if (index < 0)
+        {
             return;
+        }
+
+        _pendingDeleteId = null;
 
         _selectedIndex = index;
 
         for (int i = 0; i < _slotViewModels.Count; i++)
         {
-            _slotViewModels[i].IsSelected =
-                i == _selectedIndex;
+            _slotViewModels[i].IsSelected = i == _selectedIndex;
         }
 
         RefreshButtons();
     }
 
+    private void OnDelete()
+    {
+        if (_configured == false || SaveManager.Inst == null ||
+            _selectedIndex < 0 || _selectedIndex >= _slotViewModels.Count)
+        {
+            return;
+        }
+
+        SaveSelectionSlotViewModel slot = _slotViewModels[_selectedIndex];
+        string typeName = _selectingWorld ? "월드" : "캐릭터";
+
+        if (_pendingDeleteId != slot.SaveId)
+        {
+            _pendingDeleteId = slot.SaveId;
+            SetMessage($"'{slot.DisplayName}' {typeName}와 백업을 삭제할까요?\n삭제하려면 삭제 버튼을 한 번 더 눌러 주세요.");
+            return;
+        }
+
+        _pendingDeleteId = null;
+
+        string error;
+        bool deleted = _selectingWorld
+            ? SaveManager.Inst.DeleteWorld(_worlds[_selectedIndex], out error)
+            : SaveManager.Inst.DeleteCharacter(_characters[_selectedIndex], out error);
+
+        if (deleted == false)
+        {
+            SetMessage(error);
+            return;
+        }
+
+        string deletedName = slot.DisplayName;
+        RefreshList();
+        SetMessage($"'{deletedName}' {typeName}를 삭제했습니다.");
+    }
+
     private void ClearSaveSlots()
     {
+        _pendingDeleteId = null;
+
         foreach (SaveSelectionSlotUI slot in _saveSlots)
         {
             if (slot == null)
+            {
                 continue;
+            }
 
             slot.Unbind();
 

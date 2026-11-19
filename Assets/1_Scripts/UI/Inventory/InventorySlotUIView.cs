@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using System;
 using System.ComponentModel;
 using TMPro;
@@ -22,8 +22,12 @@ public class InventorySlotUIView : MonoBehaviour
 
         _viewModel = viewModel;
 
-        if (_viewModel != null)
-            _viewModel.PropertyChanged += OnItemPropertyChanged;
+        if (_viewModel == null)
+        {
+            return;
+        }
+
+        _viewModel.PropertyChanged += OnItemPropertyChanged;
         _viewModel.InvokeOnceOnInit();
 
     }
@@ -93,12 +97,13 @@ public class InventorySlotUIView : MonoBehaviour
 
     }
 
-    private void Unbind()
+    public void Unbind()
     {
         if (_viewModel != null)
+        {
             _viewModel.PropertyChanged -= OnItemPropertyChanged;
-
-        _viewModel = null;
+            _viewModel = null;
+        }
     }
 
     private void OnClickUseButton()

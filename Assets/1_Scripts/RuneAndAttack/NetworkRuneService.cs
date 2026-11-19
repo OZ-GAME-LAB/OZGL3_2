@@ -221,4 +221,25 @@ public class NetworkRuneService : IDisposable
     {
         DisconnectLocalPlayer();
     }
+
+    public bool TryCaptureEquippedRuneIds(out List<string> runeIds, out string error)
+    {
+        runeIds = null;
+        error = null;
+
+        if (TryConnectLocalPlayer() == false || _localEquipment.CanCaptureRunes == false)
+        {
+            error = "룬 복원 또는 장착 변경이 완료되지 않아 저장하지 않았습니다.";
+            return false;
+        }
+
+        runeIds = new List<string>(PlayerRuneEquipmentController.SlotCount);
+
+        for (int i = 0; i < PlayerRuneEquipmentController.SlotCount; i++)
+        {
+            runeIds.Add(_localEquipment.GetConfirmedRuneId(i));
+        }
+
+        return true;
+    }
 }

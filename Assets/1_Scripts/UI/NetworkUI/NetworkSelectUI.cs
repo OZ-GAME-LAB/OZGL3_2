@@ -375,6 +375,20 @@ public class NetworkSelectUI : UIBase
         bool started;
         string error;
 
+        InventoryService inventory = ServiceManager.Inst != null ? ServiceManager.Inst.InventoryService : null;
+
+        if (inventory == null)
+        {
+            SetMessage("InventoryService가 준비되지 않았습니다.");
+            return;
+        }
+
+        if (inventory.TryRestoreSaveItems(GameStartSelection.Character.Items, out string restoreError) == false)
+        {
+            SetMessage($"캐릭터 인벤토리를 불러오지 못했습니다.\n{restoreError}");
+            return;
+        }
+
         if (GameStartSelection.IsHost)
         {
             if (GameStartSelection.World == null)

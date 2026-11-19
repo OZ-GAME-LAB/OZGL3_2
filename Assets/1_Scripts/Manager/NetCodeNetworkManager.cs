@@ -41,8 +41,11 @@ public class NetCodeNetworkManager : MonoBehaviour
         _hostDisconnected == false &&
         _returningToLobby == false &&
         _netCodeNetworkManager != null &&
-        _netCodeNetworkManager.IsListening == false && 
+        _netCodeNetworkManager.IsListening == false &&
+        IsReturningToLobby == false &&
         _netCodeNetworkManager.ShutdownInProgress == false;
+
+    public bool IsReturningToLobby { get; private set; }
 
     public event Action<string> ConnectionMessageChanged;
 
@@ -182,6 +185,21 @@ public class NetCodeNetworkManager : MonoBehaviour
 
         // TODO(저장 연결) : 캐릭터 저장 기능 완성 후 여기서 로컬 캐릭터 데이터를 확보하고 한 번 저장한다.
         // NetworkObject가 정리되기 전이므로 확인 버튼이 아닌 이 위치에 저장 처리를 연결한다.
+
+        SaveManager saves = SaveManager.Inst;
+
+        if (saves == null)
+        {
+            Debug.LogWarning("[연결 종료 저장 실패] SaveManager가 없습니다.", this);
+        }
+        else if (saves.TrySaveDisconnectedCharacter(out string error) == false)
+        {
+            Debug.LogWarning($"[연결 종료 저장 실패] {error}", this);
+        }
+        else
+        {
+            Debug.Log("[연결 종료 저장 완료] 로컬 캐릭터를 저장했습니다.", this);
+        }
 
         _previousTimeScale = Time.timeScale;
         _previousAudioPause = AudioListener.pause;
@@ -437,5 +455,89 @@ public class NetCodeNetworkManager : MonoBehaviour
         }
 
         return true;
+    }
+
+    public async UniTask<bool> TryReturnToLobbyAsync()
+    {
+        if (IsReturningToLobby || _netCodeNetworkManager == null)
+        {
+            return false;
+        }
+
+        if (_netCodeNetworkManager.IsListening == false || _netCodeNetworkManager.ShutdownInProgress)
+        {
+            return false;
+        }
+
+        SaveManager saves = SaveManager.Inst;
+        GameManager game = GameManager.Inst;
+        UIManager ui = UIManager.Inst;
+
+        if (saves == null || game == null || ui == null)
+        {
+            Debug.LogError("로비 복귀에 필요한 매니저를 확인해 주세요.", this);
+            return false;
+        }
+
+        IsReturningToLobby = true;
+
+        try
+        {
+            // 장착 룬을 읽을 수 있도록 플레이어가 스폰된 상태에서 저장한다.
+            if (saves.TrySaveCurrentCharacter(out string error) == false)
+            {
+                Debug.LogWarning(error, this);
+                return false;
+            }
+
+            if (_netCodeNetworkManager.IsHost)
+            {
+                WorldSaveData world = GameStartSelection.World;
+
+                if (world == null)
+                {
+                    Debug.LogError("저장할 호스트 월드가 없습니다.", this);
+                    return false;
+                }
+
+                if (saves.SaveWorld(world, out error) == false)
+                {
+                    Debug.LogError(error, this);
+                    return false;
+                }
+            }
+
+            // 로비 UI를 열 수 없는 경우에는 연결을 끊지 않는다.
+            // 현재 설정창은 Popup Root에 있어 로비보다 앞에 남는다.
+            LobbyUI lobby = await ui.OpenLobbyUIAsync();
+
+            if (lobby == null)
+            {
+                Debug.LogError("로비 UI를 열지 못했습니다.", this);
+                return false;
+            }
+
+            _connectedAsClient = false;
+            _netCodeNetworkManager.Shutdown();
+
+            while (_netCodeNetworkManager.IsListening || _netCodeNetworkManager.ShutdownInProgress)
+            {
+                await UniTask.Yield();
+            }
+
+            _clientSideService.EndClientService();
+            _serverSideService.EndServerService();
+
+            game.ClearSessionWorld();
+            GameStartSelection.Clear();
+
+            ui.CloseSessionWindows();
+
+            return true;
+        }
+        finally
+        {
+            IsReturningToLobby = false;
+        }
     }
 }

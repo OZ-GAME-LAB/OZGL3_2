@@ -7,8 +7,14 @@ public static class GameUtil
 {
     public static async UniTask<Sprite> LoadAndSetSpriteImage(Image targetImage, string spritePath)
     {
+        if (targetImage == null || string.IsNullOrWhiteSpace(spritePath))
+        {
+            return null;
+        }
+
         Sprite sprite = await ResourceManager.Inst.LoadAsset<Sprite>(spritePath);
-        if (sprite != null)
+
+        if (targetImage != null && sprite != null)
         {
             targetImage.sprite = sprite;
         }

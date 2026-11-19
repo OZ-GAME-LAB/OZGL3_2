@@ -153,10 +153,9 @@ public class NetworkCraftingService
 
             for(int i = 0; i < material.Value; i++)
             {
-
+                ServiceManager.Inst.InventoryService.RemoveItem(material.Key);
             }
-            ServiceManager.Inst.InventoryService.RemoveItem(
-                material.Key);
+            
         }
 
         ServiceManager.Inst.InventoryService.AddItem(recipe.Item_Id);

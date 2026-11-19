@@ -232,4 +232,17 @@ public class UIManager : MonoBehaviour
         return ui is LoggingMiningUI resultUI &&
                resultUI.TryCloseResult();
     }
+
+    public void CloseSessionWindows()
+    {
+        var opened = new List<UIType>(_openedUISet);
+
+        foreach (UIType type in opened)
+        {
+            if (type != UIType.LobbyUI && IsOpen(type))
+            {
+                Close(type);
+            }
+        }
+    }
 }

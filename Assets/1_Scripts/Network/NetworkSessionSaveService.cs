@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -13,9 +13,13 @@ public sealed class NetworkSessionSaveService : IDisposable
     private CustomMessagingManager _messages;
     private bool _initialized;
     private bool _autoSaveRunning;
+    private bool _resultHandlerRegistered;
     private float _autoSaveRemaining = AutoSaveInterval;
     private ulong _nextRequestId;
     private ulong _lastCharacterRequestId;
+
+    private const string CharacterSaveResultMessage = "SessionSave.CharacterResult";
+    private readonly System.Collections.Generic.HashSet<ulong> _waitingClients = new();
 
     private bool IsNetworkReady => _network != null && _network.IsListening &&
         !_network.ShutdownInProgress && _messages != null &&
@@ -84,7 +88,7 @@ public sealed class NetworkSessionSaveService : IDisposable
 
         _autoSaveRemaining = AutoSaveInterval;
         // TODO(저장 연결) : 저장 함수 구현 후 아래 로그를 RequestSessionSave() 호출로 교체한다.
-        Debug.Log("60초 저장", _logContext);
+        RequestSessionSave();
     }
 
     public bool RequestSessionSave()
@@ -95,6 +99,13 @@ public sealed class NetworkSessionSaveService : IDisposable
             return false;
         }
 
+        foreach (ulong clientId in _waitingClients)
+        {
+            Debug.LogWarning($"[캐릭터 저장 미확인] 요청 {_nextRequestId}, 클라이언트 {clientId}", _logContext);
+        }
+
+        _waitingClients.Clear();
+
         ulong requestId = ++_nextRequestId;
         using var writer = new FastBufferWriter(sizeof(ulong), Allocator.Temp);
         writer.WriteValueSafe(requestId);
@@ -104,6 +115,7 @@ public sealed class NetworkSessionSaveService : IDisposable
             if (clientId == _network.LocalClientId)
                 continue;
 
+            _waitingClients.Add(clientId);
             _messages.SendNamedMessage(CharacterSaveRequestMessage, clientId, writer);
         }
 
@@ -123,8 +135,13 @@ public sealed class NetworkSessionSaveService : IDisposable
             return;
 
         _messages.RegisterNamedMessageHandler(CharacterSaveRequestMessage, OnCharacterSaveRequested);
+
         if (_network.IsHost)
+        {
+            _messages.RegisterNamedMessageHandler(CharacterSaveResultMessage, OnCharacterSaveResult);
+            _resultHandlerRegistered = true;
             StartAutoSave();
+        }
     }
 
     private void OnSessionStopped(bool wasHost)
@@ -136,6 +153,15 @@ public sealed class NetworkSessionSaveService : IDisposable
     {
         StopAutoSave();
         _messages?.UnregisterNamedMessageHandler(CharacterSaveRequestMessage);
+
+        if (_resultHandlerRegistered)
+        {
+            _messages?.UnregisterNamedMessageHandler(CharacterSaveResultMessage);
+            _resultHandlerRegistered = false;
+        }
+
+        _waitingClients.Clear();
+
         _messages = null;
         _nextRequestId = 0;
         _lastCharacterRequestId = 0;
@@ -158,6 +184,32 @@ public sealed class NetworkSessionSaveService : IDisposable
 
         _lastCharacterRequestId = requestId;
         // TODO(저장 연결) : 저장 함수 구현 후 현재 로컬 캐릭터 데이터를 수집하여 저장하고, 성공·실패 결과를 호스트에 전달한다.
+
+        SaveManager saves = SaveManager.Inst;
+        string error = "SaveManager가 없습니다.";
+        bool success = saves != null && saves.TrySaveCurrentCharacter(out error);
+
+        if (success)
+        {
+            Debug.Log($"[캐릭터 저장 완료] 요청 {requestId}, 클라이언트 {_network.LocalClientId}", _logContext);
+        }
+        else
+        {
+            Debug.LogWarning($"[캐릭터 저장 실패] 요청 {requestId}: {error}", _logContext);
+        }
+
+        // 호스트 자신의 결과는 위에서 이미 확인했다.
+        if (_network.IsHost || IsNetworkReady == false)
+        {
+            return;
+        }
+
+        using var writer = new FastBufferWriter(sizeof(ulong) + sizeof(byte), Allocator.Temp);
+        writer.WriteValueSafe(requestId);
+        writer.WriteValueSafe((byte)(success ? 1 : 0));
+
+        _messages.SendNamedMessage(CharacterSaveResultMessage, NetworkManager.ServerClientId, writer);
+
         Debug.Log($"[캐릭터 저장 요청] 요청: {requestId}, 클라이언트: {_network.LocalClientId}, 실제 저장 연결 대기", _logContext);
     }
 
@@ -165,6 +217,50 @@ public sealed class NetworkSessionSaveService : IDisposable
     {
         // TODO : 시나리오 상황 저장 구현 후 월드 진행도를 수집하는 처리를 연결한다. 기존 진행도는 유지한다.
         // TODO(저장 연결) : 저장 함수 구현 후 호스트의 월드 데이터를 저장하고 결과를 확인한다.
-        Debug.Log($"[월드 저장 요청] 요청: {requestId}, 실제 저장 연결 대기", _logContext);
+        if (_network.IsHost == false)
+        {
+            return;
+        }
+
+        SaveManager saves = SaveManager.Inst;
+        WorldSaveData world = GameStartSelection.World;
+
+        if (saves == null || world == null)
+        {
+            Debug.LogWarning($"[월드 저장 실패] 요청 {requestId}: 선택한 월드 또는 SaveManager가 없습니다.", _logContext);
+            return;
+        }
+
+        if (saves.SaveWorld(world, out string error) == false)
+        {
+            Debug.LogWarning($"[월드 저장 실패] 요청 {requestId}: {error}", _logContext);
+            return;
+        }
+    }
+
+    private void OnCharacterSaveResult(ulong senderClientId, FastBufferReader reader)
+    {
+        if (IsNetworkReady == false || _network.IsHost == false ||
+            reader.TryBeginRead(sizeof(ulong) + sizeof(byte)) == false)
+        {
+            return;
+        }
+
+        reader.ReadValueSafe(out ulong requestId);
+        reader.ReadValueSafe(out byte result);
+
+        if (requestId != _nextRequestId || result > 1 || _waitingClients.Remove(senderClientId) == false)
+        {
+            return;
+        }
+
+        if (result == 1)
+        {
+            Debug.Log($"[게스트 저장 완료] 요청 {requestId}, 클라이언트 {senderClientId}", _logContext);
+        }
+        else
+        {
+            Debug.LogWarning($"[게스트 저장 실패] 요청 {requestId}, 클라이언트 {senderClientId}. 게스트 Console을 확인하세요.", _logContext);
+        }
     }
 }
