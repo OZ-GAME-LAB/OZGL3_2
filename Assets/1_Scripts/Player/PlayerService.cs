@@ -19,29 +19,40 @@ public class PlayerService
         return true;
     }
 
-    public void SetUIInputAction(bool open)
+    public bool SetUIInputAction(bool open)
     {
 
         if (!NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent<PlayerInput>(out var input))
         {
-            return;
+            return false;
         }
         
         input.SwitchCurrentActionMap(open ? "UI" : "Player");
-
+        return true;
     }
 
-    public void SetPlayerPoisonProtectionAmulet(bool isEquipment)
+    public bool SetPlayerPoisonProtectionAmulet(bool isEquipment)
     {
 
         if (!NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent<PlayerNetworkStats>(out var stats))
         {
-            return;
+            return false;
         }
 
         stats.SetPoisonProtectionAmuletOnServer(isEquipment);
 
         Debug.Log($"독 저항 탈리스만 {isEquipment}");
+        return true;
+    }
+
+    public Vector3 GetPlayerVectorSelf()
+    {
+        if (!NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent<PlayerNetworkStats>(out var stats))
+        {
+            return Vector3.zero;
+        }
+
+        return stats.gameObject.transform.position;
     }
 
     // 서버에서 호출해야 실제로 적용됨.
