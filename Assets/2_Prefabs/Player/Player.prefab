@@ -57,6 +57,7 @@ GameObject:
   - component: {fileID: 5351946392484908784}
   - component: {fileID: 5325140983784346215}
   - component: {fileID: 3814531767672842738}
+  - component: {fileID: 6134582619720384111}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -96,8 +97,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cf4d04d6eaa9394b9c0aed304b4846c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControllerView
+  _loggingAxeTip: {x: 3.9970598, y: 2.8025362}
+  _loggingAlignmentSpeed: 8
+  _loggingAlignmentMaxDistance: 2.2
+  _loggingAlignmentTolerance: 0.04
+  _loggingHitHeightTolerance: 0.3
+  _screenTransitionTimeout: 15
   _moveSpeed: 12
-  _jumpForce: 17.5
+  _jumpForce: 18.5
   _playerInput: {fileID: 5287553457062025148}
   _rigidbody2D: {fileID: 6109652825985272487}
   _normalJumpDistanceMultiplier: 0.85
@@ -365,6 +372,11 @@ MonoBehaviour:
   - {fileID: 3715523650954437514}
   - {fileID: 2233211356022855574}
   - {fileID: 6818489664537175061}
+  _preparationTimeout: 30
+  _contactTolerance: 0.15
+  _fishingCastSeconds: 3.33
+  _loggingSwingSeconds: 2
+  _loggingImpactNormalized: 0.11666667
 --- !u!114 &-2624902584304914743
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -388,12 +400,12 @@ MonoBehaviour:
     _hitNormalizedTime: 0.16666667
     _comboNormalizedTime: 0.65
   _attack2Timing:
-    _durationMultiplier: 0.66666667
+    _durationMultiplier: 0.6666667
     _hitNormalizedTime: 0.16666667
     _comboNormalizedTime: 0.6
   _attack3Timing:
     _durationMultiplier: 1.2
-    _hitNormalizedTime: 0.26666667
+    _hitNormalizedTime: 0.26666668
     _comboNormalizedTime: 0.9
   _targetLayer:
     serializedVersion: 2
@@ -406,7 +418,6 @@ MonoBehaviour:
     m_Bits: 0
   _projectileSpeed: 10
   _projectileDistance: 8
-  _projectileRadius: 0.15
 --- !u!114 &5351946392484908784
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -420,6 +431,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkStats
   ShowTopMostFoldoutHeaderGroup: 1
+  _logRespawnFlow: 1
   _initialMaxHp: 100
   _initialAttackPower: 10
   _initialMoveSpeed: 12
@@ -439,6 +451,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRuneCombatActor
   ShowTopMostFoldoutHeaderGroup: 1
+  _hitInvulnerabilityDuration: 0.6
+  _hitControlLockDuration: 0.1
+  _knockbackImpulse: 3
 --- !u!114 &3814531767672842738
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -453,6 +468,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRuneEquipmentController
   ShowTopMostFoldoutHeaderGroup: 1
   _allowTestEquipment: 1
+--- !u!114 &6134582619720384111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2861750558698755832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e9a47cdf3b140e29abb3ce36258cfba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementNetwork
+  ShowTopMostFoldoutHeaderGroup: 1
+  _velocitySendInterval: 0.05
 --- !u!1 &3691929907212733408
 GameObject:
   m_ObjectHideFlags: 0

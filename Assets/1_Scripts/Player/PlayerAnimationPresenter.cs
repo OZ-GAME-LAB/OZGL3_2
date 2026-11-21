@@ -39,6 +39,104 @@ public sealed class PlayerAnimationPresenter
     public bool IsPlayingResource => _playingResource;
     private PlayerResourceAnimationState _displayedResource;
     private float _loggingLength = 1f, _miningLength = 1f, _castLength = 1f, _fishingIdleLength = 1f;
+    private bool _remoteInitialized;
+    private bool _remoteWasValid;
+    private bool _remoteWasActing;
+    private uint _remoteLifeVersion;
+    private uint _remoteJumpSequence;
+    private static readonly int RunStateHash = Animator.StringToHash("Base Layer.Run");
+    private static readonly int CrouchIdleStateHash = Animator.StringToHash("Base Layer.CrouchIdle");
+    private static readonly int CrouchWalkStateHash = Animator.StringToHash("Base Layer.CrouchWalk");
+    private static readonly int WallClingStateHash = Animator.StringToHash("Base Layer.WallClingIdle");
+    private static readonly int LedgeHangStateHash = Animator.StringToHash("Base Layer.LedgeHangIdle");
+    private static readonly int IdleJumpRiseStateHash = Animator.StringToHash("Base Layer.IdleJumpRise");
+    private static readonly int IdleJumpDescentStateHash = Animator.StringToHash("Base Layer.IdleJumpDescent");
+    private static readonly int RunningJumpRiseStateHash = Animator.StringToHash("Base Layer.RunningJumpRise");
+    private static readonly int RunningJumpDescentStateHash = Animator.StringToHash("Base Layer.RunningJumpDescent");
+
+    public void ResetRemoteMovement()
+    {
+        _remoteInitialized = false;
+        _remoteWasValid = false;
+        _remoteWasActing = false;
+    }
+
+    // 원격 표현은 한 번의 호출에서 채집 > 공격 > 이동 순으로 결정합니다.
+    public void UpdateRemoteMovement(PlayerMovementAnimationState state, bool valid,
+        PlayerAttackState attack, PlayerResourceAnimationState resource, double now,
+        bool hasBodyGeometry, float bodyRightEdge, float handLocalX)
+    {
+        if (_animator == null) return;
+        bool firstSample = !_remoteInitialized;
+        bool restorePose = firstSample || !_remoteWasValid || _remoteLifeVersion != state.LifeVersion;
+        bool newJump = _remoteInitialized && _remoteJumpSequence != state.JumpSequence;
+        // 행동 중이거나 이미 착지한 점프도 소비합니다. 나중에 다시 재생하지 않습니다.
+        _remoteJumpSequence = state.JumpSequence;
+        _remoteLifeVersion = state.LifeVersion;
+        _remoteInitialized = true;
+        if (!valid)
+        {
+            UpdateResource(default, now, true);
+            UpdateAttack(default, now, true);
+            SetMoving(false);
+            SetCrouching(false);
+            SetWallClinging(false, false, hasBodyGeometry, bodyRightEdge, handLocalX);
+            ResetJump();
+            if (_remoteWasValid || firstSample) _animator.Play(IdleStateHash, 0, 0f);
+            _remoteWasValid = false;
+            _remoteWasActing = false;
+            return;
+        }
+
+        _remoteWasValid = true;
+        bool acting = resource.PlaysAnimation || attack.Step != 0;
+        UpdateResource(resource, now, state.Grounded);
+        UpdateAttack(attack, now, state.Grounded);
+        if (acting)
+        {
+            SetMoving(false);
+            SetCrouching(false);
+            SetWallClinging(false, false, hasBodyGeometry, bodyRightEdge, handLocalX);
+            _animator.ResetTrigger(RunningJumpHash);
+            _animator.ResetTrigger(IdleJumpHash);
+        }
+        else
+        {
+            SetMoving(state.Moving);
+            SetCrouching(state.Crouching);
+            SetGroundState(state.Grounded, state.VerticalSpeed);
+            _animator.SetBool(IsIdleJumpHash, state.IdleJump);
+            SetWallClinging(state.WallClinging, state.LedgeHanging, hasBodyGeometry, bodyRightEdge, handLocalX);
+            if (restorePose || _remoteWasActing)
+            {
+                _animator.ResetTrigger(RunningJumpHash);
+                _animator.ResetTrigger(IdleJumpHash);
+                _animator.Play(GetRemotePose(state), 0, 0f);
+            }
+            else if (newJump && state.Jumping && !state.Grounded && !state.WallClinging && state.VerticalSpeed >= -0.1f)
+            {
+                PlayJump(state.IdleJump, state.Moving, state.VerticalSpeed);
+            }
+            else if (state.Grounded || state.WallClinging)
+            {
+                _animator.ResetTrigger(RunningJumpHash);
+                _animator.ResetTrigger(IdleJumpHash);
+            }
+        }
+        _remoteWasActing = acting;
+    }
+
+    private static int GetRemotePose(PlayerMovementAnimationState state)
+    {
+        if (state.LedgeHanging) return LedgeHangStateHash;
+        if (state.WallClinging) return WallClingStateHash;
+        if (state.Crouching) return state.Moving ? CrouchWalkStateHash : CrouchIdleStateHash;
+        if (state.Grounded) return state.Moving ? RunStateHash : IdleStateHash;
+        if (!state.Jumping) return FallStateHash;
+        if (state.VerticalSpeed < -0.1f)
+            return state.IdleJump ? IdleJumpDescentStateHash : RunningJumpDescentStateHash;
+        return state.IdleJump ? IdleJumpRiseStateHash : RunningJumpRiseStateHash;
+    }
 
     public void UpdateResource(PlayerResourceAnimationState state, double now, bool grounded)
     {

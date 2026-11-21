@@ -83,6 +83,9 @@ public partial class PlayerControllerView : MonoBehaviour
     private InputAction _specialAttackAction;
     private InputAction _switchConsumableAction;
     private InputAction _inventoryAction;
+    private InputAction _closeInventoryAction;
+    private bool _openingInventory;
+    private int _inventoryInputFrame = -1;
     private InputAction _journalAction;
     private InputAction _settingsAction;
     private InputAction _runeInventoryAction;
@@ -160,6 +163,7 @@ public partial class PlayerControllerView : MonoBehaviour
     void Awake()
     {
         TryGetComponent(out _networkObject);
+        TryGetComponent(out _movementNetwork);
 
         if (_runeAttackController == null)
         {
@@ -199,6 +203,7 @@ public partial class PlayerControllerView : MonoBehaviour
         _specialAttackAction = _playerInput.actions["SpecialAttack"];
         _switchConsumableAction = _playerInput.actions["SwitchConsumable"];
         _inventoryAction = _playerInput.actions["OpenInventory"];
+        _closeInventoryAction = _playerInput.actions["UI/CloseInventory"];
         _journalAction = _playerInput.actions["OpenJournal"];
         _settingsAction = _playerInput.actions["OpenSettings"];
         _runeInventoryAction = _playerInput.actions["OpenRuneInventory"];
@@ -223,6 +228,7 @@ public partial class PlayerControllerView : MonoBehaviour
         _specialAttackAction.performed += OnSpecialAttack;
         _switchConsumableAction.performed += OnSwitchConsumable;
         _inventoryAction.performed += OnOpenInventory;
+        _closeInventoryAction.performed += OnCloseInventory;
         _journalAction.performed += OnOpenJournal;
         _settingsAction.performed += OnOpenSettings;
         _fieldInteractAction.canceled += OnFieldInteractCanceled;
@@ -280,6 +286,7 @@ public partial class PlayerControllerView : MonoBehaviour
         _specialAttackAction.performed -= OnSpecialAttack;
         _switchConsumableAction.performed -= OnSwitchConsumable;
         _inventoryAction.performed -= OnOpenInventory;
+        _closeInventoryAction.performed -= OnCloseInventory;
         _journalAction.performed -= OnOpenJournal;
         _settingsAction.performed -= OnOpenSettings;
         _fieldInteractAction.canceled -= OnFieldInteractCanceled;
@@ -1109,6 +1116,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void ResetAirborneStateAndAnimation()
     {
+        ResetMovementNetworkSample();
         _blockedRunDirection = 0f;
         if (_wallCling != null) _wallCling.ResetState();
         UpdateWallAnimation();
@@ -1175,11 +1183,17 @@ public partial class PlayerControllerView : MonoBehaviour
         _footstepGrounded = rawGrounded;
         _footstepHorizontalSpeed = Mathf.Abs(_rigidbody2D.linearVelocity.x);
         bool grounded = ResolveAnimationGrounded(rawGrounded);
+        _movementGrounded = grounded;
+        _movementVerticalSpeed = _isSpectatorMode ? 0f : verticalSpeed;
+        if (grounded) _movementJumping = false;
         LogGroundAnimationDiagnostic(rawGrounded, grounded);
 
         // 점프 종류는 공중 입력으로 바꾸지 않습니다. 걸어서 떨어질 때만 해제합니다.
         if (!grounded && _wasGroundedForAnimation && !_jumpInProgress)
+        {
+            _movementIdleJump = false;
             _animationPresenter?.ClearIdleJump();
+        }
 
         UpdateJumpLandingState(grounded);
         UpdateRunUpState(rawGrounded);
@@ -1417,6 +1431,11 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void PlayJumpAnimation(bool idleJump)
     {
+        _movementGrounded = false;
+        _movementJumping = true;
+        _movementIdleJump = idleJump;
+        _movementVerticalSpeed = _rigidbody2D.linearVelocity.y;
+        _movementJumpSequence = unchecked(_movementJumpSequence + 1);
         if (_logAnimationDiagnostics)
             Debug.Log($"[PlayerAnim][Jump] 종류={(idleJump ? "IdleJump" : "RunningJump")} " +
                 GetAnimationDiagnosticContext(), this);
@@ -1501,6 +1520,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     public void UpdateAttackPresentation()
     {
+        if (UsesRemoteMovementPresentation) return;
         bool locked = IsAttackLocked;
         if (_runeAttackController != null && _runeAttackController.IsSpawned)
         {
@@ -1536,6 +1556,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     public void UpdateResourcePresentation(PlayerResourceAnimationState state, double now)
     {
+        if (UsesRemoteMovementPresentation) return;
         if (_animationPresenter == null) return;
         if (state.Kind != ResourceAnimationKind.None && state.FacingDirection != 0)
         {
@@ -1569,17 +1590,57 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private async void OnOpenInventory(InputAction.CallbackContext context)
     {
-        if (IsGameplayControlLocked) return;
-        if (_isDialogueMode)
+        if (IsGameplayControlLocked || _isDialogueMode || _openingInventory ||
+            _inventoryInputFrame == Time.frameCount)
             return;
-        var view = await UIManager.Inst.OpenInventoryUIAsync();
-        if (this == null || IsDeathControlLocked)
+
+        UIManager uiManager = UIManager.Inst;
+        if (uiManager == null || uiManager.IsOpen(UIType.InventoryUI) ||
+            _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
+            return;
+
+        _inventoryInputFrame = Time.frameCount;
+        _openingInventory = true;
+
+        try
         {
-            if (UIManager.Inst != null && UIManager.Inst.IsOpen(UIType.InventoryUI))
-                UIManager.Inst.Close(UIType.InventoryUI);
-            return;
+            var view = await uiManager.OpenInventoryUIAsync();
+            if (this == null || IsDeathControlLocked || !isActiveAndEnabled)
+            {
+                if (uiManager != null && uiManager.IsOpen(UIType.InventoryUI))
+                    uiManager.Close(UIType.InventoryUI);
+                return;
+            }
+
+            if (view == null)
+            {
+                ServiceManager.Inst.PlayerService.SetUIInputAction(false);
+                return;
+            }
+
+            ServiceManager.Inst.InventoryService.BindInventoryView(view);
         }
-        ServiceManager.Inst.InventoryService.BindInventoryView(view);
+        finally
+        {
+            if (this != null)
+                _openingInventory = false;
+        }
+    }
+
+    private void OnCloseInventory(InputAction.CallbackContext context)
+    {
+        if (IsGameplayControlLocked || _isDialogueMode || _openingInventory ||
+            _inventoryInputFrame == Time.frameCount)
+            return;
+
+        UIManager uiManager = UIManager.Inst;
+        if (uiManager == null || !uiManager.IsOpen(UIType.InventoryUI) ||
+            _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
+            return;
+
+        // 입력 맵 전환 중 같은 I 입력이 다시 열기로 처리되는 것을 막는다.
+        _inventoryInputFrame = Time.frameCount;
+        uiManager.CloseInventoryUI();
     }
 
     private void OnOpenJournal(InputAction.CallbackContext context)
