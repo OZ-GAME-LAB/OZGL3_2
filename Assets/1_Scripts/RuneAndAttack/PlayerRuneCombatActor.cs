@@ -84,6 +84,16 @@ public class PlayerRuneCombatActor : RuneCombatActor
             _isHitInvulnerable.Value = false;
     }
 
+    public void ResetForRespawnOnServer()
+    {
+        if (!IsServer || !IsSpawned) return;
+        _hitInvulnerabilityRemaining = 0f;
+        _hitControlLockRemaining = 0f;
+        _isHitInvulnerable.Value = false;
+        _attackPhysicsStep = double.NaN;
+        _attackersThisPhysicsStep.Clear();
+    }
+
     private void OnHitInvulnerabilityChanged(bool previousValue, bool currentValue)
     {
         //TODO : currentValue가 true이면 피격 무적 표시를 켜고, false이면 끄기. 서버와 각 클라이언트에서 호출됨.

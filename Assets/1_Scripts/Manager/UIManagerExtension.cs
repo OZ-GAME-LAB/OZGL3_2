@@ -37,12 +37,23 @@ public enum UIType
     CinematicEffectUI,
     BossEntryUI,
     SaveSelectionUI,
-    PlayerHudUI
+    PlayerHudUI,
+    GameOverUI
 }
 
 
 public static class UIManagerExtension
 {
+    public static async UniTask<GameOverUI> OpenGameOverUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        while (uiManager != null && uiManager.IsLoading(UIType.GameOverUI))
+            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (uiManager == null) return null;
+        UIBase ui = await uiManager.OpenVeryFrontRootAsync(UIType.GameOverUI, cancellationToken);
+        return GetView<GameOverUI>(ui, UIType.GameOverUI);
+    }
+
     public static async UniTask<SlidingPuzzleUI> OpenSlidingPuzzleUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
     {
         while (uiManager != null && uiManager.IsLoading(UIType.SlidingPuzzleUI))

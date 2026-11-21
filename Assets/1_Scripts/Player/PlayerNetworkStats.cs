@@ -3,7 +3,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
-public class PlayerNetworkStats : NetworkUnit
+public partial class PlayerNetworkStats : NetworkUnit
 {
     protected override bool PoisonUsesMaxHp => true;
 
@@ -137,10 +137,12 @@ public class PlayerNetworkStats : NetworkUnit
         _jumpForce.OnValueChanged += OnStatChanged;
 
         RefreshViewModel();
+        InitializeDeathFlow();
     }
 
     public override void OnNetworkDespawn()
     {
+        ReleaseDeathFlow();
         StatsChanged -= RefreshViewModel;
         StatusChanged -= RefreshViewModel;
         _moveSpeed.OnValueChanged -= OnStatChanged;
