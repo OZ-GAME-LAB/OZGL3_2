@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
@@ -39,6 +39,7 @@ public partial class PlayerControllerView : MonoBehaviour
     private bool _jumpInProgress;
     private bool _wasGroundedForAnimation = true;
     private PlayerAnimationPresenter _animationPresenter;
+    private PlayerFootstepSound _footstepSound;
     private bool _footstepGrounded;
     private float _footstepHorizontalSpeed;
     private bool _wasAttackLocked;
@@ -167,6 +168,7 @@ public partial class PlayerControllerView : MonoBehaviour
     {
         TryGetComponent(out _networkObject);
         TryGetComponent(out _movementNetwork);
+        TryGetComponent(out _footstepSound);
 
         if (_runeAttackController == null)
         {
@@ -261,6 +263,7 @@ public partial class PlayerControllerView : MonoBehaviour
     {
         RestTent.Active?.CancelLocalForPlayer(this);
         CancelScreenTransition();
+        _footstepSound?.ResetTracking();
         SetEncounterControlLocked(false);
         EndHitControlLock();
         UnbindScenarioService();
@@ -1137,6 +1140,7 @@ public partial class PlayerControllerView : MonoBehaviour
     {
         _footstepGrounded = false;
         _footstepHorizontalSpeed = 0f;
+        _footstepSound?.ResetTracking();
         ResetJumpDistance();
         _jumpInProgress = false;
         _animationGroundLostTime = 0f;
@@ -1289,6 +1293,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void LateUpdate()
     {
+        UpdateFootstepSound();
         if (!_logAnimationDiagnostics)
         {
             _animationPresenter?.ResetDiagnostics();
@@ -1302,6 +1307,21 @@ public partial class PlayerControllerView : MonoBehaviour
 
         if (_animationPresenter != null && _animationPresenter.TryGetStateDiagnostic(out string message))
             Debug.Log($"{message} {GetAnimationDiagnosticContext()}", this);
+    }
+
+    private void UpdateFootstepSound()
+    {
+        if (_footstepSound == null) return;
+        bool canStep = _networkObject != null && _networkObject.IsSpawned && _networkObject.IsOwner &&
+            _playerStatViewModel != null && _playerStatViewModel.CurHp > 0f &&
+            _playerInput != null && _playerInput.isActiveAndEnabled && _playerInput.inputIsActive &&
+            _rigidbody2D != null && _rigidbody2D.simulated &&
+            _footstepGrounded && _footstepHorizontalSpeed > _blockedRunSpeedThreshold &&
+            Mathf.Abs(_moveInput) > 0.01f && !_jumpInProgress && !IsDroppingThroughPlatforms() &&
+            !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode && _loggingAlignmentRequest == 0 &&
+            !IsAttackLocked && !IsHitControlLocked && !IsMovementControlLocked &&
+            (_wallCling == null || !_wallCling.IsClinging);
+        _footstepSound.Tick(_animator, canStep, _isCrouching);
     }
 
     private void LogGroundAnimationDiagnostic(bool rawGrounded, bool grounded)
