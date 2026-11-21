@@ -38,7 +38,8 @@ public enum UIType
     BossEntryUI,
     SaveSelectionUI,
     PlayerHudUI,
-    GameOverUI
+    GameOverUI,
+    RestUI
 }
 
 

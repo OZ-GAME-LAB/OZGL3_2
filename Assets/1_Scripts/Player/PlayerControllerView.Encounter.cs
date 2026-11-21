@@ -15,6 +15,7 @@ public partial class PlayerControllerView
     // 연출이 소유한 잠금만 해제하며 대화/피격 잠금은 별도로 유지합니다.
     public void SetEncounterControlLocked(bool locked)
     {
+        if (locked) RestTent.Active?.CancelLocalForPlayer(this);
         if (locked) CancelScreenTransition();
         if (_encounterStats == null) TryGetComponent(out _encounterStats);
         if (_encounterLocalLocked == locked) return;

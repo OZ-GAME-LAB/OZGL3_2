@@ -8,7 +8,7 @@ public partial class PlayerControllerView
     private bool _deathWasSimulated;
     public bool IsDeathControlLocked => _deathControlLocked;
     // 화면 전환은 이동을 허용하지만 공격·상호작용·메뉴는 계속 막습니다.
-    private bool IsMovementControlLocked => IsDeathControlLocked || IsEncounterControlLocked;
+    private bool IsMovementControlLocked => IsDeathControlLocked || IsEncounterControlLocked || _restControlLocked;
     private bool IsGameplayControlLocked => IsMovementControlLocked || IsScreenTransitioning;
     public bool CanPlaceForRespawn => _rigidbody2D != null && _groundCheck != null &&
         _networkObject != null && _networkObject.IsSpawned;
@@ -17,6 +17,7 @@ public partial class PlayerControllerView
     {
         if (_deathControlLocked == locked) return;
         if (locked && (_networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)) return;
+        if (locked) RestTent.Active?.CancelLocalForPlayer(this);
         if (locked) CancelScreenTransition();
         _deathControlLocked = locked;
 

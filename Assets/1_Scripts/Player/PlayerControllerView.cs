@@ -259,6 +259,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnDisable()
     {
+        RestTent.Active?.CancelLocalForPlayer(this);
         CancelScreenTransition();
         SetEncounterControlLocked(false);
         EndHitControlLock();

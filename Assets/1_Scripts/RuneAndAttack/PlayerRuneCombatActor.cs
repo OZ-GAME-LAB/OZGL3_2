@@ -33,7 +33,7 @@ public class PlayerRuneCombatActor : RuneCombatActor
     }
 
     public override bool IsAlive => IsSpawned && _stats != null && _stats.IsAlive;
-    public override bool CanAttack => IsAlive && isActiveAndEnabled && !_stats.IsEncounterLocked;
+    public override bool CanAttack => IsAlive && isActiveAndEnabled && !_stats.IsEncounterLocked && !_stats.IsResting;
     public override float AttackPower => _stats != null ? _stats.AttackPower : 0f;
     public bool IsHitInvulnerable => _isHitInvulnerable.Value;
     public bool IsHitControlLocked => _hitControlLockRemaining > 0f

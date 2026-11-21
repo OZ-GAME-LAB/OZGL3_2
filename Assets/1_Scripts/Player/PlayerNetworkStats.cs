@@ -138,10 +138,12 @@ public partial class PlayerNetworkStats : NetworkUnit
 
         RefreshViewModel();
         InitializeDeathFlow();
+        InitializeRestState();
     }
 
     public override void OnNetworkDespawn()
     {
+        ReleaseRestState();
         ReleaseDeathFlow();
         StatsChanged -= RefreshViewModel;
         StatusChanged -= RefreshViewModel;

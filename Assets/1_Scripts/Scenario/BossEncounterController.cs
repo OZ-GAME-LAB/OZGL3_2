@@ -75,6 +75,7 @@ public sealed partial class BossEncounterController : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
+        if (RestTent.BlocksBossEntry) return;
         if (!isActiveAndEnabled || _manager == null || !_manager.IsReady || Phase != BossEncounterPhase.Ready ||
             Time.unscaledTime < _nextLocalPrompt || other == null || other.isTrigger) return;
         PlayerNetworkStats player = other.GetComponentInParent<PlayerNetworkStats>();
@@ -164,6 +165,7 @@ public sealed partial class BossEncounterController : MonoBehaviour
 
     public void RequestPromptOnServer(ulong clientId)
     {
+        if (RestTent.BlocksBossEntry) return;
         _manager = ScenarioManager.Inst;
         if (_manager == null || !_manager.IsServer || Phase != BossEncounterPhase.Ready ||
             Time.realtimeSinceStartupAsDouble < _nextServerPrompt ||
