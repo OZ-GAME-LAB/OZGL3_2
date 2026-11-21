@@ -3,7 +3,7 @@ using UnityEngine;
 
 public enum BossEncounterPhase : byte
 {
-    Ready, Prompt, Fading, Moving, Framing, Intro, Releasing, Fighting, Completed, Recovering
+    Ready, Prompt, Fading, Moving, Framing, Intro, Releasing, Fighting, Completed, Recovering, Cancelled
 }
 
 public sealed partial class ScenarioManager

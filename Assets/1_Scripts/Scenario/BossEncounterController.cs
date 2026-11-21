@@ -20,9 +20,10 @@ public sealed partial class BossEncounterController : MonoBehaviour
 
     private readonly List<ulong> _participants = new();
     private readonly HashSet<ulong> _acknowledged = new();
+    private readonly HashSet<ulong> _accepted = new();
     private readonly Dictionary<ulong, Vector3> _destinations = new();
     private uint _run;
-    private ulong _chooser;
+    private double _nextServerPrompt;
     private double _deadline;
     private float _nextLocalPrompt;
     private bool _failed;
@@ -55,12 +56,16 @@ public sealed partial class BossEncounterController : MonoBehaviour
         }
         _participants.Clear();
         _acknowledged.Clear();
+        _accepted.Clear();
         _destinations.Clear();
         if (newSession)
         {
             _run = 0;
             _localRun = 0;
+            _localPhase = BossEncounterPhase.Ready;
         }
+        _nextLocalPrompt = 0f;
+        _nextServerPrompt = 0d;
         _failed = false;
         _manager = manager;
         if (_manager != null && _manager.IsServer)
@@ -70,6 +75,7 @@ public sealed partial class BossEncounterController : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
+        if (RestTent.BlocksBossEntry) return;
         if (!isActiveAndEnabled || _manager == null || !_manager.IsReady || Phase != BossEncounterPhase.Ready ||
             Time.unscaledTime < _nextLocalPrompt || other == null || other.isTrigger) return;
         PlayerNetworkStats player = other.GetComponentInParent<PlayerNetworkStats>();
@@ -107,7 +113,7 @@ public sealed partial class BossEncounterController : MonoBehaviour
         }
         if (Phase == BossEncounterPhase.Prompt)
         {
-            if (_failed || expired || !TryGetAlivePlayer(_chooser, out PlayerNetworkStats chooser) || !Contains(chooser)) RecoverOnServer();
+            if (_failed || expired || !AllParticipantsInEntryArea()) CancelPromptOnServer();
             return;
         }
         if (_failed || expired || !AllParticipantsAlive()) { RecoverOnServer(); return; }
@@ -139,8 +145,10 @@ public sealed partial class BossEncounterController : MonoBehaviour
 
     private bool Contains(PlayerNetworkStats player)
     {
-        return _entryArea != null && _entryArea.enabled && player != null &&
-            _entryArea.OverlapPoint(player.transform.position);
+        if (_entryArea == null || !_entryArea.isActiveAndEnabled || player == null ||
+            !player.TryGetComponent(out Collider2D body) || !body.isActiveAndEnabled || body.isTrigger) return false;
+        ColliderDistance2D distance = _entryArea.Distance(body);
+        return distance.isValid && distance.isOverlapped;
     }
 
     private bool TryGetAlivePlayer(ulong id, out PlayerNetworkStats player)
@@ -157,35 +165,41 @@ public sealed partial class BossEncounterController : MonoBehaviour
 
     public void RequestPromptOnServer(ulong clientId)
     {
+        if (RestTent.BlocksBossEntry) return;
         _manager = ScenarioManager.Inst;
         if (_manager == null || !_manager.IsServer || Phase != BossEncounterPhase.Ready ||
+            Time.realtimeSinceStartupAsDouble < _nextServerPrompt ||
             _manager.IsCompleted(_defeatedEventId) ||
             _preparationPoint == null || _battlePoint == null ||
             !TryGetAlivePlayer(clientId, out PlayerNetworkStats player) || !Contains(player)) return;
         ++_run;
-        _chooser = clientId;
         _participants.Clear();
-        _participants.Add(clientId);
+        foreach (NetworkClient client in Network.ConnectedClientsList)
+            if (TryGetAlivePlayer(client.ClientId, out PlayerNetworkStats candidate) && Contains(candidate))
+                _participants.Add(client.ClientId);
+        _participants.Sort();
         _acknowledged.Clear();
+        _accepted.Clear();
         _destinations.Clear();
         _failed = false;
-        LockOnServer(player, true);
+        foreach (ulong id in _participants)
+            if (TryGetAlivePlayer(id, out PlayerNetworkStats participant)) LockOnServer(participant, true);
         _manager.SetBossPhaseOnServer(BossEncounterPhase.Prompt);
         _deadline = Time.realtimeSinceStartupAsDouble + _choiceTimeout;
-        _manager.SendBossStepOnServer(clientId, _run, BossEncounterPhase.Prompt, Vector3.zero);
+        // 호스트의 즉시 실패 응답이 목록을 정리할 수 있으므로 전송마다 단계를 확인합니다.
+        uint run = _run;
+        for (int i = 0; i < _participants.Count && Phase == BossEncounterPhase.Prompt && run == _run; i++)
+            _manager.SendBossStepOnServer(_participants[i], run, BossEncounterPhase.Prompt, Vector3.zero);
     }
 
     public void ChooseOnServer(ulong sender, uint run, bool enter)
     {
-        if (_manager == null || !_manager.IsServer || run != _run || Phase != BossEncounterPhase.Prompt || sender != _chooser) return;
-        if (!TryGetAlivePlayer(sender, out PlayerNetworkStats chooser) || !Contains(chooser)) { RecoverOnServer(); return; }
-        if (!enter) { RecoverOnServer(); return; }
-        _participants.Clear();
-        foreach (NetworkClient client in Network.ConnectedClientsList)
-        {
-            if (TryGetAlivePlayer(client.ClientId, out PlayerNetworkStats player) && Contains(player)) _participants.Add(client.ClientId);
-        }
-        _participants.Sort();
+        if (_manager == null || !_manager.IsServer || run != _run || Phase != BossEncounterPhase.Prompt ||
+            !_participants.Contains(sender) || _accepted.Contains(sender)) return;
+        if (_failed || Time.realtimeSinceStartupAsDouble > _deadline || !AllParticipantsInEntryArea() || !enter)
+        { CancelPromptOnServer(); return; }
+        _accepted.Add(sender);
+        if (_accepted.Count != _participants.Count) return;
         _destinations.Clear();
         for (int i = 0; i < _participants.Count; i++)
         {
@@ -216,6 +230,7 @@ public sealed partial class BossEncounterController : MonoBehaviour
     public void AcknowledgeOnServer(ulong sender, uint run, BossEncounterPhase phase, bool success)
     {
         if (_manager == null || !_manager.IsServer || run != _run || phase != Phase || !_participants.Contains(sender)) return;
+        if (!success && phase == BossEncounterPhase.Prompt) { CancelPromptOnServer(); return; }
         if (!success) _failed = true;
         else _acknowledged.Add(sender);
     }
@@ -224,6 +239,30 @@ public sealed partial class BossEncounterController : MonoBehaviour
     {
         foreach (ulong id in _participants) if (!TryGetAlivePlayer(id, out _)) return false;
         return _participants.Count > 0;
+    }
+
+    private bool AllParticipantsInEntryArea()
+    {
+        foreach (ulong id in _participants)
+            if (!TryGetAlivePlayer(id, out PlayerNetworkStats player) || !Contains(player)) return false;
+        return _participants.Count > 0;
+    }
+
+    private void CancelPromptOnServer()
+    {
+        if (_manager == null || !_manager.IsServer || Phase != BossEncounterPhase.Prompt) return;
+        _nextServerPrompt = Time.realtimeSinceStartupAsDouble + 2d;
+        _nextLocalPrompt = Time.unscaledTime + 2f;
+        // Ready로 먼저 바꿔 호스트의 동기 응답이 취소를 재진입하지 않게 합니다.
+        _manager.SetBossPhaseOnServer(BossEncounterPhase.Ready);
+        UnlockParticipants();
+        foreach (ulong id in _participants)
+            _manager.SendBossStepOnServer(id, _run, BossEncounterPhase.Cancelled, Vector3.zero);
+        _participants.Clear();
+        _accepted.Clear();
+        _acknowledged.Clear();
+        _destinations.Clear();
+        _failed = false;
     }
 
     private bool ArrivedOnServer()
@@ -272,6 +311,7 @@ public sealed partial class BossEncounterController : MonoBehaviour
         UnlockParticipants();
         _participants.Clear();
         _acknowledged.Clear();
+        _accepted.Clear();
         _destinations.Clear();
         _manager.SetBossPhaseOnServer(BossEncounterPhase.Ready);
         _nextLocalPrompt = Time.unscaledTime + 2f;

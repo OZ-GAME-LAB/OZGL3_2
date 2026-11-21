@@ -44,6 +44,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5272157064205760542}
+  - component: {fileID: 872105716422001901}
   - component: {fileID: 5899334954998637641}
   - component: {fileID: 5287553457062025148}
   - component: {fileID: 6623172072296654929}
@@ -57,6 +58,7 @@ GameObject:
   - component: {fileID: 5351946392484908784}
   - component: {fileID: 5325140983784346215}
   - component: {fileID: 3814531767672842738}
+  - component: {fileID: 6134582619720384111}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -84,6 +86,39 @@ Transform:
   - {fileID: 2747556212112546826}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &872105716422001901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2861750558698755832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc93c27555da42d9b8628e78e25f62f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFootstepSound
+  _clips:
+  - {fileID: 8300000, guid: 9a30499e47789df48aa9bdb1ec7b0982, type: 3}
+  - {fileID: 8300000, guid: 1d7e7e6569aab5a45a837f470eaddc8b, type: 3}
+  - {fileID: 8300000, guid: 31be579b280d0bc459635877e8c45aee, type: 3}
+  - {fileID: 8300000, guid: c3f3efc1106f84643a38bd21f6826aaf, type: 3}
+  - {fileID: 8300000, guid: 2de8329adc6f9b944a5ab0875fb59924, type: 3}
+  - {fileID: 8300000, guid: f39f1d43c5b9fbf449e7b39d056e5aad, type: 3}
+  - {fileID: 8300000, guid: d3ea0567dbe95714eb0ca07f43a37a96, type: 3}
+  - {fileID: 8300000, guid: 161d5a427e88d594f9906708ccdc5663, type: 3}
+  - {fileID: 8300000, guid: 7a5ff4a806216b14ab9dba35a4fb258c, type: 3}
+  - {fileID: 8300000, guid: bd5653e52c4636e4aa3b0ced8f49a18d, type: 3}
+  - {fileID: 8300000, guid: 6c8508d96905ea749ae50b49916fde55, type: 3}
+  - {fileID: 8300000, guid: 35bda0c39b1fbe64196a669bfb99757d, type: 3}
+  - {fileID: 8300000, guid: 6259119f201fafa4ca80646eff6b4b1f, type: 3}
+  - {fileID: 8300000, guid: b04914b5801123b4dafba88cbcb5bc74, type: 3}
+  - {fileID: 8300000, guid: 3ec9ef3892d02044a9d62e412eb45ffb, type: 3}
+  _volume: 0.2
+  _volumeVariation: 0.1
+  _crouchVolumeMultiplier: 0.6
+  _runContacts: {x: 0.05263158, y: 0.57894737}
+  _crouchContacts: {x: 0.20689654, y: 0.7241379}
 --- !u!114 &5899334954998637641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96,8 +131,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cf4d04d6eaa9394b9c0aed304b4846c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControllerView
+  _loggingAxeTip: {x: 3.9970598, y: 2.8025362}
+  _loggingAlignmentSpeed: 8
+  _loggingAlignmentMaxDistance: 2.2
+  _loggingAlignmentTolerance: 0.04
+  _loggingHitHeightTolerance: 0.3
+  _screenTransitionTimeout: 15
   _moveSpeed: 12
-  _jumpForce: 17.5
+  _jumpForce: 18.5
   _playerInput: {fileID: 5287553457062025148}
   _rigidbody2D: {fileID: 6109652825985272487}
   _normalJumpDistanceMultiplier: 0.85
@@ -365,6 +406,11 @@ MonoBehaviour:
   - {fileID: 3715523650954437514}
   - {fileID: 2233211356022855574}
   - {fileID: 6818489664537175061}
+  _preparationTimeout: 30
+  _contactTolerance: 0.15
+  _fishingCastSeconds: 3.33
+  _loggingSwingSeconds: 2
+  _loggingImpactNormalized: 0.11666667
 --- !u!114 &-2624902584304914743
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -388,12 +434,12 @@ MonoBehaviour:
     _hitNormalizedTime: 0.16666667
     _comboNormalizedTime: 0.65
   _attack2Timing:
-    _durationMultiplier: 0.66666667
+    _durationMultiplier: 0.6666667
     _hitNormalizedTime: 0.16666667
     _comboNormalizedTime: 0.6
   _attack3Timing:
     _durationMultiplier: 1.2
-    _hitNormalizedTime: 0.26666667
+    _hitNormalizedTime: 0.26666668
     _comboNormalizedTime: 0.9
   _targetLayer:
     serializedVersion: 2
@@ -406,7 +452,6 @@ MonoBehaviour:
     m_Bits: 0
   _projectileSpeed: 10
   _projectileDistance: 8
-  _projectileRadius: 0.15
 --- !u!114 &5351946392484908784
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -420,6 +465,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetworkStats
   ShowTopMostFoldoutHeaderGroup: 1
+  _logRespawnFlow: 1
   _initialMaxHp: 100
   _initialAttackPower: 10
   _initialMoveSpeed: 12
@@ -439,6 +485,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRuneCombatActor
   ShowTopMostFoldoutHeaderGroup: 1
+  _hitInvulnerabilityDuration: 0.6
+  _hitControlLockDuration: 0.1
+  _knockbackImpulse: 3
 --- !u!114 &3814531767672842738
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -453,6 +502,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRuneEquipmentController
   ShowTopMostFoldoutHeaderGroup: 1
   _allowTestEquipment: 1
+--- !u!114 &6134582619720384111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2861750558698755832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e9a47cdf3b140e29abb3ce36258cfba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementNetwork
+  ShowTopMostFoldoutHeaderGroup: 1
+  _velocitySendInterval: 0.05
 --- !u!1 &3691929907212733408
 GameObject:
   m_ObjectHideFlags: 0

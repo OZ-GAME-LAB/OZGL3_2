@@ -53,6 +53,7 @@ public partial class InteractionNetwork : NetworkBehaviour
     private bool _localInitialized;
     private int _initializationVersion;
     public bool IsReady => IsSpawned && _localInitialized;
+    public bool IsDormant => _isDormant.Value;
     public bool IsAvailable => IsReady && _isAvailable.Value;
 
     public void SetPlacementBeforeSpawn(PlacedInteractionSettings placement)

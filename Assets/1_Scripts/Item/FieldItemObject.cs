@@ -141,12 +141,19 @@ public class FieldItemObject : NetworkBehaviour
 
         var itemData = DataManager.Inst.GetData<ItemData>(itemId);
 
-        if (itemData == null || string.IsNullOrEmpty(itemData.IconPath))
+        if (itemData == null)
         {
             return;
         }
 
-        Sprite sprite = await ResourceManager.Inst.LoadSprite(itemData.IconPath);
+        string iconPath = itemData.IconPath;
+
+        if (string.IsNullOrWhiteSpace(iconPath))
+        {
+            iconPath = "sampleicon";
+        }
+
+        Sprite sprite = await ResourceManager.Inst.LoadSprite(iconPath);
 
         if (this == null || IsSpawned == false || version != _visualVersion || _spriteRenderer == null || Collider_Body == null)
         {
@@ -155,7 +162,7 @@ public class FieldItemObject : NetworkBehaviour
 
         if (sprite == null)
         {
-            Debug.LogError($"아이템 스프라이트 로드 실패: {itemId}, 경로: {itemData.IconPath}", this);
+            Debug.LogError($"아이템 스프라이트 로드 실패: {itemId}, 경로: {iconPath}", this);
 
             return;
         }

@@ -14,16 +14,31 @@ public class InventorySlotUIView : MonoBehaviour
     [SerializeField] private Image Image_BackGround;
 
     private InventoryItemViewModel _viewModel;
+    private int _iconLoadVersion;
     public event Action<InventorySlotUIView, InventoryItemViewModel> ItemOnClickEvent;
+
+    private void Awake()
+    {
+        if (_useButton == null)
+            return;
+
+        Navigation navigation = _useButton.navigation;
+        navigation.mode = Navigation.Mode.None;
+        _useButton.navigation = navigation;
+    }
 
     public void Bind(InventoryItemViewModel viewModel)
     {
+        if (_viewModel != null && ReferenceEquals(_viewModel, viewModel))
+            return;
+
         Unbind();
 
         _viewModel = viewModel;
 
-        if (_viewModel == null)
+        if (_viewModel == null || string.IsNullOrEmpty(_viewModel.Id))
         {
+            _viewModel = null;
             return;
         }
 
@@ -64,11 +79,12 @@ public class InventorySlotUIView : MonoBehaviour
                 }
             case nameof(_viewModel.IconPath):
                 {
-                    Image_ItemIcon.gameObject.SetActive(true);
+                    int version = ++_iconLoadVersion;
+                    Image_ItemIcon.enabled = false;
                     Image_ItemIcon.sprite = null;
 
                     if (!string.IsNullOrEmpty(_viewModel.IconPath))
-                        LoadItemIconAsync(Image_ItemIcon, _viewModel.IconPath).Forget();
+                        LoadItemIconAsync(_viewModel.IconPath, version).Forget();
 
                     break;
                 }
@@ -99,10 +115,22 @@ public class InventorySlotUIView : MonoBehaviour
 
     public void Unbind()
     {
+        // 이전 아이템의 비동기 로딩 결과가 재사용한 슬롯을 덮지 못하게 한다.
+        _iconLoadVersion++;
         if (_viewModel != null)
         {
             _viewModel.PropertyChanged -= OnItemPropertyChanged;
             _viewModel = null;
+        }
+
+        if (_itemName != null)
+            _itemName.text = string.Empty;
+        if (_itemCount != null)
+            _itemCount.text = string.Empty;
+        if (Image_ItemIcon != null)
+        {
+            Image_ItemIcon.sprite = null;
+            Image_ItemIcon.enabled = false;
         }
     }
 
@@ -114,9 +142,14 @@ public class InventorySlotUIView : MonoBehaviour
 
 
 
-    private async UniTaskVoid LoadItemIconAsync(Image Image, string iconPath)
+    private async UniTaskVoid LoadItemIconAsync(string iconPath, int version)
     {
-        await GameUtil.LoadAndSetSpriteImage(Image, _viewModel.IconPath);
+        Sprite sprite = await ResourceManager.Inst.LoadAsset<Sprite>(iconPath);
 
+        if (this == null || version != _iconLoadVersion || Image_ItemIcon == null)
+            return;
+
+        Image_ItemIcon.sprite = sprite;
+        Image_ItemIcon.enabled = sprite != null;
     }
 }

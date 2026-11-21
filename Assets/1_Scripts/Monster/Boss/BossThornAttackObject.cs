@@ -20,6 +20,27 @@ public class BossThornAttackObject : MonoBehaviour
     [SerializeField, Min(0.01f)]
     private float _riseSeconds = 0.2f;
 
+    [System.Serializable]
+    private sealed class NativeSpriteSet
+    {
+        [SerializeField] private Vector2 _attackSize;
+        [SerializeField] private Sprite _warning;
+        [SerializeField] private Sprite _thorn;
+        [SerializeField] private Sprite _mask;
+
+        public Vector2 AttackSize => _attackSize;
+        public Sprite Warning => _warning;
+        public Sprite Thorn => _thorn;
+        public Sprite Mask => _mask;
+    }
+
+    [Header("Native sprites by attack size")]
+    [SerializeField] private NativeSpriteSet[] _nativeSprites;
+
+    // Allows pixel rounding at 100 PPU, without changing the attack bounds.
+    private const float SpriteSizeTolerance = 0.02f;
+    private bool _reportedNativeSpriteError;
+
     public event System.Action AttackStarted;
 
     private bool _initialized;
@@ -58,6 +79,7 @@ public class BossThornAttackObject : MonoBehaviour
             return false;
 
         _initialized = false;
+        HideVisualsAndHitbox();
 
         if (float.IsNaN(warningSeconds) || float.IsInfinity(warningSeconds) || warningSeconds < 0f)
         {
@@ -71,9 +93,8 @@ public class BossThornAttackObject : MonoBehaviour
             return false;
         }
 
-        if (_warningVisual == null || _warningVisual.sprite == null ||
-            _thornMask == null || _thornMask.sprite == null ||
-            _thornVisual == null || _thornVisual.sprite == null ||
+        if (_warningVisual == null || _thornMask == null ||
+            _thornVisual == null ||
             _hitbox == null)
         {
             Debug.LogError("가시 공격 프리팹의 참조가 연결되지 않았습니다.", this);
@@ -87,43 +108,25 @@ public class BossThornAttackObject : MonoBehaviour
             return false;
         }
 
-        Vector3 thornScale = _thornVisual.transform.localScale;
-
-        if (thornScale.x <= 0f || thornScale.y <= 0f)
-        {
-            Debug.LogError("가시 외형의 Scale은 양수여야 합니다.", this);
+        float warningHeight = _useAttackHeightForWarning ? height : _warningHeight;
+        if (!TryGetNativeSprites(width, height, warningHeight, out NativeSpriteSet sprites))
             return false;
-        }
 
         _width = width;
         _height = height;
         _holdSeconds = holdSeconds;
         _playWarningSeconds = warningSeconds;
 
-        float warningHeight = _useAttackHeightForWarning ? _height : _warningHeight;
-
-        Vector3 warningSpriteSize = _warningVisual.sprite.bounds.size;
-
-        _warningVisual.transform.localScale = new Vector3(_width / warningSpriteSize.x, warningHeight / warningSpriteSize.y, 1f);
-
+        _warningVisual.sprite = sprites.Warning;
+        _thornVisual.sprite = sprites.Thorn;
+        _thornMask.sprite = sprites.Mask;
+        _warningVisual.drawMode = SpriteDrawMode.Simple;
+        _thornVisual.drawMode = SpriteDrawMode.Simple;
+        _warningVisual.transform.localScale = Vector3.one;
+        _thornVisual.transform.localScale = Vector3.one;
+        _thornMask.transform.localScale = Vector3.one;
         _warningVisual.transform.localPosition = new Vector3(0f, warningHeight * 0.5f, 0f);
-
-        Vector3 maskSpriteSize = _thornMask.sprite.bounds.size;
-
-        _thornMask.transform.localScale = new Vector3(_width / maskSpriteSize.x, _height / maskSpriteSize.y, 1f);
-
         _thornMask.transform.localPosition = new Vector3(0f, _height * 0.5f, 0f);
-
-        if (_thornVisual.drawMode == SpriteDrawMode.Simple)
-        {
-            Vector3 spriteSize = _thornVisual.sprite.bounds.size;
-
-            _thornVisual.transform.localScale = new Vector3(_width / spriteSize.x, _height / spriteSize.y, thornScale.z);
-        }
-        else
-        {
-            _thornVisual.size = new Vector2(_width / thornScale.x, _height / thornScale.y);
-        }
 
         _thornVisual.transform.localPosition = new Vector3(0f, -_height * 0.5f, 0f);
 
@@ -140,6 +143,81 @@ public class BossThornAttackObject : MonoBehaviour
         _initialized = true;
 
         return true;
+    }
+
+    private void HideVisualsAndHitbox()
+    {
+        if (_warningVisual != null)
+            _warningVisual.gameObject.SetActive(false);
+        if (_thornVisual != null)
+            _thornVisual.gameObject.SetActive(false);
+        if (_thornMask != null)
+            _thornMask.gameObject.SetActive(false);
+        if (_hitbox != null)
+            _hitbox.gameObject.SetActive(false);
+    }
+
+    private bool TryGetNativeSprites(float width, float height, float warningHeight,
+        out NativeSpriteSet selected)
+    {
+        selected = null;
+        if (!HasUnitParentScale(_warningVisual.transform) ||
+            !HasUnitParentScale(_thornVisual.transform) ||
+            !HasUnitParentScale(_thornMask.transform) ||
+            !HasUnitParentScale(_hitbox.transform))
+            return ReportNativeSpriteError("Attack parent scale must remain (1, 1, 1).");
+
+        if (_nativeSprites != null)
+        {
+            foreach (NativeSpriteSet candidate in _nativeSprites)
+            {
+                if (candidate == null ||
+                    !MatchesSize(candidate.AttackSize, width, height))
+                    continue;
+
+                if (!MatchesSprite(candidate.Thorn, width, height) ||
+                    !MatchesSprite(candidate.Mask, width, height) ||
+                    !MatchesSprite(candidate.Warning, width, warningHeight))
+                    return ReportNativeSpriteError("Native sprite size or center pivot is invalid.");
+
+                selected = candidate;
+                return true;
+            }
+        }
+
+        return ReportNativeSpriteError($"No native sprite set for attack {width:F4} x {height:F4}.");
+    }
+
+    private static bool HasUnitParentScale(Transform visual)
+    {
+        Vector3 scale = visual.parent != null ? visual.parent.lossyScale : Vector3.one;
+        return (scale - Vector3.one).sqrMagnitude < 0.000001f;
+    }
+
+    private static bool MatchesSize(Vector2 actual, float width, float height)
+    {
+        return Mathf.Abs(actual.x - width) <= SpriteSizeTolerance &&
+            Mathf.Abs(actual.y - height) <= SpriteSizeTolerance;
+    }
+
+    private static bool MatchesSprite(Sprite sprite, float width, float height)
+    {
+        if (sprite == null || !MatchesSize(sprite.bounds.size, width, height))
+            return false;
+
+        Vector2 center = sprite.rect.size * 0.5f;
+        return (sprite.pivot - center).sqrMagnitude < 0.0001f &&
+            sprite.bounds.center.sqrMagnitude < 0.000001f;
+    }
+
+    private bool ReportNativeSpriteError(string message)
+    {
+        if (!_reportedNativeSpriteError)
+        {
+            Debug.LogError($"[BossThornAttackObject] {message}", this);
+            _reportedNativeSpriteError = true;
+        }
+        return false;
     }
 
     public bool Initialize(float width, float height, float holdSeconds)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public partial class PlayerControllerView : MonoBehaviour
 {
@@ -38,9 +39,12 @@ public partial class PlayerControllerView : MonoBehaviour
     private bool _jumpInProgress;
     private bool _wasGroundedForAnimation = true;
     private PlayerAnimationPresenter _animationPresenter;
+    private PlayerFootstepSound _footstepSound;
+    private bool _footstepGrounded;
+    private float _footstepHorizontalSpeed;
     private bool _wasAttackLocked;
     private bool IsAttackLocked => _runeAttackController != null && _runeAttackController.IsAttackActive;
-    public bool CanStartGroundAttack => !IsEncounterControlLocked && gameObject.activeInHierarchy && !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode &&
+    public bool CanStartGroundAttack => !IsGameplayControlLocked && gameObject.activeInHierarchy && !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode &&
         !_isCrouching && !_jumpInProgress && _rigidbody2D != null && _rigidbody2D.simulated && IsGroundedForAttack() &&
         (_wallCling == null || !_wallCling.IsClinging);
     private readonly RaycastHit2D[] _attackGroundHits = new RaycastHit2D[4];
@@ -78,9 +82,14 @@ public partial class PlayerControllerView : MonoBehaviour
     private InputAction _consumableAction;
     private InputAction _fieldInteractAction;
     private InputAction _attackAction;
+    private Mouse _attackInputMouse;
+    private ButtonControl _attackInputMouseButton;
+    private bool _mouseAttackBlockedUntilRelease;
     private InputAction _specialAttackAction;
     private InputAction _switchConsumableAction;
     private InputAction _inventoryAction;
+    private bool _openingInventory;
+    private int _inventoryInputFrame = -1;
     private InputAction _journalAction;
     private InputAction _settingsAction;
     private InputAction _runeInventoryAction;
@@ -158,6 +167,8 @@ public partial class PlayerControllerView : MonoBehaviour
     void Awake()
     {
         TryGetComponent(out _networkObject);
+        TryGetComponent(out _movementNetwork);
+        TryGetComponent(out _footstepSound);
 
         if (_runeAttackController == null)
         {
@@ -250,10 +261,14 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnDisable()
     {
+        RestTent.Active?.CancelLocalForPlayer(this);
+        CancelScreenTransition();
+        _footstepSound?.ResetTracking();
         SetEncounterControlLocked(false);
         EndHitControlLock();
         UnbindScenarioService();
         _runeAttackController?.CancelAttackInput();
+        ClearMouseAttackInput();
         RestoreThinPlatformCollisions();
         // Awake에서 필수 참조를 찾지 못해 비활성화된 경우에는 구독한 입력이 없습니다.
         if (!_inputActionsInitialized)
@@ -299,7 +314,13 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void Update()
     {
-        if (IsEncounterControlLocked) return;
+        UpdateScreenTransitionLifetime();
+        if (IsDeathControlLocked)
+        {
+            MaintainDeathInput();
+            return;
+        }
+        if (IsGameplayControlLocked) return;
         /*
         // 원격 플레이어까지 같은 키보드 입력으로 움직이지 않도록 제한합니다.
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
@@ -312,13 +333,20 @@ public partial class PlayerControllerView : MonoBehaviour
         }
 
         if (!CanReadAttackInput())
+        {
             _runeAttackController?.CancelAttackInput();
+            ClearMouseAttackInput();
+        }
+        else
+        {
+            UpdateMouseAttackBlocking();
+        }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         HandleDeveloperInvincibilityInput();
 #endif
 
-        if (IsEncounterControlLocked || IsHitControlLocked || _isDialogueMode)
+        if (IsGameplayControlLocked || IsHitControlLocked || _isDialogueMode)
             return;
 
         if (_isMiniGameMode || _fieldInteractAction.IsPressed())
@@ -428,7 +456,8 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (IsEncounterControlLocked && _networkObject != null && _networkObject.IsOwner)
+        if (IsDeathControlLocked) return;
+        if (IsMovementControlLocked && _networkObject != null && _networkObject.IsOwner)
         {
             SetMoveInput(0f);
             if (_rigidbody2D != null) _rigidbody2D.linearVelocity = Vector2.zero;
@@ -988,10 +1017,12 @@ public partial class PlayerControllerView : MonoBehaviour
 
     public void ApplyHitReaction(Vector2 direction, float impulse, float controlLockDuration)
     {
+        if (IsDeathControlLocked) return;
         if (!isActiveAndEnabled || _networkObject == null || !_networkObject.IsSpawned
             || !_networkObject.IsOwner || _rigidbody2D == null)
             return;
 
+        CancelScreenTransition();
         _hitControlLockRemaining = controlLockDuration;
         _interactionController?.CancelRequestedInteraction();
         ExitMiniGameMode();
@@ -1035,6 +1066,7 @@ public partial class PlayerControllerView : MonoBehaviour
             return;
 
         _restoreInputAfterHit = false;
+        if (IsDeathControlLocked) return;
         if (_playerInput == null || !_playerInput.isActiveAndEnabled
             || _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
             return;
@@ -1049,7 +1081,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnMove(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked || _isSpectatorMode || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
+        if (IsMovementControlLocked || _isSpectatorMode || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
             return;
 
         SetMoveInput(context.ReadValue<Vector2>().x);
@@ -1096,6 +1128,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void ResetAirborneStateAndAnimation()
     {
+        ResetMovementNetworkSample();
         _blockedRunDirection = 0f;
         if (_wallCling != null) _wallCling.ResetState();
         UpdateWallAnimation();
@@ -1105,6 +1138,9 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void ResetJumpTracking()
     {
+        _footstepGrounded = false;
+        _footstepHorizontalSpeed = 0f;
+        _footstepSound?.ResetTracking();
         ResetJumpDistance();
         _jumpInProgress = false;
         _animationGroundLostTime = 0f;
@@ -1156,12 +1192,21 @@ public partial class PlayerControllerView : MonoBehaviour
         float verticalSpeed = _rigidbody2D.linearVelocity.y;
         bool rawGrounded = _isSpectatorMode ||
             (verticalSpeed <= 0.1f && HasGroundContact());
+        // 이동 속도를 쓰기 전의 물리 결과를 이용해 벽에 막힌 입력에서는 재생하지 않습니다.
+        _footstepGrounded = rawGrounded;
+        _footstepHorizontalSpeed = Mathf.Abs(_rigidbody2D.linearVelocity.x);
         bool grounded = ResolveAnimationGrounded(rawGrounded);
+        _movementGrounded = grounded;
+        _movementVerticalSpeed = _isSpectatorMode ? 0f : verticalSpeed;
+        if (grounded) _movementJumping = false;
         LogGroundAnimationDiagnostic(rawGrounded, grounded);
 
         // 점프 종류는 공중 입력으로 바꾸지 않습니다. 걸어서 떨어질 때만 해제합니다.
         if (!grounded && _wasGroundedForAnimation && !_jumpInProgress)
+        {
+            _movementIdleJump = false;
             _animationPresenter?.ClearIdleJump();
+        }
 
         UpdateJumpLandingState(grounded);
         UpdateRunUpState(rawGrounded);
@@ -1248,6 +1293,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void LateUpdate()
     {
+        UpdateFootstepSound();
         if (!_logAnimationDiagnostics)
         {
             _animationPresenter?.ResetDiagnostics();
@@ -1261,6 +1307,21 @@ public partial class PlayerControllerView : MonoBehaviour
 
         if (_animationPresenter != null && _animationPresenter.TryGetStateDiagnostic(out string message))
             Debug.Log($"{message} {GetAnimationDiagnosticContext()}", this);
+    }
+
+    private void UpdateFootstepSound()
+    {
+        if (_footstepSound == null) return;
+        bool canStep = _networkObject != null && _networkObject.IsSpawned && _networkObject.IsOwner &&
+            _playerStatViewModel != null && _playerStatViewModel.CurHp > 0f &&
+            _playerInput != null && _playerInput.isActiveAndEnabled && _playerInput.inputIsActive &&
+            _rigidbody2D != null && _rigidbody2D.simulated &&
+            _footstepGrounded && _footstepHorizontalSpeed > _blockedRunSpeedThreshold &&
+            Mathf.Abs(_moveInput) > 0.01f && !_jumpInProgress && !IsDroppingThroughPlatforms() &&
+            !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode && _loggingAlignmentRequest == 0 &&
+            !IsAttackLocked && !IsHitControlLocked && !IsMovementControlLocked &&
+            (_wallCling == null || !_wallCling.IsClinging);
+        _footstepSound.Tick(_animator, canStep, _isCrouching);
     }
 
     private void LogGroundAnimationDiagnostic(bool rawGrounded, bool grounded)
@@ -1318,7 +1379,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked || _isSpectatorMode || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
+        if (IsMovementControlLocked || _isSpectatorMode || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
             return;
         if (_networkObject != null && _networkObject.IsSpawned && !_networkObject.IsOwner)
             return;
@@ -1399,6 +1460,11 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void PlayJumpAnimation(bool idleJump)
     {
+        _movementGrounded = false;
+        _movementJumping = true;
+        _movementIdleJump = idleJump;
+        _movementVerticalSpeed = _rigidbody2D.linearVelocity.y;
+        _movementJumpSequence = unchecked(_movementJumpSequence + 1);
         if (_logAnimationDiagnostics)
             Debug.Log($"[PlayerAnim][Jump] 종류={(idleJump ? "IdleJump" : "RunningJump")} " +
                 GetAnimationDiagnosticContext(), this);
@@ -1407,19 +1473,19 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnSpecialAbility(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
+        if (IsGameplayControlLocked) return;
         Debug.Log($"{nameof(OnSpecialAbility)} 실행");
     }
 
     private void OnConsumable(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
+        if (IsGameplayControlLocked) return;
         Debug.Log($"{nameof(OnConsumable)} 실행");
     }
 
     private void OnFieldInteract(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
+        if (IsGameplayControlLocked || IsHitControlLocked || IsAttackLocked || _isDialogueMode)
             return;
 
         Debug.Log($"{nameof(OnFieldInteract)} 실행");
@@ -1450,6 +1516,9 @@ public partial class PlayerControllerView : MonoBehaviour
             return;
         }
 
+        if (!TryAcceptMouseAttackInput(context))
+            return;
+
         _runeAttackController.RequestAttack(_lookRight);
 
         Debug.Log($"{nameof(OnAttack)} 실행");
@@ -1463,7 +1532,7 @@ public partial class PlayerControllerView : MonoBehaviour
             return false;
         }
 
-        return !IsEncounterControlLocked && (_interactionController == null || !_interactionController.HasLocalRequest) &&
+        return !IsGameplayControlLocked && (_interactionController == null || !_interactionController.HasLocalRequest) &&
             !IsHitControlLocked && !_isSpectatorMode && !_isMiniGameMode && !_isDialogueMode && _networkObject != null &&
             _networkObject.IsSpawned && _networkObject.IsOwner && _playerInput != null &&
             _playerInput.isActiveAndEnabled && _playerInput.inputIsActive &&
@@ -1474,15 +1543,72 @@ public partial class PlayerControllerView : MonoBehaviour
     {
         if (CanReadAttackInput()) _runeAttackController?.ReleaseAttack();
         else _runeAttackController?.CancelAttackInput();
+        ClearMouseAttackInput();
+    }
+
+    private bool TryAcceptMouseAttackInput(InputAction.CallbackContext context)
+    {
+        if (!(context.control?.device is Mouse mouse) || !(context.control is ButtonControl button))
+        {
+            ClearMouseAttackInput();
+            return true;
+        }
+
+        if (_attackInputMouseButton != button)
+            ClearMouseAttackInput();
+
+        _attackInputMouse = mouse;
+        _attackInputMouseButton = button;
+        if (_mouseAttackBlockedUntilRelease)
+            return false;
+
+        _mouseAttackBlockedUntilRelease = IsMouseOverInventory(mouse);
+        return !_mouseAttackBlockedUntilRelease;
+    }
+
+    private bool IsMouseOverInventory(Mouse mouse)
+    {
+        return mouse != null && UIManager.Inst != null &&
+            UIManager.Inst.IsPointerOverInventory(mouse.position.ReadValue());
+    }
+
+    private void UpdateMouseAttackBlocking()
+    {
+        if (_attackInputMouseButton == null)
+            return;
+
+        if (!_attackInputMouseButton.isPressed)
+        {
+            ClearMouseAttackInput();
+            return;
+        }
+
+        if (!_mouseAttackBlockedUntilRelease && IsMouseOverInventory(_attackInputMouse))
+        {
+            _mouseAttackBlockedUntilRelease = true;
+            _runeAttackController?.CancelAttackInput();
+        }
+    }
+
+    private void ClearMouseAttackInput()
+    {
+        _attackInputMouse = null;
+        _attackInputMouseButton = null;
+        _mouseAttackBlockedUntilRelease = false;
     }
 
     private void OnApplicationFocus(bool hasFocus)
     {
-        if (!hasFocus) _runeAttackController?.CancelAttackInput();
+        if (!hasFocus)
+        {
+            _runeAttackController?.CancelAttackInput();
+            ClearMouseAttackInput();
+        }
     }
 
     public void UpdateAttackPresentation()
     {
+        if (UsesRemoteMovementPresentation) return;
         bool locked = IsAttackLocked;
         if (_runeAttackController != null && _runeAttackController.IsSpawned)
         {
@@ -1518,6 +1644,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     public void UpdateResourcePresentation(PlayerResourceAnimationState state, double now)
     {
+        if (UsesRemoteMovementPresentation) return;
         if (_animationPresenter == null) return;
         if (state.Kind != ResourceAnimationKind.None && state.FacingDirection != 0)
         {
@@ -1537,25 +1664,61 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnSpecialAttack(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
+        if (IsGameplayControlLocked) return;
+        if (context.control?.device is Mouse mouse && IsMouseOverInventory(mouse))
+            return;
         Debug.Log($"{nameof(OnSpecialAttack)} 실행");
 
     }
 
     private void OnSwitchConsumable(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
+        if (IsGameplayControlLocked) return;
         Debug.Log($"{nameof(OnSwitchConsumable)} 실행");
 
     }
 
     private async void OnOpenInventory(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
-        if (_isDialogueMode)
+        if (IsGameplayControlLocked || _isDialogueMode || _openingInventory ||
+            _inventoryInputFrame == Time.frameCount)
             return;
-        var view = await UIManager.Inst.OpenInventoryUIAsync();
-        ServiceManager.Inst.InventoryService.BindInventoryView(view);
+
+        UIManager uiManager = UIManager.Inst;
+        if (uiManager == null ||
+            _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
+            return;
+
+        _inventoryInputFrame = Time.frameCount;
+        if (uiManager.IsOpen(UIType.InventoryUI))
+        {
+            uiManager.CloseInventoryUI();
+            return;
+        }
+
+        _openingInventory = true;
+
+        try
+        {
+            var view = await uiManager.OpenInventoryUIAsync();
+            if (this == null || !isActiveAndEnabled || IsGameplayControlLocked || _isDialogueMode ||
+                _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
+            {
+                if (uiManager != null && uiManager.IsOpen(UIType.InventoryUI))
+                    uiManager.Close(UIType.InventoryUI);
+                return;
+            }
+
+            if (view == null)
+                return;
+
+            ServiceManager.Inst.InventoryService.BindInventoryView(view);
+        }
+        finally
+        {
+            if (this != null)
+                _openingInventory = false;
+        }
     }
 
     private void OnOpenJournal(InputAction.CallbackContext context)
@@ -1566,7 +1729,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnOpenSettings(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
+        if (IsGameplayControlLocked) return;
         if (_networkObject == null ||
         !_networkObject.IsSpawned ||
         !_networkObject.IsOwner)
@@ -1608,7 +1771,7 @@ public partial class PlayerControllerView : MonoBehaviour
                 return;
 
             // 로딩 도중 플레이어가 사라지거나 비활성화된 경우.
-            if (this == null ||
+            if (this == null || IsDeathControlLocked ||
                 !isActiveAndEnabled ||
                 _networkObject == null ||
                 !_networkObject.IsSpawned ||
@@ -1626,7 +1789,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnOpenRuneInventory(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
+        if (IsGameplayControlLocked) return;
         if (_isDialogueMode)
             return;
         if (_networkObject == null ||
@@ -1666,7 +1829,7 @@ public partial class PlayerControllerView : MonoBehaviour
             }
 
             // UI 로딩 중 플레이어가 사라지거나 연결이 종료된 경우.
-            if (this == null || isActiveAndEnabled == false || _networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false || services == null)
+            if (this == null || IsDeathControlLocked || isActiveAndEnabled == false || _networkObject == null || _networkObject.IsSpawned == false || _networkObject.IsOwner == false || services == null)
             {
                 uiManager.CloseRuneInventoryUI();
                 return;
@@ -1807,7 +1970,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnMiniGameConfirm(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
+        if (IsGameplayControlLocked) return;
         if (_isDialogueMode)
         {
             if (Time.frameCount != _dialogueEnteredFrame)
@@ -1822,7 +1985,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void OnMiniGameCancel(InputAction.CallbackContext context)
     {
-        if (IsEncounterControlLocked) return;
+        if (IsGameplayControlLocked) return;
         // 대화는 마지막 줄까지 진행해야 완료됩니다. 취소 키로 닫지 않습니다.
         if (_isDialogueMode)
             return;
@@ -1842,7 +2005,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private bool CanEnterDialogueMode(ScenarioSource source)
     {
-        if (IsEncounterControlLocked) return false;
+        if (IsGameplayControlLocked) return false;
         if (!isActiveAndEnabled || source == null || _networkObject == null ||
             !_networkObject.IsSpawned || !_networkObject.IsOwner || !_inputActionsInitialized ||
             _isMiniGameMode || _isDialogueMode || _isSpectatorMode || IsAttackLocked ||
@@ -1936,8 +2099,7 @@ public partial class PlayerControllerView : MonoBehaviour
             return false;
         }
 
-        return ui.IsOpen(UIType.InventoryUI)
-            || ui.IsOpen(UIType.RuneInventoryUI)
+        return ui.IsOpen(UIType.RuneInventoryUI)
             || ui.IsOpen(UIType.SettingUI);
     }
 }

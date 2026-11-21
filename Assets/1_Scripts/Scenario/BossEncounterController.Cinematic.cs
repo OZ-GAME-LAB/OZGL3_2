@@ -32,7 +32,7 @@ public sealed partial class BossEncounterController
         lens.OrthographicSize = _cinematicCameraSize;
         lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
         _encounterCamera.Lens = lens;
-        _cinematicUI = await OpenUIAsync<CinematicEffectUI>(UIType.CinematicEffectUI, true, token);
+        _cinematicUI = await OpenUIAsync<CinematicEffectUI>(UIType.CinematicEffectUI, token);
         await _cinematicUI.ShowAsync(token);
         if (_transitionUI != null) await _transitionUI.FadeAsync(false, token);
     }

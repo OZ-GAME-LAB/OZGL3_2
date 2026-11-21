@@ -367,6 +367,18 @@ public abstract class NetworkUnit : NetworkBehaviour
 
     protected virtual void OnDiedOnServer() { }
 
+    // 일반 회복과 구분합니다. 부활 위치가 확정된 뒤 파생 클래스에서만 호출합니다.
+    protected bool ReviveOnServer()
+    {
+        if (!CanChangeStats || IsAlive || !_deathHandled || MaxHp <= 0f)
+            return false;
+
+        ClearStatusEffectsOnServer();
+        _deathHandled = false;
+        _curHp.Value = MaxHp;
+        return true;
+    }
+
     private void OnStatChanged(float previousValue, float newValue)
     {
         StatsChanged?.Invoke();

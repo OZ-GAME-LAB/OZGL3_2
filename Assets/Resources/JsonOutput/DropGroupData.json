@@ -72,9 +72,11 @@
     "ItemId": [
       "con_red_berry"
     ],
-    "MinQuantity": null,
-    "MaxQuantity": null,
-    "DropChance": null
+    "MinQuantity": 1,
+    "MaxQuantity": 3,
+    "DropChance": [
+      1
+    ]
   },
   {
     "Id": "drop_berry_02",

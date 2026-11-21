@@ -37,12 +37,24 @@ public enum UIType
     CinematicEffectUI,
     BossEntryUI,
     SaveSelectionUI,
-    PlayerHudUI
+    PlayerHudUI,
+    GameOverUI,
+    RestUI
 }
 
 
 public static class UIManagerExtension
 {
+    public static async UniTask<GameOverUI> OpenGameOverUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
+    {
+        while (uiManager != null && uiManager.IsLoading(UIType.GameOverUI))
+            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (uiManager == null) return null;
+        UIBase ui = await uiManager.OpenVeryFrontRootAsync(UIType.GameOverUI, cancellationToken);
+        return GetView<GameOverUI>(ui, UIType.GameOverUI);
+    }
+
     public static async UniTask<SlidingPuzzleUI> OpenSlidingPuzzleUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
     {
         while (uiManager != null && uiManager.IsLoading(UIType.SlidingPuzzleUI))
@@ -110,14 +122,12 @@ public static class UIManagerExtension
 
     public static async UniTask<InventoryUIView> OpenInventoryUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
     {
-        ServiceManager.Inst.PlayerService.SetUIInputAction(true);
         UIBase uiBase = await uiManager.OpenMainRootAsync(UIType.InventoryUI, cancellationToken);
         return GetView<InventoryUIView>(uiBase, UIType.InventoryUI);
     }
 
     public static void CloseInventoryUI(this UIManager uiManager)
     {
-        ServiceManager.Inst.PlayerService.SetUIInputAction(false);
         uiManager.Close(UIType.InventoryUI);
     }
 

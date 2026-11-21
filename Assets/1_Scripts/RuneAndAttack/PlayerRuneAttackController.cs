@@ -522,6 +522,13 @@ public class PlayerRuneAttackController : NetworkBehaviour
         _queuedAttack = false;
     }
 
+    public void ResetForRespawnOnServer()
+    {
+        if (!IsServer || !IsSpawned) return;
+        ClearActiveAttack();
+        _nextAttackTime = 0d;
+    }
+
     private void PublishAttackStopped()
     {
         PlayerAttackState state = _attackState.Value;

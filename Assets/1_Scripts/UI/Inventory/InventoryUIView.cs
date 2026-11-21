@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class InventoryUIView : UIBase
 {
     [SerializeField] private Transform _inventorySlotRoot;
-    [SerializeField] private Button _closeButton;
     [SerializeField] private GameObject _inventorySlotPrefab;
 
     [SerializeField] private Transform _EquipmentSlotRoot;
@@ -34,18 +34,53 @@ public class InventoryUIView : UIBase
     [SerializeField] private Sprite _miningSlotBackground;
 
     InventoryUIViewModel _InventoryUIViewModel;
-    private readonly Dictionary<InventorySlotUIView, InventoryItemViewModel> _inventorySlots = new();
+    private readonly List<InventorySlotUIView> _inventorySlots = new();
 
     private readonly List<InventorySlotUIView> _equipmentSlots = new();
 
     private InventoryItemViewModel _selectedItem;
+    private PointerEventData _pointerEventData;
+    private EventSystem _pointerEventSystem;
+    private readonly List<RaycastResult> _pointerHits = new();
+
+    public bool BlocksGameplayPointer(Vector2 screenPosition)
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (!isActiveAndEnabled || eventSystem == null)
+            return false;
+
+        if (_pointerEventData == null || _pointerEventSystem != eventSystem)
+        {
+            _pointerEventSystem = eventSystem;
+            _pointerEventData = new PointerEventData(eventSystem);
+        }
+
+        _pointerEventData.Reset();
+        _pointerEventData.position = screenPosition;
+        _pointerHits.Clear();
+        eventSystem.RaycastAll(_pointerEventData, _pointerHits);
+
+        bool blocked = false;
+        foreach (RaycastResult hit in _pointerHits)
+        {
+            if (hit.module is GraphicRaycaster && hit.gameObject != null &&
+                hit.gameObject.transform.IsChildOf(transform))
+            {
+                blocked = true;
+                break;
+            }
+        }
+
+        _pointerHits.Clear();
+        return blocked;
+    }
 
     private void OnEnable()
     {
-        if (_closeButton != null)
-        {
-            _closeButton.onClick.AddListener(OnClickCloseButton);
-        }
+        SetMouseOnlyNavigation(_ItemUseButton);
+        SetMouseOnlyNavigation(_ItemAddQuickSlotButton);
+        SetMouseOnlyNavigation(_ItemRemoveButton);
+        SetMouseOnlyNavigation(_popupCloseButton);
 
         if (_popupCloseButton != null)
         {
@@ -72,11 +107,6 @@ public class InventoryUIView : UIBase
 
     private void OnDisable()
     {
-        if (_closeButton != null)
-        {
-            _closeButton.onClick.RemoveListener(OnClickCloseButton);
-        }
-
         if (_popupCloseButton != null)
         {
             _popupCloseButton.onClick.RemoveListener(OnClickPopupCloseButton);
@@ -102,6 +132,23 @@ public class InventoryUIView : UIBase
 
     public void Bind(InventoryUIViewModel inventory)
     {
+        UnsubscribeInventory();
+        CloseItemPopup();
+        _InventoryUIViewModel = inventory;
+
+        if (_InventoryUIViewModel?.InventoryItemViewModelDictionary != null)
+        {
+            EnsureSlots();
+            _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged += OnInventoryChanged;
+            _InventoryUIViewModel.PropertyChanged += OnPropertyChanged;
+        }
+
+        RefreshEquipmentSlots();
+        RefreshSlots();
+    }
+
+    private void UnsubscribeInventory()
+    {
         if (_InventoryUIViewModel != null)
         {
             if (_InventoryUIViewModel.InventoryItemViewModelDictionary != null)
@@ -113,27 +160,12 @@ public class InventoryUIView : UIBase
             _InventoryUIViewModel.PropertyChanged -= OnPropertyChanged;
         }
 
-        ClearInventorySlots();
-        ClearEquipmentSlots();
-        _InventoryUIViewModel = inventory;
-
-
-        if (_InventoryUIViewModel?.InventoryItemViewModelDictionary == null)
-            return;
-
-        _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged += OnInventoryChanged;
-
-        _InventoryUIViewModel.PropertyChanged += OnPropertyChanged;
-
-
-        RebuildEquipmentSlots();
-
-        RebuildSlots();
     }
 
     private void OnInventoryChanged(in NotifyCollectionChangedEventArgs<KeyValuePair<string, InventoryItemViewModel>> e)
     {
-        RebuildSlots();
+        CloseItemPopup();
+        RefreshSlots();
     }
 
     private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -144,38 +176,76 @@ public class InventoryUIView : UIBase
             case nameof(InventoryUIViewModel.FishingItemViewModel):
             case nameof(InventoryUIViewModel.LoggingItemViewModel):
             case nameof(InventoryUIViewModel.MiningItemViewModel):
-                RebuildEquipmentSlots();
+                CloseItemPopup();
+                RefreshEquipmentSlots();
                 break;
 
         }
     }
 
-    private void RebuildSlots()
+    private void EnsureSlots()
     {
-        ClearInventorySlots();
-
-        foreach (var pair in _InventoryUIViewModel.InventoryItemViewModelDictionary)
+        // UIManager가 창을 재사용하므로 슬롯도 최초 연결 때만 생성한다.
+        while (_inventorySlots.Count < _InventoryUIViewModel.InventoryMaxSlotNumber)
         {
-            if (pair.Value != null)
-                MakeItemSlot(pair.Value);
+            InventorySlotUIView slot = CreateSlot(_inventorySlotRoot);
+            if (slot == null)
+                return;
+
+            _inventorySlots.Add(slot);
+        }
+
+        if (_equipmentSlots.Count == 0)
+        {
+            CreateEquipmentSlot(_talismanSlotBackground);
+            CreateEquipmentSlot(_loggingSlotBackground);
+            CreateEquipmentSlot(_fishingSlotBackground);
+            CreateEquipmentSlot(_miningSlotBackground);
         }
     }
 
-    private void MakeItemSlot(InventoryItemViewModel item)
+    private void RefreshSlots()
     {
-        var slotObject = Instantiate(_inventorySlotPrefab, _inventorySlotRoot);
+        int index = 0;
+        var items = _InventoryUIViewModel?.InventoryItemViewModelDictionary;
+
+        if (items != null)
+        {
+            foreach (var pair in items)
+            {
+                if (pair.Value == null)
+                    continue;
+
+                if (index >= _inventorySlots.Count)
+                    break;
+
+                _inventorySlots[index].Bind(pair.Value);
+                index++;
+            }
+        }
+
+        for (; index < _inventorySlots.Count; index++)
+            _inventorySlots[index].Bind(null);
+    }
+
+    private InventorySlotUIView CreateSlot(Transform root)
+    {
+        if (root == null || _inventorySlotPrefab == null)
+            return null;
+
+        var slotObject = Instantiate(_inventorySlotPrefab, root);
         var slotView = slotObject.GetComponent<InventorySlotUIView>();
 
         if (slotView == null)
         {
             Destroy(slotObject);
             Debug.LogError("InventorySlotUIView가 프리팹에 없습니다.", _inventorySlotPrefab);
-            return;
+            return null;
         }
 
-        _inventorySlots.Add(slotView, item);
-        slotView.Bind(item);
+        slotView.Bind(null);
         slotView.ItemOnClickEvent += ItemOnClick;
+        return slotView;
     }
 
     private void ItemOnClick(InventorySlotUIView slot, InventoryItemViewModel item)
@@ -192,6 +262,7 @@ public class InventoryUIView : UIBase
 
     private void OpenItemPopup(InventorySlotUIView slot, InventoryItemViewModel item)
     {
+        ClearInventorySelection();
         _selectedItem = item;
 
         // 아이템 정보 표시
@@ -274,10 +345,29 @@ public class InventoryUIView : UIBase
 
     private void CloseItemPopup()
     {
+        ClearInventorySelection();
         _selectedItem = null;
 
         if (_itemPopupUI != null)
             _itemPopupUI.SetActive(false);
+    }
+
+    private void SetMouseOnlyNavigation(Button button)
+    {
+        if (button == null)
+            return;
+
+        Navigation navigation = button.navigation;
+        navigation.mode = Navigation.Mode.None;
+        button.navigation = navigation;
+    }
+
+    private void ClearInventorySelection()
+    {
+        EventSystem eventSystem = EventSystem.current;
+        GameObject selected = eventSystem != null ? eventSystem.currentSelectedGameObject : null;
+        if (selected != null && selected.transform.IsChildOf(transform))
+            eventSystem.SetSelectedGameObject(null);
     }
 
     // 아이템 사용 / 장착 버튼
@@ -348,92 +438,46 @@ public class InventoryUIView : UIBase
         ServiceManager.Inst.InventoryService.RemoveItem(item.Id);
     }
 
-    private void ClearInventorySlots()
+    private void OnDestroy()
     {
-        foreach (var slot in _inventorySlots.Keys)
+        UnsubscribeInventory();
+        ReleaseSlots(_inventorySlots);
+        ReleaseSlots(_equipmentSlots);
+    }
+
+    private void ReleaseSlots(List<InventorySlotUIView> slots)
+    {
+        foreach (var slot in slots)
         {
             if (slot == null)
                 continue;
 
             slot.ItemOnClickEvent -= ItemOnClick;
             slot.Unbind();
-            Destroy(slot.gameObject);
         }
 
-        _inventorySlots.Clear();
+        slots.Clear();
     }
 
-    private void RebuildEquipmentSlots()
+    private void RefreshEquipmentSlots()
     {
-        ClearEquipmentSlots();
-
-        CreateEquipmentSlot(
-            _EquipmentSlotRoot,
-            _InventoryUIViewModel.TalismanItemViewModel,
-            _talismanSlotBackground);
-
-        CreateEquipmentSlot(
-            _EquipmentSlotRoot,
-            _InventoryUIViewModel.LoggingItemViewModel,
-            _loggingSlotBackground);
-
-        CreateEquipmentSlot(
-            _EquipmentSlotRoot,
-            _InventoryUIViewModel.FishingItemViewModel,
-            _fishingSlotBackground);
-
-        CreateEquipmentSlot(
-            _EquipmentSlotRoot,
-            _InventoryUIViewModel.MiningItemViewModel,
-            _miningSlotBackground);
-    }
-
-    private void CreateEquipmentSlot(
-        Transform root,
-        InventoryItemViewModel inventoryItemViewModel,
-        Sprite background)
-    {
-        if (root == null)
+        if (_equipmentSlots.Count != 4)
             return;
 
-        var slotObject = Instantiate(_inventorySlotPrefab, root);
-        var slotView = slotObject.GetComponent<InventorySlotUIView>();
+        _equipmentSlots[0].Bind(_InventoryUIViewModel?.TalismanItemViewModel);
+        _equipmentSlots[1].Bind(_InventoryUIViewModel?.LoggingItemViewModel);
+        _equipmentSlots[2].Bind(_InventoryUIViewModel?.FishingItemViewModel);
+        _equipmentSlots[3].Bind(_InventoryUIViewModel?.MiningItemViewModel);
+    }
 
+    private void CreateEquipmentSlot(Sprite background)
+    {
+        InventorySlotUIView slotView = CreateSlot(_EquipmentSlotRoot);
         if (slotView == null)
-        {
-            Destroy(slotObject);
-            Debug.LogError(
-                "InventorySlotUIView가 프리팹에 없습니다.",
-                _inventorySlotPrefab);
             return;
-        }
 
         _equipmentSlots.Add(slotView);
-
-        slotView.Bind(inventoryItemViewModel);
         slotView.SetBackground(background);
-
-        slotView.ItemOnClickEvent += ItemOnClick;
-    }
-
-    private void ClearEquipmentSlots()
-    {
-        foreach (var slot in _equipmentSlots)
-        {
-            if (slot != null)
-            {
-                slot.ItemOnClickEvent -= ItemOnClick;
-                slot.Unbind();
-                Destroy(slot.gameObject);
-            }
-        }
-
-        _equipmentSlots.Clear();
-    }
-
-    private void OnClickCloseButton()
-    {
-        UIManager.Inst.CloseInventoryUI();
     }
 
     private void OnClickPopupCloseButton()
