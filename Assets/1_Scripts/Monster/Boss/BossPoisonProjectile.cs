@@ -19,7 +19,6 @@ public class BossPoisonProjectile : MonoBehaviour
 
     private BossNetwork _owner;
     private Vector3 _start, _control, _end;
-    private Vector3 _visualScale;
     private Color _visualColor;
     private double _startTime;
     private RuneDamageInfo _damageInfo;
@@ -34,7 +33,6 @@ public class BossPoisonProjectile : MonoBehaviour
         if (_visual == null)
             return;
 
-        _visualScale = _visual.transform.localScale;
         _visualColor = _visual.color;
     }
 
@@ -130,7 +128,6 @@ public class BossPoisonProjectile : MonoBehaviour
 
     private void UpdateVisual(float progress)
     {
-        _visual.transform.localScale = _visualScale * Mathf.Lerp(0.35f, 1f, progress);
         Color color = _visualColor;
         color.a *= Mathf.Lerp(0.3f, 1f, progress);
         _visual.color = color;
@@ -203,7 +200,6 @@ public class BossPoisonProjectile : MonoBehaviour
         if (_visual == null)
             return;
 
-        _visual.transform.localScale = _visualScale;
         _visual.color = _visualColor;
         _visual.enabled = false;
     }

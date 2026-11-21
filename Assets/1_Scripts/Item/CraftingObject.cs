@@ -11,6 +11,7 @@ public class CraftingObject : InteractableObject
     private bool _sessionActive;
     private int _openVersion;
     public override bool RequiresServerReservation => false;
+    public override bool KeepInteractionOnRelease => true;
 
     public override async UniTask InitObject(string id)
     {
