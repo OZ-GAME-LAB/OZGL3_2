@@ -1,0 +1,1980 @@
+[
+  {
+    "key": "thorn_ground",
+    "width": 3000,
+    "height": 200,
+    "ppu": 100,
+    "guid": "877813ee247b4efda549d4b33250cf4e",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Ground_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      30,
+      2
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      2,
+      6,
+      2996,
+      192
+    ],
+    "zeroAlphaPixels": 307219,
+    "partialAlphaPixels": 272331,
+    "opaquePixels": 20450,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "D25824B7ACFD0F232FD5D22C15871B7D299AC089916864802045F77B71236EB3",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_ground",
+    "width": 3000,
+    "height": 22,
+    "ppu": 100,
+    "guid": "4e2f2b1d660b443d934c7906e69fe7e5",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Ground_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      30,
+      0.22
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_ground",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      3000,
+      22
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 66000,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 6040,
+    "minAlpha": 125,
+    "maxAlpha": 235,
+    "sha256": "FEEAC50D40DD3DE6C9582A05DD89D789413A2CA1ADAA83FABDFAB225E6F38148",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_ground",
+    "width": 3000,
+    "height": 200,
+    "ppu": 100,
+    "guid": "c7124410bc5d4b4fb74c45da858e1e23",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Ground_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      30,
+      2
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      3000,
+      200
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 600000,
+    "borderAlpha16Pixels": 6396,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "83B8EF0ACB8CC5C9EE1B5ABA2CF0A0F69182F22F68492135C78E9038A008C062",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_platform",
+    "width": 960,
+    "height": 200,
+    "ppu": 100,
+    "guid": "c53510cf83a141058dae79968fa96f07",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Platform_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      9.6,
+      2
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      2,
+      6,
+      956,
+      192
+    ],
+    "zeroAlphaPixels": 97258,
+    "partialAlphaPixels": 87217,
+    "opaquePixels": 7525,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "261408C73D78FE275247CAA11D00548DF91AD2DBB5BF2E0BAF9FE15EEE19E490",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_platform",
+    "width": 960,
+    "height": 22,
+    "ppu": 100,
+    "guid": "511a1a0507f34b94bf71a7914ac2bd75",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Platform_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      9.6,
+      0.22
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_ground",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      960,
+      22
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 21120,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 1960,
+    "minAlpha": 125,
+    "maxAlpha": 235,
+    "sha256": "B7D2770D3256BFF9952C3B8CD3E7F3AC5BE39311EE88E7C49D245893EBECFBD1",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_platform",
+    "width": 960,
+    "height": 200,
+    "ppu": 100,
+    "guid": "479df38acadd470793c9c03fe71b135a",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Platform_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      9.6,
+      2
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      960,
+      200
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 192000,
+    "borderAlpha16Pixels": 2316,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "18B395AFEDF108D3B76587C0CE1CCEFB4B6C2F2F1CD2C543AFB26B86587FBC58",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_centerplatform",
+    "width": 1200,
+    "height": 200,
+    "ppu": 100,
+    "guid": "a530730d9f19450c82990a243a2142b2",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_CenterPlatform_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      12,
+      2
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      2,
+      6,
+      1196,
+      192
+    ],
+    "zeroAlphaPixels": 120641,
+    "partialAlphaPixels": 111568,
+    "opaquePixels": 7791,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "C8503E534282C27A1EDC6FB2D20973FF2B638C3935A0E635D8A8FD098B80A326",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_centerplatform",
+    "width": 1200,
+    "height": 22,
+    "ppu": 100,
+    "guid": "53bc0b0c64a64e9d8e9fdae82ba72ae9",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_CenterPlatform_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      12,
+      0.22
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_ground",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      1200,
+      22
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 26400,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 2440,
+    "minAlpha": 125,
+    "maxAlpha": 235,
+    "sha256": "C8CDC88E60F116B62EAD9ED3B1F895E16F5CF982E14AD4CE3A7CF7FD92501A2B",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_centerplatform",
+    "width": 1200,
+    "height": 200,
+    "ppu": 100,
+    "guid": "5adc10a213c0423f8defae9d2c2a33c1",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_CenterPlatform_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      12,
+      2
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      1200,
+      200
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 240000,
+    "borderAlpha16Pixels": 2796,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "AF170A45C939DFED8B293268F3EE6FBCF2FCDF6348A8E8C890EA5655A29F8045",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_01",
+    "width": 187,
+    "height": 1881,
+    "ppu": 100,
+    "guid": "a33637d434d14228a41a0927a731492d",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_01_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      18.81
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      1877
+    ],
+    "zeroAlphaPixels": 179066,
+    "partialAlphaPixels": 165364,
+    "opaquePixels": 7317,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "A58559B9D2AECAAE8BC2CCE647AA671F8ACC00619F33A16FC21A88A0A32A435C",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_01",
+    "width": 187,
+    "height": 1881,
+    "ppu": 100,
+    "guid": "469c339fa9b14ec19b08b5f9e5d6b567",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_01_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      18.81
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1881
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 351747,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 4132,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "6E55ECED3A25999FBD701C700CB736F65E0C87B213B163897FE0A5DEED489FE8",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_01",
+    "width": 187,
+    "height": 1881,
+    "ppu": 100,
+    "guid": "ffa99e98325f4eecb423a8009b69e755",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_01_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      18.81
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1881
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 351747,
+    "borderAlpha16Pixels": 4132,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "7ECAB8B65DDA7D3DFAE098178465F4CFFBA510E41EC784FBC9499A2752E44E57",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_02",
+    "width": 187,
+    "height": 1703,
+    "ppu": 100,
+    "guid": "3d2fe1a52668462e85a5746a8d86cb67",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_02_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      17.03
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      1699
+    ],
+    "zeroAlphaPixels": 171089,
+    "partialAlphaPixels": 123337,
+    "opaquePixels": 24035,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "C758CF6F24D8E576A2019D7644839F69109F869CFDC1DAC8175C765402958AD1",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_02",
+    "width": 187,
+    "height": 1703,
+    "ppu": 100,
+    "guid": "5490e01676cf476786d20ac42fc3fe77",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_02_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      17.03
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1703
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 318461,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 3776,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "1CE477FCB95CA5C98D55A776D7FF9284A7772D98F5F84A8D047F612BB317E5E1",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_02",
+    "width": 187,
+    "height": 1703,
+    "ppu": 100,
+    "guid": "8c0db1f8476244aaae9e69d0b3dd048a",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_02_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      17.03
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1703
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 318461,
+    "borderAlpha16Pixels": 3776,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "1A03FAAA359FEEEC823777C2F751FCBFC9B4D3318DD9C7E6D4B65998DB930BCF",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_03",
+    "width": 187,
+    "height": 1525,
+    "ppu": 100,
+    "guid": "0b9f326d63de48eaa7afb12ee68a19e6",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_03_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      15.25
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      1521
+    ],
+    "zeroAlphaPixels": 150910,
+    "partialAlphaPixels": 125854,
+    "opaquePixels": 8411,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "313333E25DB28E3D558965699C77E1E2090B759891DA76040B18609AE4EB7622",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_03",
+    "width": 187,
+    "height": 1525,
+    "ppu": 100,
+    "guid": "6fc760979ba94d6c9f6ab771bf6a31fd",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_03_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      15.25
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1525
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 285175,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 3420,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "84B11105234EC296F7C314239296A7257331007D430D4AC2C759D4E97DF1F3BF",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_03",
+    "width": 187,
+    "height": 1525,
+    "ppu": 100,
+    "guid": "33c422389078406abc98280bfdaa2cdd",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_03_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      15.25
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1525
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 285175,
+    "borderAlpha16Pixels": 3420,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "E85D8A56FE5789E6B93DB24BB4192A60EAB400A06056855D13B4D0D12223FD74",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_04",
+    "width": 187,
+    "height": 1347,
+    "ppu": 100,
+    "guid": "a327049292f04cc684b3dae060583d85",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_04_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      13.47
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      1343
+    ],
+    "zeroAlphaPixels": 125760,
+    "partialAlphaPixels": 116121,
+    "opaquePixels": 10008,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "20E01C9FDCDCCCD7BE6826723FF11CD93B78E3976A16C629D772C66BAE1DF2E4",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_04",
+    "width": 187,
+    "height": 1347,
+    "ppu": 100,
+    "guid": "1dc4b2df31a442efb4de9085c44bbf93",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_04_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      13.47
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1347
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 251889,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 3064,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "98BDC5A8976E56CDC1AFA10122DC555AED7E21DEF53323B011EFE2439247222C",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_04",
+    "width": 187,
+    "height": 1347,
+    "ppu": 100,
+    "guid": "512082ad351d41d3833d87828e49a2c4",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_04_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      13.47
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1347
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 251889,
+    "borderAlpha16Pixels": 3064,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "040F9761C8CBF2CD35FD65413E09368D44A227B8BA15BC2585D39ABF7F2C2787",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_05",
+    "width": 187,
+    "height": 1169,
+    "ppu": 100,
+    "guid": "ccbbe22e603e4426912814f416359c47",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_05_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      11.69
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      1165
+    ],
+    "zeroAlphaPixels": 122689,
+    "partialAlphaPixels": 80181,
+    "opaquePixels": 15733,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "C43D365C0293890BAC89922D5352E19C9D5ACD12BEF133D73135677CE3F435AB",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_05",
+    "width": 187,
+    "height": 1169,
+    "ppu": 100,
+    "guid": "7fd4b37d920c4079ac547c3423eafe56",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_05_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      11.69
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1169
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 218603,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 2708,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "84ECAAB6580FA50889050628FF0984271B51CA15C53032CBE3B253153F1E6210",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_05",
+    "width": 187,
+    "height": 1169,
+    "ppu": 100,
+    "guid": "6a20239f55e84f869612a920fbf832b4",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_05_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      11.69
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      1169
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 218603,
+    "borderAlpha16Pixels": 2708,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "532C1E08EA1B661F6D07775B14091720BA7AF0D3848F65F0A1572577D39F53DF",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_06",
+    "width": 187,
+    "height": 991,
+    "ppu": 100,
+    "guid": "b0135475b4ea4528ba3e7e6bfff71f95",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_06_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      9.91
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      987
+    ],
+    "zeroAlphaPixels": 92266,
+    "partialAlphaPixels": 89288,
+    "opaquePixels": 3763,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "09893C335266DA25C336E74E3C6D2F9D93FED8C7639BA05B6682C4E3694674D0",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_06",
+    "width": 187,
+    "height": 991,
+    "ppu": 100,
+    "guid": "ceb67a2cf98c4d0ba15e81449b5f035c",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_06_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      9.91
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      991
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 185317,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 2352,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "088FD10D9D27CC2524F6B98F5AC1BE94B6037F5753BF8B5F1D95F3186A8B3858",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_06",
+    "width": 187,
+    "height": 991,
+    "ppu": 100,
+    "guid": "de5e776b054c46c5ae8360761ab20598",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_06_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      9.91
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      991
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 185317,
+    "borderAlpha16Pixels": 2352,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "68580AD7CCEC94EC8C1896A301305B7E708CDA019B130B3F8CB8E8EEF7E27375",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_07",
+    "width": 187,
+    "height": 812,
+    "ppu": 100,
+    "guid": "d1fed24c6b994a708afc7f2f8ed75c80",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_07_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      8.12
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      808
+    ],
+    "zeroAlphaPixels": 77651,
+    "partialAlphaPixels": 71279,
+    "opaquePixels": 2914,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "1F088DDB6F880403340BCE7349201B10B5155C0C5A818883EADABA31FA76E50F",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_07",
+    "width": 187,
+    "height": 812,
+    "ppu": 100,
+    "guid": "bbbfc0fbf9dd4747876a8595bea85bc3",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_07_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      8.12
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      812
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 151844,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 1994,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "F2302A264576388F27A6FFC1EFBFA2985EAEF5707E66F3CB1A61F7A712E89B4D",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_07",
+    "width": 187,
+    "height": 812,
+    "ppu": 100,
+    "guid": "378d4e28b55c4f728396c6fc0512f2ec",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_07_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      8.12
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      812
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 151844,
+    "borderAlpha16Pixels": 1994,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "1A2B2E4844F952E2690CA195E602915F325E73A9CE0E769973A12D87CA1D0269",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_08",
+    "width": 187,
+    "height": 634,
+    "ppu": 100,
+    "guid": "16f302b234a140deacde0c071d6bce5a",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_08_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      6.34
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      630
+    ],
+    "zeroAlphaPixels": 66333,
+    "partialAlphaPixels": 45266,
+    "opaquePixels": 6959,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "6BB6F4D70B9959A479863B1B0CD3FE5C15EECE4F196D9DD762593E6CDEEBF6F7",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_08",
+    "width": 187,
+    "height": 634,
+    "ppu": 100,
+    "guid": "9d4e2c77936040c992f22fa71107db0b",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_08_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      6.34
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      634
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 118558,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 1638,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "7F70F63F674D0D7467F3D842AD380646E724C246BA2CDB189885B551147D915D",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_08",
+    "width": 187,
+    "height": 634,
+    "ppu": 100,
+    "guid": "5fed9cd3c65e4c7f93c1ebb4c445b0b9",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_08_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      6.34
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      634
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 118558,
+    "borderAlpha16Pixels": 1638,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "57D765B82A065D3C7ED499B8AC052D62A8FF2D99D703D4786957A44DD40FAE70",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_09",
+    "width": 187,
+    "height": 456,
+    "ppu": 100,
+    "guid": "b0788a0bfe934a08a82df5162e45f743",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_09_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      4.56
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      452
+    ],
+    "zeroAlphaPixels": 47049,
+    "partialAlphaPixels": 37443,
+    "opaquePixels": 780,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "4DD3E666082E81B0184BB43D5200D509ED30A2C69FEE6DCAC4E30EBF9EE7ABC8",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_09",
+    "width": 187,
+    "height": 456,
+    "ppu": 100,
+    "guid": "90a4ab9709eb4f0494147c5d8409f912",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_09_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      4.56
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      456
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 85272,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 1282,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "EB0910744846DA0CC5E362027B02F98C1415C79A630908EBB50F077EF376DB9F",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_09",
+    "width": 187,
+    "height": 456,
+    "ppu": 100,
+    "guid": "64da9ba0c6984d5da676b529ba3ad917",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_09_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      4.56
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      456
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 85272,
+    "borderAlpha16Pixels": 1282,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "5E0B2854921A0C969C6B2BB619586C8333AC84B64EF1283D83867F5DBD01F69A",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_10",
+    "width": 187,
+    "height": 278,
+    "ppu": 100,
+    "guid": "3a25613f4f1b4d92872ebeda9846680e",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_10_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      2.78
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      274
+    ],
+    "zeroAlphaPixels": 25491,
+    "partialAlphaPixels": 23736,
+    "opaquePixels": 2759,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "D503986F771F022C8790996258B255AC84D5A53A77643ACB30B269D0E641AB4F",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_10",
+    "width": 187,
+    "height": 278,
+    "ppu": 100,
+    "guid": "24bd75de227d4d468c140c764fdb26f7",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_10_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      2.78
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      278
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 51986,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 926,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "F13AD722DF6861A10AA78CEBD1279B571DBCD65EE9F4DD39B7C8D5E3F74D0EED",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_10",
+    "width": 187,
+    "height": 278,
+    "ppu": 100,
+    "guid": "33d541ff96d343ea86012007612e4672",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_10_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      2.78
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      278
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 51986,
+    "borderAlpha16Pixels": 926,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "1E1C3B930319CA3026DE3DC8859768E247C89908150195DC4B5F4F2B8B68D7C2",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "thorn_direction_11",
+    "width": 187,
+    "height": 100,
+    "ppu": 100,
+    "guid": "790e39d79a1740f5b814de197aaf13e9",
+    "path": "Assets/04_Sprites/Monster/Boss/Thorns/Boss_Thorn_Direction_11_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      1
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "thorn",
+    "alpha16BoundsXYWH": [
+      3,
+      2,
+      181,
+      96
+    ],
+    "zeroAlphaPixels": 13051,
+    "partialAlphaPixels": 5594,
+    "opaquePixels": 55,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "51ED0EA459A8F1FC763128C6080A75FC573943083B365EE57277027A7742A750",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-3e637650-dc1e-4c2e-8e00-d88dc7fdd1f7.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "warning_direction_11",
+    "width": 187,
+    "height": 100,
+    "ppu": 100,
+    "guid": "81b686850ea14b5d815334ed63456866",
+    "path": "Assets/04_Sprites/Monster/Boss/Warnings/Boss_Warning_Direction_11_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      1
+    ],
+    "recommendedRendererAlpha": 0.65,
+    "kind": "warning_direction",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      100
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 18700,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 570,
+    "minAlpha": 48,
+    "maxAlpha": 230,
+    "sha256": "A0485A6AE430BF18E949D91F329396AD7B0E7B68A7A08548160F8BB4BFA27B1A",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.65
+  },
+  {
+    "key": "mask_direction_11",
+    "width": 187,
+    "height": 100,
+    "ppu": 100,
+    "guid": "29d02c300d3848e6933702111327ba46",
+    "path": "Assets/04_Sprites/Monster/Boss/Masks/Boss_Mask_Direction_11_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1.87,
+      1
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "mask",
+    "alpha16BoundsXYWH": [
+      0,
+      0,
+      187,
+      100
+    ],
+    "zeroAlphaPixels": 0,
+    "partialAlphaPixels": 0,
+    "opaquePixels": 18700,
+    "borderAlpha16Pixels": 570,
+    "minAlpha": 255,
+    "maxAlpha": 255,
+    "sha256": "EEE1799FA85D5F18D9CD29AB64541D5ED85B144D5491CF84C4591F1DD19650DF",
+    "source": null,
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "mist",
+    "width": 3840,
+    "height": 2160,
+    "ppu": 64,
+    "guid": "00767afa92cd45d89f2b81e938aa8d79",
+    "path": "Assets/04_Sprites/Monster/Boss/Effects/Boss_PoisonMist_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      60,
+      33.75
+    ],
+    "recommendedRendererAlpha": 0.35,
+    "kind": "mist",
+    "alpha16BoundsXYWH": [
+      4,
+      4,
+      3834,
+      2154
+    ],
+    "zeroAlphaPixels": 12279,
+    "partialAlphaPixels": 8282121,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 142,
+    "sha256": "6D474CF77FECD44CD843339F74598C882BB5EAF43669B2A718A069A10817A6F4",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-37cc7aa4-1222-4333-b6f8-0305d17e5af8.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.35
+  },
+  {
+    "key": "heal",
+    "width": 600,
+    "height": 400,
+    "ppu": 100,
+    "guid": "47723a6e322148a19fe7daf8583f9be3",
+    "path": "Assets/04_Sprites/Monster/Boss/Effects/Boss_HealingArea_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      6,
+      4
+    ],
+    "recommendedRendererAlpha": 0.4,
+    "kind": "heal",
+    "alpha16BoundsXYWH": [
+      3,
+      3,
+      595,
+      395
+    ],
+    "zeroAlphaPixels": 53457,
+    "partialAlphaPixels": 186543,
+    "opaquePixels": 0,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 254,
+    "sha256": "C4A24DBA772CCC3CDDA82C24A8A844D6D40EEDC5B341FEEB5A47AE0DD87BEBE8",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-4ff7f67e-a4d5-474c-9ba2-ef1e76b514b8.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 0.4
+  },
+  {
+    "key": "flower",
+    "width": 360,
+    "height": 400,
+    "ppu": 100,
+    "guid": "c3d6d772a39c41748940e6f35d5ef4b3",
+    "path": "Assets/04_Sprites/Monster/Boss/Boss_WhiteFlower_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      3.6,
+      4
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "flower",
+    "alpha16BoundsXYWH": [
+      22,
+      17,
+      316,
+      365
+    ],
+    "zeroAlphaPixels": 94308,
+    "partialAlphaPixels": 49418,
+    "opaquePixels": 274,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "EE1BA9413A168B5BC1F080197AA321C8CB5F7A532E8B977C9F1E0858110878EF",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-17ff38b3-e0d6-42e7-a873-35f7a015f172.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  },
+  {
+    "key": "projectile",
+    "width": 100,
+    "height": 100,
+    "ppu": 100,
+    "guid": "98bdaa0b5e0d492db2160fd5bdf38cf8",
+    "path": "Assets/04_Sprites/Monster/Boss/Effects/Boss_PoisonProjectile_v02.png",
+    "fileID": 21300000,
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "meshType": "FullRect",
+    "drawMode": "Simple",
+    "transformScale": [
+      1,
+      1,
+      1
+    ],
+    "nativeUnits": [
+      1,
+      1
+    ],
+    "recommendedRendererAlpha": 1.0,
+    "kind": "projectile",
+    "alpha16BoundsXYWH": [
+      17,
+      18,
+      68,
+      67
+    ],
+    "zeroAlphaPixels": 5789,
+    "partialAlphaPixels": 4178,
+    "opaquePixels": 33,
+    "borderAlpha16Pixels": 0,
+    "minAlpha": 0,
+    "maxAlpha": 255,
+    "sha256": "F7ADE8869742D35AC91DBAC5534ABD069ACA17947365A2DB0B1997C241336A69",
+    "source": "C:/Users/zdand/.codex/generated_images/01a1df83-f125-72d1-b9ce-5882c764e097/exec-80485811-d1f7-4b88-8968-6670fc4c6a16.png",
+    "resized": false,
+    "maxTextureSize": 4096,
+    "connectedRendererAlpha": 1.0
+  }
+]

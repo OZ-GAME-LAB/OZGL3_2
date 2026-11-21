@@ -11,7 +11,7 @@ public static class EnvironmentDustSetup
     public const string ProfilePath = "Assets/Settings/Environment/GlowDust_Area00.asset";
     public const string SecondaryProfilePath = "Assets/Settings/Environment/GlowDust_Area01_14.asset";
     private const string TexturePath = "Assets/04_Sprites/Environment/Effects/GlowDust.png";
-    private const string MapPath = "Assets/Resources/SungjunWork.prefab";
+    private const string MapPath = "Assets/2_Prefabs/Map/Workspaces/SungjunWork.prefab";
 
     [MenuItem("Tools/Environment/Create Glow Dust Assets And Connect Test Map")]
     public static void Build()
