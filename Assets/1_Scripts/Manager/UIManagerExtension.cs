@@ -121,14 +121,12 @@ public static class UIManagerExtension
 
     public static async UniTask<InventoryUIView> OpenInventoryUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
     {
-        ServiceManager.Inst.PlayerService.SetUIInputAction(true);
         UIBase uiBase = await uiManager.OpenMainRootAsync(UIType.InventoryUI, cancellationToken);
         return GetView<InventoryUIView>(uiBase, UIType.InventoryUI);
     }
 
     public static void CloseInventoryUI(this UIManager uiManager)
     {
-        ServiceManager.Inst.PlayerService.SetUIInputAction(false);
         uiManager.Close(UIType.InventoryUI);
     }
 

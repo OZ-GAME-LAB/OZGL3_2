@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public partial class PlayerControllerView : MonoBehaviour
 {
@@ -80,10 +81,12 @@ public partial class PlayerControllerView : MonoBehaviour
     private InputAction _consumableAction;
     private InputAction _fieldInteractAction;
     private InputAction _attackAction;
+    private Mouse _attackInputMouse;
+    private ButtonControl _attackInputMouseButton;
+    private bool _mouseAttackBlockedUntilRelease;
     private InputAction _specialAttackAction;
     private InputAction _switchConsumableAction;
     private InputAction _inventoryAction;
-    private InputAction _closeInventoryAction;
     private bool _openingInventory;
     private int _inventoryInputFrame = -1;
     private InputAction _journalAction;
@@ -203,7 +206,6 @@ public partial class PlayerControllerView : MonoBehaviour
         _specialAttackAction = _playerInput.actions["SpecialAttack"];
         _switchConsumableAction = _playerInput.actions["SwitchConsumable"];
         _inventoryAction = _playerInput.actions["OpenInventory"];
-        _closeInventoryAction = _playerInput.actions["UI/CloseInventory"];
         _journalAction = _playerInput.actions["OpenJournal"];
         _settingsAction = _playerInput.actions["OpenSettings"];
         _runeInventoryAction = _playerInput.actions["OpenRuneInventory"];
@@ -228,7 +230,6 @@ public partial class PlayerControllerView : MonoBehaviour
         _specialAttackAction.performed += OnSpecialAttack;
         _switchConsumableAction.performed += OnSwitchConsumable;
         _inventoryAction.performed += OnOpenInventory;
-        _closeInventoryAction.performed += OnCloseInventory;
         _journalAction.performed += OnOpenJournal;
         _settingsAction.performed += OnOpenSettings;
         _fieldInteractAction.canceled += OnFieldInteractCanceled;
@@ -263,6 +264,7 @@ public partial class PlayerControllerView : MonoBehaviour
         EndHitControlLock();
         UnbindScenarioService();
         _runeAttackController?.CancelAttackInput();
+        ClearMouseAttackInput();
         RestoreThinPlatformCollisions();
         // Awake에서 필수 참조를 찾지 못해 비활성화된 경우에는 구독한 입력이 없습니다.
         if (!_inputActionsInitialized)
@@ -286,7 +288,6 @@ public partial class PlayerControllerView : MonoBehaviour
         _specialAttackAction.performed -= OnSpecialAttack;
         _switchConsumableAction.performed -= OnSwitchConsumable;
         _inventoryAction.performed -= OnOpenInventory;
-        _closeInventoryAction.performed -= OnCloseInventory;
         _journalAction.performed -= OnOpenJournal;
         _settingsAction.performed -= OnOpenSettings;
         _fieldInteractAction.canceled -= OnFieldInteractCanceled;
@@ -328,7 +329,14 @@ public partial class PlayerControllerView : MonoBehaviour
         }
 
         if (!CanReadAttackInput())
+        {
             _runeAttackController?.CancelAttackInput();
+            ClearMouseAttackInput();
+        }
+        else
+        {
+            UpdateMouseAttackBlocking();
+        }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         HandleDeveloperInvincibilityInput();
@@ -1487,6 +1495,9 @@ public partial class PlayerControllerView : MonoBehaviour
             return;
         }
 
+        if (!TryAcceptMouseAttackInput(context))
+            return;
+
         _runeAttackController.RequestAttack(_lookRight);
 
         Debug.Log($"{nameof(OnAttack)} 실행");
@@ -1511,11 +1522,67 @@ public partial class PlayerControllerView : MonoBehaviour
     {
         if (CanReadAttackInput()) _runeAttackController?.ReleaseAttack();
         else _runeAttackController?.CancelAttackInput();
+        ClearMouseAttackInput();
+    }
+
+    private bool TryAcceptMouseAttackInput(InputAction.CallbackContext context)
+    {
+        if (!(context.control?.device is Mouse mouse) || !(context.control is ButtonControl button))
+        {
+            ClearMouseAttackInput();
+            return true;
+        }
+
+        if (_attackInputMouseButton != button)
+            ClearMouseAttackInput();
+
+        _attackInputMouse = mouse;
+        _attackInputMouseButton = button;
+        if (_mouseAttackBlockedUntilRelease)
+            return false;
+
+        _mouseAttackBlockedUntilRelease = IsMouseOverInventory(mouse);
+        return !_mouseAttackBlockedUntilRelease;
+    }
+
+    private bool IsMouseOverInventory(Mouse mouse)
+    {
+        return mouse != null && UIManager.Inst != null &&
+            UIManager.Inst.IsPointerOverInventory(mouse.position.ReadValue());
+    }
+
+    private void UpdateMouseAttackBlocking()
+    {
+        if (_attackInputMouseButton == null)
+            return;
+
+        if (!_attackInputMouseButton.isPressed)
+        {
+            ClearMouseAttackInput();
+            return;
+        }
+
+        if (!_mouseAttackBlockedUntilRelease && IsMouseOverInventory(_attackInputMouse))
+        {
+            _mouseAttackBlockedUntilRelease = true;
+            _runeAttackController?.CancelAttackInput();
+        }
+    }
+
+    private void ClearMouseAttackInput()
+    {
+        _attackInputMouse = null;
+        _attackInputMouseButton = null;
+        _mouseAttackBlockedUntilRelease = false;
     }
 
     private void OnApplicationFocus(bool hasFocus)
     {
-        if (!hasFocus) _runeAttackController?.CancelAttackInput();
+        if (!hasFocus)
+        {
+            _runeAttackController?.CancelAttackInput();
+            ClearMouseAttackInput();
+        }
     }
 
     public void UpdateAttackPresentation()
@@ -1577,6 +1644,8 @@ public partial class PlayerControllerView : MonoBehaviour
     private void OnSpecialAttack(InputAction.CallbackContext context)
     {
         if (IsGameplayControlLocked) return;
+        if (context.control?.device is Mouse mouse && IsMouseOverInventory(mouse))
+            return;
         Debug.Log($"{nameof(OnSpecialAttack)} 실행");
 
     }
@@ -1595,17 +1664,24 @@ public partial class PlayerControllerView : MonoBehaviour
             return;
 
         UIManager uiManager = UIManager.Inst;
-        if (uiManager == null || uiManager.IsOpen(UIType.InventoryUI) ||
+        if (uiManager == null ||
             _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
             return;
 
         _inventoryInputFrame = Time.frameCount;
+        if (uiManager.IsOpen(UIType.InventoryUI))
+        {
+            uiManager.CloseInventoryUI();
+            return;
+        }
+
         _openingInventory = true;
 
         try
         {
             var view = await uiManager.OpenInventoryUIAsync();
-            if (this == null || IsDeathControlLocked || !isActiveAndEnabled)
+            if (this == null || !isActiveAndEnabled || IsGameplayControlLocked || _isDialogueMode ||
+                _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
             {
                 if (uiManager != null && uiManager.IsOpen(UIType.InventoryUI))
                     uiManager.Close(UIType.InventoryUI);
@@ -1613,10 +1689,7 @@ public partial class PlayerControllerView : MonoBehaviour
             }
 
             if (view == null)
-            {
-                ServiceManager.Inst.PlayerService.SetUIInputAction(false);
                 return;
-            }
 
             ServiceManager.Inst.InventoryService.BindInventoryView(view);
         }
@@ -1625,22 +1698,6 @@ public partial class PlayerControllerView : MonoBehaviour
             if (this != null)
                 _openingInventory = false;
         }
-    }
-
-    private void OnCloseInventory(InputAction.CallbackContext context)
-    {
-        if (IsGameplayControlLocked || _isDialogueMode || _openingInventory ||
-            _inventoryInputFrame == Time.frameCount)
-            return;
-
-        UIManager uiManager = UIManager.Inst;
-        if (uiManager == null || !uiManager.IsOpen(UIType.InventoryUI) ||
-            _networkObject == null || !_networkObject.IsSpawned || !_networkObject.IsOwner)
-            return;
-
-        // 입력 맵 전환 중 같은 I 입력이 다시 열기로 처리되는 것을 막는다.
-        _inventoryInputFrame = Time.frameCount;
-        uiManager.CloseInventoryUI();
     }
 
     private void OnOpenJournal(InputAction.CallbackContext context)
@@ -2021,8 +2078,7 @@ public partial class PlayerControllerView : MonoBehaviour
             return false;
         }
 
-        return ui.IsOpen(UIType.InventoryUI)
-            || ui.IsOpen(UIType.RuneInventoryUI)
+        return ui.IsOpen(UIType.RuneInventoryUI)
             || ui.IsOpen(UIType.SettingUI);
     }
 }

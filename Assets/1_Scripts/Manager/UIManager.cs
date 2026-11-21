@@ -81,6 +81,14 @@ public class UIManager : MonoBehaviour
         return _openedUISet.Contains(uiType);
     }
 
+    public bool IsPointerOverInventory(Vector2 screenPosition)
+    {
+        return IsOpen(UIType.InventoryUI) &&
+            _createdUICacheDictionary.TryGetValue(UIType.InventoryUI, out UIBase ui) &&
+            ui is InventoryUIView inventory && inventory != null &&
+            inventory.BlocksGameplayPointer(screenPosition);
+    }
+
     public void Close(UIType uiType)
     {
         CloseUI(uiType);
