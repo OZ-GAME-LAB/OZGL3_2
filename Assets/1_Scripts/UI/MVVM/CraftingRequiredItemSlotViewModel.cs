@@ -58,5 +58,18 @@
         }
     }
 
-    public bool IsEnough => OwnedCount >= RequiredCount;
+    private bool _isSupplied;
+    public bool IsSupplied
+    {
+        get => _isSupplied;
+        set
+        {
+            if (_isSupplied == value) return;
+            _isSupplied = value;
+            OnPropertyChanged(nameof(IsSupplied));
+            OnPropertyChanged(nameof(IsEnough));
+        }
+    }
+
+    public bool IsEnough => IsSupplied || OwnedCount >= RequiredCount;
 }

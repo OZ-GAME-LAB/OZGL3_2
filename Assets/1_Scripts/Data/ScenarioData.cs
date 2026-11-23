@@ -6,7 +6,11 @@ public class ScenarioData : GameDataBase
     // 기존 데이터의 빈 값은 Dialogue로 해석합니다.
     public string CompletionType;
     public string DialogueId;
+    public string RewardRuneId;
     public string RequiredCompletedScenarioId;
+    public string RequiredPersonalScenarioId;
+    public string AlternativeWorldForPersonalRequirement;
+    public string StartBlockedByCompletedScenarioId;
     public string BlockedByCompletedScenarioId;
     public bool CompleteWorldOnFinish;
     public bool PlayOncePerPlayer;

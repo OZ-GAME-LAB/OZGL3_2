@@ -11,6 +11,7 @@ public class NetworkStartTester : MonoBehaviour
     [SerializeField] private string _address = "127.0.0.1";
     [SerializeField] private ushort _port = 7777;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     private bool CanStart()
     {
         if (!Application.isPlaying)
@@ -82,4 +83,5 @@ public class NetworkStartTester : MonoBehaviour
 
         _netcodeManager.Shutdown();
     }
+#endif
 }

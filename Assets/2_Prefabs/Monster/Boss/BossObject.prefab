@@ -330,6 +330,8 @@ GameObject:
   - component: {fileID: 114909000}
   - component: {fileID: 114909001}
   - component: {fileID: 5576702901000733581}
+  - component: {fileID: 114909002}
+  - component: {fileID: 114909003}
   m_Layer: 10
   m_Name: BossObject
   m_TagString: Untagged
@@ -435,6 +437,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossNetwork
   ShowTopMostFoldoutHeaderGroup: 1
+  _defeatRoomArea: {fileID: 3326218789197780643}
+  _defeatSinkSeconds: 4
 --- !u!114 &2860676025520389664
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2441,3 +2445,41 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4512422765264494860, guid: 812eeb3a35c76644e9b95f94ad1eed11, type: 3}
   m_PrefabInstance: {fileID: 7202089770231210616}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &114909002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2689793130133361207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a68e2553b64cf09f770941a3b1e869, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossDefeatVisual
+  _network: {fileID: 6995651389844220576}
+  _effect: {fileID: 114909003}
+  _sprite: {fileID: 7148495723319053785}
+  _animator: {fileID: 6588567444455450872}
+  _intro: {fileID: 5576702901000733581}
+  _sinkMaterial: {fileID: 2100000, guid: c6d7fc4cc73e44c4799c0214200d8d73, type: 2}
+--- !u!114 &114909003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2689793130133361207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0924e300083a11941bb00ea4fc9c32ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LoggingTreeEffect
+  _visual: {fileID: 7148495723319053785}
+  _impactSeconds: 0.16
+  _impactAmplitude: 0.12
+  _sinkSeconds: 1.1
+  _sinkHorizontalAmplitude: 0.18
+  _sinkVerticalAmplitude: 0.025
+  _shakeFrequency: 18
+  _bottomInset: 0

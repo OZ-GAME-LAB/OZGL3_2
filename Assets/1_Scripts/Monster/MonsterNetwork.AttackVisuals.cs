@@ -109,12 +109,40 @@ public partial class MonsterNetwork
         }
     }
 
-    public uint BroadcastMeleeAttack(string skillId, Transform attackTransform, Vector2 size, double startTime, float duration)
+    private uint _previewId;
+    public double MeleeContactAt { get; private set; }
+    public float MeleeFacing { get; private set; }
+    public float MeleePreparation => _fieldPresentation != null ? _fieldPresentation.MeleePreparation : 0f;
+
+    public uint BeginMeleePreparation(float facing, double contactAt)
+    {
+        uint id = ++_nextMeleeAttackId;
+        SetMeleePreview(id, facing, contactAt);
+        PreviewMeleeClientRpc(id, facing, contactAt);
+        return id;
+    }
+
+    private void SetMeleePreview(uint id, float facing, double contactAt)
+    {
+        _previewId = id;
+        MeleeFacing = facing;
+        MeleeContactAt = contactAt;
+    }
+
+    [ClientRpc]
+    private void PreviewMeleeClientRpc(uint id, float facing, double contactAt)
+    {
+        if (!IsServer && IsAlive && id > _lastMeleeAttackId)
+            SetMeleePreview(id, facing, contactAt);
+    }
+
+    public uint BroadcastMeleeAttack(string skillId, Transform attackTransform, Vector2 size, double startTime, float duration, uint preparedId = 0)
     {
         if (!IsServer || !IsSpawned || attackTransform == null)
             return 0;
 
-        uint attackId = ++_nextMeleeAttackId;
+        uint attackId = preparedId != 0 ? preparedId : ++_nextMeleeAttackId;
+        if (IsHost) AttackPresented?.Invoke(attackTransform.localPosition.x);
         PlayMeleeAttackClientRpc(attackId, skillId, attackTransform.localPosition,
             attackTransform.localRotation, attackTransform.localScale, size, startTime, duration);
         return attackId;
@@ -122,6 +150,7 @@ public partial class MonsterNetwork
 
     public void BroadcastMeleeAttackFinished(uint attackId)
     {
+        if (attackId == _previewId) MeleeContactAt = 0d;
         if (IsServer && IsSpawned && attackId != 0)
             FinishMeleeAttackClientRpc(attackId);
     }
@@ -150,6 +179,7 @@ public partial class MonsterNetwork
     [ClientRpc]
     private void FinishMeleeAttackClientRpc(uint attackId)
     {
+        if (attackId == _previewId) MeleeContactAt = 0d;
         if (IsServer || attackId != _lastMeleeAttackId)
             return;
 
@@ -192,6 +222,7 @@ public partial class MonsterNetwork
         if (IsSpawned && IsAlive && NetworkManager.ServerTime.Time < endTime && _activeMeleeVisual != null)
         {
             _activeMeleeVisual.gameObject.SetActive(true);
+            AttackPresented?.Invoke(_activeMeleeVisual.transform.localPosition.x);
 
             while (IsSpawned && IsAlive && NetworkManager.ServerTime.Time < endTime)
                 yield return null;
@@ -220,6 +251,8 @@ public partial class MonsterNetwork
 
     private void DestroyMeleeVisuals()
     {
+        MeleeContactAt = 0d;
+        _previewId = 0;
         _meleeVisualVersion++;
         _meleeVisualsReady = false;
         _pendingMeleeVisual = null;

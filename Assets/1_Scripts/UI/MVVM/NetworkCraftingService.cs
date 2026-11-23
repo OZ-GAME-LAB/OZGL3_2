@@ -1,9 +1,39 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 public class NetworkCraftingService
 {
     private CraftingViewModel _craftingViewModel;
+    private CraftingObject _workshop;
+
+    public void SetWorkshop(CraftingObject workshop)
+    {
+        _workshop = workshop;
+        LoadRecipeList();
+    }
+
+    public void ClearWorkshop(CraftingObject workshop)
+    {
+        if (_workshop == null || _workshop != workshop) return;
+        _workshop = null;
+        _craftingViewModel.SelectedRecipe = null;
+        _craftingViewModel.RequiredItemList = new List<CraftingRequiredItemSlotViewModel>();
+        _craftingViewModel.IsCraftable = false;
+        LoadRecipeList();
+    }
+
+
+    private bool IsAvailable(CraftingRecipeData recipe) => recipe != null &&
+        (string.IsNullOrEmpty(recipe.RequiredWorkshopProgressId) ||
+         (_workshop != null && _workshop.IsWorkshopOpen(recipe.RequiredWorkshopProgressId)));
+
+    private string GetSupportId(CraftingRecipeData recipe)
+    {
+        var progress = GameStartSelection.Character?.ProgressIds;
+        return IsAvailable(recipe) && !string.IsNullOrEmpty(recipe.RequiredWorkshopProgressId) &&
+            !string.IsNullOrEmpty(recipe.FirstCraftSupportId) && progress != null &&
+            !progress.Contains(recipe.FirstCraftSupportId) ? recipe.FirstCraftSupportId : null;
+    }
 
     public CraftingViewModel GetCraftingViewModel()
     {
@@ -30,6 +60,7 @@ public class NetworkCraftingService
                 continue;
             }
 
+            if (!IsAvailable(recipe)) continue;
             var slotVm = new CraftingSlotViewModel
             {
                 RecipeDataId = recipe.Id,
@@ -58,7 +89,7 @@ public class NetworkCraftingService
 
         var recipe = DataManager.Inst.GetData<CraftingRecipeData>(recipeId);
 
-        if (recipe == null)
+        if (!IsAvailable(recipe))
         {
             return;
         }
@@ -96,11 +127,15 @@ public class NetworkCraftingService
             return;
         }
 
-        bool canCraft = _craftingViewModel.SelectedRecipe != null;
+        var selected = _craftingViewModel.SelectedRecipe;
+        var recipe = selected == null ? null : DataManager.Inst.GetData<CraftingRecipeData>(selected.RecipeDataId);
+        bool canCraft = IsAvailable(recipe);
+        bool supported = GetSupportId(recipe) != null;
 
         foreach (var materialVm in _craftingViewModel.RequiredItemList)
         {
             materialVm.OwnedCount = GetOwnedMaterialCount(materialVm.ItemDataId);
+            materialVm.IsSupplied = supported;
 
             if (materialVm.IsEnough == false)
             {
@@ -124,7 +159,7 @@ public class NetworkCraftingService
 
         var recipe = DataManager.Inst.GetData<CraftingRecipeData>(recipeId);
 
-        if (recipe == null)
+        if (!IsAvailable(recipe))
         {
             return false;
         }
@@ -135,34 +170,10 @@ public class NetworkCraftingService
             return false;
         }
 
-        foreach (var material in materials)
-        {
-            int ownedCount = GetOwnedMaterialCount(material.Key);
-
-            if (ownedCount < material.Value)
-            {
-                Debug.LogWarning("제작 실패, 재료 부족");
-                RefreshInventoryState();
-                return false;
-            }
-        }
-
-        
-        foreach (var material in materials)
-        {
-
-            for(int i = 0; i < material.Value; i++)
-            {
-                ServiceManager.Inst.InventoryService.RemoveItem(material.Key);
-            }
-            
-        }
-
-        ServiceManager.Inst.InventoryService.AddItem(recipe.Item_Id);
-        
-        Debug.LogWarning("재료는 충분하지만 실제 재료 차감과 결과물 지급은 아직 연결되지 않았습니다.");
+        InventoryService inventory = ServiceManager.Inst.InventoryService;
+        bool crafted = inventory.TryCraft(materials, DataManager.Inst.GetData<ItemData>(recipe.Item_Id), GetSupportId(recipe));
         RefreshInventoryState();
-        return true;
+        return crafted;
     }
 
     private bool TryGetMaterialCounts(CraftingRecipeData recipe, out Dictionary<string, int> materials)
@@ -179,7 +190,7 @@ public class NetworkCraftingService
             return false;
         }
 
-        if (recipe.RequiredMaterialId == null || recipe.RequiredMaterialQuantity == null || recipe.RequiredMaterialId.Length != recipe.RequiredMaterialQuantity.Length)
+        if (recipe.RequiredMaterialId == null || recipe.RequiredMaterialQuantity == null || recipe.RequiredMaterialId.Length == 0 || recipe.RequiredMaterialId.Length != recipe.RequiredMaterialQuantity.Length)
         {
             return false;
         }
@@ -235,8 +246,8 @@ public class NetworkCraftingService
                 continue;
             }
 
-            // 장착 중인 장비는 제작 재료에서 제외.
-            if (inventory.IsEquippedItem(item))
+            // 장착 중인 장비와 사용 결과를 기다리는 아이템은 제작 재료에서 제외.
+            if (inventory.IsEquippedItem(item) || inventory.IsItemUsePending(item.Id))
             {
                 continue;
             }

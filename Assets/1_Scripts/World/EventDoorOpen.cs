@@ -21,6 +21,10 @@ public sealed class EventDoorOpen : MonoBehaviour
     private bool _hasStarted;
     private bool _isOpen;
 
+    internal Vector3 ClosedPosition => _startPosition;
+    internal Vector3 OpenPosition => _targetPosition;
+    internal float OpenDuration => _duration;
+
     private void Awake()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();

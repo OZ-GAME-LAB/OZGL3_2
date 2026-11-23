@@ -24,6 +24,7 @@ public class PlayerInteractionTestBootstrap : MonoBehaviour
     public bool IsReady { get; private set; }
     private bool _startedHost;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     private IEnumerator Start()
     {
         if (_networkManager == null || _objectManager == null || _worldManager == null ||
@@ -91,4 +92,5 @@ public class PlayerInteractionTestBootstrap : MonoBehaviour
         if (_startedHost && _networkManager != null && _networkManager.IsListening)
             _networkManager.Shutdown();
     }
+#endif
 }

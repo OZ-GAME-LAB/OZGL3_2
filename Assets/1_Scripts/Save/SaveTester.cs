@@ -6,6 +6,7 @@ public class SaveTester : MonoBehaviour
 {
     [SerializeField] private Button _saveButton;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     private void Awake()
     {
         if (_saveButton == null)
@@ -60,4 +61,10 @@ public class SaveTester : MonoBehaviour
             return;
         }
     }
+#else
+    private void Awake()
+    {
+        if (_saveButton != null) _saveButton.gameObject.SetActive(false);
+    }
+#endif
 }

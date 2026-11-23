@@ -1,23 +1,12 @@
 [
   {
-    "Id": "weapon_basic_sword",
-    "Name": "기본 검",
-    "Tier": 1,
-    "ItemType": "Consumable",
-    "Description": "베기 공격을 사용하는 고정 기본 무기.",
-    "MaxStack": 1,
-    "IconPath": "weapon_basic_sword",
-    "PrefabPath": null
-  },
-  {
     "Id": "rune_triple",
     "Name": "연격의 룬",
     "Tier": 1,
     "ItemType": "Rune",
     "Description": "공격을 타격당 25% 피해의 빠른 삼연타로 바꾼다.",
     "MaxStack": 99,
-    "IconPath": "rune_triple",
-    "PrefabPath": null
+    "IconPath": "rune_triple"
   },
   {
     "Id": "rune_projectile",
@@ -26,8 +15,7 @@
     "ItemType": "Rune",
     "Description": "공격력 70%의 검기를 발사하는 원거리 공격으로 바꾼다.",
     "MaxStack": 99,
-    "IconPath": "rune_projectile",
-    "PrefabPath": null
+    "IconPath": "rune_projectile"
   },
   {
     "Id": "rune_heavy",
@@ -36,8 +24,7 @@
     "ItemType": "Rune",
     "Description": "공격력 300%, 공격 속도 50%. 공격 중 피격되어도 공격을 유지한다.",
     "MaxStack": 99,
-    "IconPath": "rune_heavy",
-    "PrefabPath": null
+    "IconPath": "rune_heavy"
   },
   {
     "Id": "rune_fire",
@@ -46,8 +33,7 @@
     "ItemType": "Rune",
     "Description": "공격 피해 속성을 화염으로 바꾼다.",
     "MaxStack": 99,
-    "IconPath": "rune_fire",
-    "PrefabPath": null
+    "IconPath": "rune_fire"
   },
   {
     "Id": "rune_ice",
@@ -56,8 +42,7 @@
     "ItemType": "Rune",
     "Description": "공격 피해 속성을 냉기로 바꾼다.",
     "MaxStack": 99,
-    "IconPath": "rune_ice",
-    "PrefabPath": null
+    "IconPath": "rune_ice"
   },
   {
     "Id": "rune_lightning",
@@ -66,8 +51,7 @@
     "ItemType": "Rune",
     "Description": "공격 피해 속성을 번개로 바꾼다.",
     "MaxStack": 99,
-    "IconPath": "rune_lightning",
-    "PrefabPath": null
+    "IconPath": "rune_lightning"
   },
   {
     "Id": "rune_bear",
@@ -76,8 +60,7 @@
     "ItemType": "Rune",
     "Description": "공격 범위와 투사체 크기를 50% 늘리고 피해를 20% 줄인다.",
     "MaxStack": 99,
-    "IconPath": "rune_bear",
-    "PrefabPath": null
+    "IconPath": "rune_bear"
   },
   {
     "Id": "rune_snake",
@@ -86,8 +69,7 @@
     "ItemType": "Rune",
     "Description": "공격에 독 상태이상을 부여한다.",
     "MaxStack": 99,
-    "IconPath": "rune_snake",
-    "PrefabPath": null
+    "IconPath": "rune_snake"
   },
   {
     "Id": "rune_mosquito",
@@ -96,8 +78,7 @@
     "ItemType": "Rune",
     "Description": "공격에 출혈 상태이상을 부여한다.",
     "MaxStack": 99,
-    "IconPath": "rune_mosquito",
-    "PrefabPath": null
+    "IconPath": "rune_mosquito"
   },
   {
     "Id": "rune_bat",
@@ -106,8 +87,7 @@
     "ItemType": "Rune",
     "Description": "공격 시 공격력의 2%만큼 체력을 회복한다.",
     "MaxStack": 99,
-    "IconPath": "rune_bat",
-    "PrefabPath": null
+    "IconPath": "rune_bat"
   },
   {
     "Id": "equipment_poison_charm",
@@ -116,18 +96,16 @@
     "ItemType": "Equipment",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "equipment_poison_charm"
   },
   {
     "Id": "mat_slime_lump",
-    "Name": "몬스터재료1",
+    "Name": "슬라임의 핵",
     "Tier": 1,
     "ItemType": "Material",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "mat_slime_lump"
   },
   {
     "Id": "con_red_berry",
@@ -136,8 +114,7 @@
     "ItemType": "Consumable",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "con_red_berry"
   },
   {
     "Id": "eq_worn_axe",
@@ -146,8 +123,7 @@
     "ItemType": "Equipment",
     "Description": "벌목용 기본 도끼. 도끼 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
-    "IconPath": "eq_worn_axe",
-    "PrefabPath": null
+    "IconPath": "eq_worn_axe"
   },
   {
     "Id": "eq_worn_fishingrod",
@@ -156,8 +132,7 @@
     "ItemType": "Equipment",
     "Description": "기본 낚시대. 낚시 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "eq_worn_fishingrod"
   },
   {
     "Id": "eq_worn_pickaxe",
@@ -166,38 +141,25 @@
     "ItemType": "Equipment",
     "Description": "기본 곡괭이. 곡괭이 슬롯에 장착해야 사용할 수 있다.",
     "MaxStack": 1,
-    "IconPath": null,
-    "PrefabPath": null
-  },
-  {
-    "Id": "eq_normal_axe",
-    "Name": "일반 도끼",
-    "Tier": 1,
-    "ItemType": "Equipment",
-    "Description": "손을 본 도끼. 도끼 슬롯에 장착해야 사용할 수 있다.",
-    "MaxStack": 1,
-    "IconPath": "eq_normal_axe",
-    "PrefabPath": null
+    "IconPath": "eq_worn_pickaxe"
   },
   {
     "Id": "mat_monster_02",
-    "Name": "몬스터재료2",
+    "Name": "동굴 멧돼지의 엄니",
     "Tier": 1,
     "ItemType": "Material",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "mat_monster_02"
   },
   {
     "Id": "mat_monster_03",
-    "Name": "몬스터재료3",
+    "Name": "박쥐의 독샘",
     "Tier": 1,
     "ItemType": "Material",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "mat_monster_03"
   },
   {
     "Id": "con_fish_01",
@@ -206,8 +168,7 @@
     "ItemType": "Material",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "con_fish_01"
   },
   {
     "Id": "con_fish_02",
@@ -216,8 +177,7 @@
     "ItemType": "Material",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "con_fish_02"
   },
   {
     "Id": "mat_wood_01",
@@ -226,8 +186,7 @@
     "ItemType": "Material",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "mat_wood_01"
   },
   {
     "Id": "con_berry_02",
@@ -236,8 +195,7 @@
     "ItemType": "Consumable",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "con_berry_02"
   },
   {
     "Id": "mat_ore_01",
@@ -246,8 +204,7 @@
     "ItemType": "Material",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "mat_ore_01"
   },
   {
     "Id": "mat_ore_02",
@@ -256,7 +213,6 @@
     "ItemType": "Material",
     "Description": null,
     "MaxStack": 99,
-    "IconPath": null,
-    "PrefabPath": null
+    "IconPath": "mat_ore_02"
   }
 ]

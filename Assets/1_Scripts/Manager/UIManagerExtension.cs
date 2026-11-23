@@ -39,7 +39,8 @@ public enum UIType
     SaveSelectionUI,
     PlayerHudUI,
     GameOverUI,
-    RestUI
+    RestUI,
+    DemoCompleteUI
 }
 
 

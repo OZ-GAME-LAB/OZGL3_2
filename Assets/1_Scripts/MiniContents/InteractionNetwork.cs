@@ -309,7 +309,10 @@ public partial class InteractionNetwork : NetworkBehaviour
             string id = _objectId.Value.ToString();
             FieldObjectData data = DataManager.Inst.GetData<FieldObjectData>(id);
             if (data == null) throw new InvalidOperationException("Missing field data: " + id);
-            interactableObject.ConfigureResourceLayout(data.InteractionType, _placement.Value.UsesResourceLayout, _placement.Value.Size);
+            ResourceInteractionLayout layoutPrefab = await LoadResourceLayoutAsync(data);
+            if (this == null || !IsSpawned || version != _initializationVersion) return;
+            interactableObject.ConfigureResourceLayout(data.InteractionType, _placement.Value.UsesResourceLayout,
+                _placement.Value.Size, layoutPrefab);
             interactableObject.ConfigureFieldPresentation(data.InteractionType, _placement.Value.UsesPlacedVisual);
             interactableObject.SetDestroyAfterUse(data.DestroyAfterUse);
             interactableObject.SetRequiredToolAction(data.RequiredToolAction);
@@ -328,6 +331,20 @@ public partial class InteractionNetwork : NetworkBehaviour
             AvailabilityChanged?.Invoke(false);
             Debug.LogException(exception, this);
         }
+    }
+
+    private async UniTask<ResourceInteractionLayout> LoadResourceLayoutAsync(FieldObjectData data)
+    {
+        if (!_placement.Value.UsesResourceLayout || string.IsNullOrWhiteSpace(data.PrefabPath))
+            return null;
+        if (ResourceManager.Inst == null)
+            throw new InvalidOperationException("ResourceManager is required to load a resource layout.");
+
+        GameObject prefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.PrefabPath);
+        if (prefab == null || !prefab.TryGetComponent(out ResourceInteractionLayout layout))
+            throw new InvalidOperationException("Missing resource layout prefab: " + data.PrefabPath);
+
+        return layout;
     }
 
     public virtual bool CompleteInteraction(ulong clientId, ulong requestId, float accuracy)

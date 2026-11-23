@@ -53,6 +53,8 @@ public class PlayerInteractionController : NetworkBehaviour
     private InteractableObject _serverContent;
     private bool _localProgressStarted;
     private bool _awaitingCompletion;
+    private bool _awaitingHarvest;
+    public float LoggingImpactNormalized => _loggingImpactNormalized;
     private bool _serverContentReady;
     private bool _serverProgressStarted;
     private bool _serverAlignmentRequired;
@@ -252,6 +254,9 @@ public class PlayerInteractionController : NetworkBehaviour
                 _removeBuffer.Add(contact);
                 continue;
             }
+
+            if (target is ScenarioNpcInteractable && !target.ViewModel.IsAvailable && target != _lockedTarget)
+                continue;
 
             if (target.IsPlayerInInteractionArea(transform.position)) _candidates.Add(target);
         }
@@ -591,6 +596,7 @@ public class PlayerInteractionController : NetworkBehaviour
         _localInteractionStarted = false;
         _localProgressStarted = false;
         _awaitingCompletion = false;
+        _awaitingHarvest = false;
         _localLoggingSwingPending = false;
         _localLoggingSwingSequence = 0;
         _localLoggingCompletionAccepted = false;
@@ -725,6 +731,7 @@ public class PlayerInteractionController : NetworkBehaviour
         if (!IsSpawned || !IsOwner || !_hasLocalRequest || !_localProgressStarted || _awaitingCompletion)
             return;
         _awaitingCompletion = true;
+        _awaitingHarvest = _requestedTarget is InteractionGatheringObject;
         if (!_usesServerReservation)
         {
             FinishLocalRequest(_activeRequestId);
@@ -768,6 +775,9 @@ public class PlayerInteractionController : NetworkBehaviour
     private void ReceiveEndResultClientRpc(ulong requestId, bool completed, ClientRpcParams rpcParams = default)
     {
         if (!IsOwner) return;
+        if (completed && _hasLocalRequest && requestId == _activeRequestId && _awaitingHarvest &&
+            _view != null && _view.CanPlayActionSound && TryGetComponent(out PlayerActionSound sounds))
+            sounds.PlayHarvest();
         if (_hasLocalRequest && _activeRequestId == requestId && _awaitingCompletion && !completed)
             Debug.LogWarning("서버에서 채취 완료가 거절되어 요청을 정리했습니다.", this);
         FinishLocalRequest(requestId);

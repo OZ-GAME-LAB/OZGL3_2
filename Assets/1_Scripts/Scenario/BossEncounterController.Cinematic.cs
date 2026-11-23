@@ -24,17 +24,23 @@ public sealed partial class BossEncounterController
     private async UniTask PrepareIntroductionAsync(CancellationToken token)
     {
         BossNetwork boss = await ResolveBossAsync(token);
+        CreateEncounterCamera(boss.transform.position);
+        _cinematicUI = await OpenUIAsync<CinematicEffectUI>(UIType.CinematicEffectUI, token);
+        await _cinematicUI.ShowAsync(token);
+        if (_transitionUI != null) await _transitionUI.FadeAsync(false, token);
+    }
+
+    private void CreateEncounterCamera(Vector3 bossPosition)
+    {
+        RestoreEncounterCamera();
         GameObject cameraObject = new("BossEncounterCamera");
         _encounterCamera = cameraObject.AddComponent<CinemachineCamera>();
-        cameraObject.transform.position = boss.transform.position + _cinematicCameraOffset;
+        cameraObject.transform.position = bossPosition + _cinematicCameraOffset;
         _encounterCamera.Priority = 1000;
         var lens = _encounterCamera.Lens;
         lens.OrthographicSize = _cinematicCameraSize;
         lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
         _encounterCamera.Lens = lens;
-        _cinematicUI = await OpenUIAsync<CinematicEffectUI>(UIType.CinematicEffectUI, token);
-        await _cinematicUI.ShowAsync(token);
-        if (_transitionUI != null) await _transitionUI.FadeAsync(false, token);
     }
 
     private async UniTask PlayIntroductionAsync(CancellationToken token)

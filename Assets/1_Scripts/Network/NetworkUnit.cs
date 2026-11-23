@@ -45,6 +45,9 @@ public abstract class NetworkUnit : NetworkBehaviour
     public bool IsBleeding => BleedStackCount > 0;
 
     public event Action StatsChanged;
+    public event Action Damaged;
+    public event Action<bool> DamageSoundRequested;
+    protected virtual bool HasDamageSound => false;
     public event Action StatusChanged;
 
     private bool CanChangeStats => IsServer && IsSpawned && _unitInitialized;
@@ -62,7 +65,7 @@ public abstract class NetworkUnit : NetworkBehaviour
         StatusState.Clear();
 
         _maxHp.OnValueChanged += OnStatChanged;
-        _curHp.OnValueChanged += OnStatChanged;
+        _curHp.OnValueChanged += OnHealthChanged;
         _attackPower.OnValueChanged += OnStatChanged;
         _physicalResistance.OnValueChanged += OnStatChanged;
         _fireResistance.OnValueChanged += OnStatChanged;
@@ -82,7 +85,7 @@ public abstract class NetworkUnit : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         _maxHp.OnValueChanged -= OnStatChanged;
-        _curHp.OnValueChanged -= OnStatChanged;
+        _curHp.OnValueChanged -= OnHealthChanged;
         _attackPower.OnValueChanged -= OnStatChanged;
         _physicalResistance.OnValueChanged -= OnStatChanged;
         _fireResistance.OnValueChanged -= OnStatChanged;
@@ -160,6 +163,9 @@ public abstract class NetworkUnit : NetworkBehaviour
     // TO USE : 서버에서 계산이 끝난 최종 피해를 HP에 적용할 때 사용. actualDamage는 실제 감소한 HP.
     // 저항력을 다시 계산하지 않으며, 직접 타격의 공격 중단 반응은 실행하지 않음.
     public virtual bool TryTakeDamageOnServer(float finalDamage, out float actualDamage)
+        => ApplyDamageOnServer(finalDamage, out actualDamage, poisonTick: false);
+
+    protected virtual bool ApplyDamageOnServer(float finalDamage, out float actualDamage, bool poisonTick)
     {
         actualDamage = 0f;
 
@@ -174,6 +180,8 @@ public abstract class NetworkUnit : NetworkBehaviour
             return false;
 
         _curHp.Value = nextHp;
+        if (nextHp > 0f && HasDamageSound)
+            PlayDamageSoundClientRpc(poisonTick);
 
         if (CurrentHp <= 0f && !_deathHandled)
         {
@@ -184,6 +192,9 @@ public abstract class NetworkUnit : NetworkBehaviour
 
         return true;
     }
+
+    [ClientRpc]
+    private void PlayDamageSoundClientRpc(bool poisonTick) => DamageSoundRequested?.Invoke(poisonTick);
 
     // TO USE : 서버에서 저항력 적용 전 피해·속성·독 부여 여부를 받아 공통 피격 처리를 할 때 사용.
     // 피격 반응까지 필요한 공격은 대상 Actor의 ReceiveDirectDamageOnServer를 호출.
@@ -327,14 +338,17 @@ public abstract class NetworkUnit : NetworkBehaviour
             MaxHp, PoisonResistance, _hasPoisonProtectionAmulet);
         SynchronizeStatusOnServer();
         if (damage > 0f)
-            TryTakeDamageOnServer(damage, out _);
+            ApplyDamageOnServer(damage, out _, poisonTick: true);
     }
 
-    // TO USE : 서버에서 유닛을 회복할 때 사용. amount만큼 회복하되 최대 HP를 넘지 않으며 부활은 처리하지 않음.
+    // TO USE : 서버에서 HP 증감을 적용. 양수는 회복, 음수는 기존 피해·사망 처리로 전달하며 부활은 하지 않음.
     public bool HealOnServer(float amount)
     {
-        if (!CanChangeStats || !IsAlive || !IsFinite(amount) || amount <= 0f)
+        if (!CanChangeStats || !IsAlive || !IsFinite(amount) || amount == 0f)
             return false;
+
+        if (amount < 0f)
+            return TryTakeDamageOnServer(-amount, out _);
 
         float actualHeal = Mathf.Min(amount, MaxHp - CurrentHp);
         if (actualHeal <= 0f)
@@ -382,6 +396,12 @@ public abstract class NetworkUnit : NetworkBehaviour
     private void OnStatChanged(float previousValue, float newValue)
     {
         StatsChanged?.Invoke();
+    }
+
+    private void OnHealthChanged(float previousValue, float newValue)
+    {
+        StatsChanged?.Invoke();
+        if (previousValue > newValue && newValue > 0f) Damaged?.Invoke();
     }
 
     private void OnStatusPermissionChanged(bool previousValue, bool newValue)

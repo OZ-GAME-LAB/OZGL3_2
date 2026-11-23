@@ -31,8 +31,20 @@
     "CompletionType": "Dialogue",
     "DialogueId": "NPCGirlEncounterDialogue",
     "RequiredCompletedScenarioId": null,
-    "BlockedByCompletedScenarioId": null,
+    "BlockedByCompletedScenarioId": "NPCJoinedCamp",
+    "StartBlockedByCompletedScenarioId": "UndergroundAncientPlateSolved",
     "CompleteWorldOnFinish": false,
     "PlayOncePerPlayer": true
+  },
+  {
+    "Id": "NPCJoinedCamp",
+    "CompletionType": "Dialogue",
+    "DialogueId": "NPCJoinCampDialogue",
+    "RequiredPersonalScenarioId": "NPCGirlEncounter",
+    "AlternativeWorldForPersonalRequirement": "UndergroundAncientPlateSolved",
+    "RequiredCompletedScenarioId": null,
+    "BlockedByCompletedScenarioId": null,
+    "CompleteWorldOnFinish": true,
+    "PlayOncePerPlayer": false
   }
 ]

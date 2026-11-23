@@ -78,6 +78,19 @@
     "PrefabPath": null
   },
   {
+    "Id": "field_berry_rare_blue",
+    "Name": "희귀 푸른 열매 덤불",
+    "Description": "은은한 청색 잎과 푸른 열매가 달린 희귀 덤불.",
+    "InteractionType": "Gathering",
+    "DestroyAfterUse": true,
+    "RequiredToolAction": null,
+    "Tier": 1,
+    "IsMandatoryDropItem": false,
+    "MandatoryDropGroupId": null,
+    "ProbabilityDropGroupId": "drop_berry_rare_blue",
+    "PrefabPath": "World/ResourceLayouts/RareBlueBerryLayout"
+  },
+  {
     "Id": "field_mining_01",
     "Name": "광맥1",
     "Description": null,

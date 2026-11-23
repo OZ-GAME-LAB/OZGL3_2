@@ -7,6 +7,7 @@ public class WorldInteractionSpawnTest : MonoBehaviour
     [SerializeField]
     private InteractableObjectSpawner[] _spawnPoints;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/상호작용 오브젝트 생성")]
     public void RequestSpawn()
     {
@@ -46,11 +47,13 @@ public class WorldInteractionSpawnTest : MonoBehaviour
             spawnPoint.SpawnInteractableObject(_testId);
         }
     }
+#endif
 
     [Header("몬스터 스폰 테스트")]
     [SerializeField] private string _monsterTestId;
     [SerializeField] private MonsterSpawner[] _monsterSpawnPoints;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/몬스터 생성")]
     public void RequestMonsterSpawn()
     {
@@ -90,6 +93,7 @@ public class WorldInteractionSpawnTest : MonoBehaviour
             spawnPoint.SpawnMonster(_monsterTestId);
         }
     }
+#endif
 
     [Header("보스 테스트")]
     [SerializeField] private string _bossTestId = "monster_test_boss";
@@ -97,6 +101,7 @@ public class WorldInteractionSpawnTest : MonoBehaviour
 
     private Boss _spawnedBoss;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     private bool CanTestBoss()
     {
         var manager = Unity.Netcode.NetworkManager.Singleton;
@@ -112,7 +117,9 @@ public class WorldInteractionSpawnTest : MonoBehaviour
 
         return true;
     }
+#endif
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/보스 생성")]
     public void RequestBossSpawn()
     {
@@ -142,7 +149,9 @@ public class WorldInteractionSpawnTest : MonoBehaviour
                 _spawnedBoss);
         }
     }
+#endif
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/보스 가시 공격")]
     public void RequestBossThornAttack()
     {
@@ -197,7 +206,9 @@ public class WorldInteractionSpawnTest : MonoBehaviour
 
         Debug.LogWarning("보스의 스킬 목록에 BossThornSkill이 없습니다.", _spawnedBoss);
     }
+#endif
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/보스 발판 침식")]
     public void RequestBossPlatformThornAttack()
     {
@@ -242,4 +253,5 @@ public class WorldInteractionSpawnTest : MonoBehaviour
 
         Debug.LogWarning("보스의 스킬 목록에 BossPlatformThornSkill이 없습니다.", _spawnedBoss);
     }
+#endif
 }

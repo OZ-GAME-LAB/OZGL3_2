@@ -10,15 +10,11 @@
     ]
   },
   {
-    "Id": "recipe_normal_axe",
-    "Item_Id": "eq_normal_axe",
-    "RequiredMaterialId": [
-      "eq_worn_axe",
-      "mat_slime_lump"
-    ],
-    "RequiredMaterialQuantity": [
-      1,
-      10
-    ]
+    "Id": "recipe_poison_charm",
+    "Item_Id": "equipment_poison_charm",
+    "RequiredMaterialId": ["mat_slime_lump"],
+    "RequiredMaterialQuantity": [3],
+    "RequiredWorkshopProgressId": "UndergroundAncientPlateSolved",
+    "FirstCraftSupportId": "WorkshopFirstPoisonCharm"
   }
 ]

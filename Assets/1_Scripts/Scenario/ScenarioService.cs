@@ -80,7 +80,7 @@ public sealed class ScenarioService : IDisposable
     {
         return IsReady && !_ending && !IsBusy && source != null && source.isActiveAndEnabled &&
             _manager.TryGetScenario(source.ScenarioId, out ScenarioData data) &&
-            data.IsDialogue && _manager.CanStart(data) && (!data.PlayOncePerPlayer || !_personalCompleted.Contains(data.Id));
+            data.IsDialogue && _manager.CanStartForPlayer(data, _personalCompleted);
     }
 
     public bool TryStart(ScenarioSource source)
@@ -110,8 +110,13 @@ public sealed class ScenarioService : IDisposable
         return IsBusy;
     }
 
-    private void OnReplyReceived(ulong requestId, ScenarioReply reply)
+    private void OnReplyReceived(ulong requestId, ScenarioReply reply, string personalId)
     {
+        // 요청 UI가 이미 닫혔어도 서버가 확정한 개인 선행 조건을 복원합니다.
+        if (reply == ScenarioReply.Completed && !string.IsNullOrEmpty(personalId) &&
+            _personalCompleted.Add(personalId))
+            StateChanged?.Invoke();
+
         if (!IsBusy || requestId != ActiveRequestId)
             return;
 
@@ -122,7 +127,7 @@ public sealed class ScenarioService : IDisposable
         }
         if (State == ScenarioLocalState.WaitingForStart && reply == ScenarioReply.Started)
         {
-            if (!_manager.CanStart(_scenario))
+            if (!_manager.CanContinue(_scenario))
             {
                 End(ScenarioEndReason.WorldChanged);
                 return;
@@ -133,6 +138,12 @@ public sealed class ScenarioService : IDisposable
         else if (State == ScenarioLocalState.WaitingForCompletion && reply == ScenarioReply.Completed)
         {
             // 공유 상태 알림이 먼저 도착했어도 이 승인 응답이 정상 완료의 기준입니다.
+            if (!string.IsNullOrEmpty(_scenario.RewardRuneId) &&
+                ServiceManager.Inst?.InventoryService?.TryReceiveStoryRune(_scenario.RewardRuneId) != true)
+            {
+                End(ScenarioEndReason.Failed);
+                return;
+            }
             if (_scenario.PlayOncePerPlayer)
                 _personalCompleted.Add(_scenario.Id);
             End(ScenarioEndReason.Completed);
@@ -144,7 +155,7 @@ public sealed class ScenarioService : IDisposable
     {
         if (State != ScenarioLocalState.OpeningDialogue || ActiveRequestId != requestId)
             return false;
-        if (!_manager.CanStart(_scenario))
+        if (!_manager.CanContinue(_scenario))
         {
             End(ScenarioEndReason.WorldChanged);
             return false;
@@ -215,7 +226,7 @@ public sealed class ScenarioService : IDisposable
 
     private void OnProgressChanged()
     {
-        if (IsBusy && State != ScenarioLocalState.WaitingForCompletion && !_manager.CanStart(_scenario))
+        if (IsBusy && State != ScenarioLocalState.WaitingForCompletion && !_manager.CanContinue(_scenario))
             End(ScenarioEndReason.WorldChanged);
         else
             StateChanged?.Invoke();

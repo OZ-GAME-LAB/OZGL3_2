@@ -14,5 +14,21 @@
     "SpeakerName": "",
     "Text": "해당 위치에 처음 진입하면 NPC구출 이벤트가 열립니다.",
     "NpcSpriteAddress": ""
+  },
+  {
+    "Id": "NPCJoinCampDialogue_01",
+    "DialogueId": "NPCJoinCampDialogue",
+    "Order": 1,
+    "SpeakerName": "소녀",
+    "Text": "다시 만났네. 여기까지 와 줘서 고마워.",
+    "NpcSpriteAddress": ""
+  },
+  {
+    "Id": "NPCJoinCampDialogue_02",
+    "DialogueId": "NPCJoinCampDialogue",
+    "Order": 2,
+    "SpeakerName": "소녀",
+    "Text": "나는 먼저 거점으로 갈게. 만들고 싶은 게 있으면 텐트 옆으로 찾아와.",
+    "NpcSpriteAddress": ""
   }
 ]

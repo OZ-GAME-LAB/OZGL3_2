@@ -16,6 +16,17 @@ public sealed partial class ScenarioManager
     private ScenarioPuzzleProgress _puzzles;
     public event Action<string, ulong, uint, ScenarioPuzzleReply, int[]> PuzzleReplyReceived;
 
+    public event Action<string, bool> PuzzleDoorPresentation;
+
+    internal void PresentSolvedPuzzle(string scenarioId) => PuzzleDoorPresentation?.Invoke(scenarioId, true);
+
+    [ClientRpc]
+    private void NotifyPuzzleDoorObserversClientRpc(string scenarioId, ulong solver)
+    {
+        if (NetworkManager.LocalClientId != solver)
+            PuzzleDoorPresentation?.Invoke(scenarioId, false);
+    }
+
     public void RequestPuzzleStart(string sourceId, ulong requestId)
     {
         if (IsSpawned && IsClient)
@@ -69,7 +80,10 @@ public sealed partial class ScenarioManager
         SendPuzzleReply(clientId, sourceId, requestId, sequence, reply, board);
         // 뒤늦게 참가한 플레이어도 완료 상태를 받도록 목록에 남깁니다.
         if (accepted && completedId != null)
+        {
             _completedIds.Add(new FixedString128Bytes(completedId));
+            NotifyPuzzleDoorObserversClientRpc(completedId, clientId);
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]

@@ -9,6 +9,7 @@ public sealed class ScenarioDoorBinding : MonoBehaviour
     [Header("연결할 문")]
     [SerializeField] private EventDoorOpen _door;
 
+    [SerializeField] private PuzzleDoorShot _shot;
     private ScenarioManager _manager;
     private bool _hasSnapshot;
     private bool _wasCompleted;
@@ -32,11 +33,18 @@ public sealed class ScenarioDoorBinding : MonoBehaviour
         if (_manager != manager)
         {
             if (_manager != null)
+            {
                 _manager.ProgressChanged -= Refresh;
+                _manager.PuzzleDoorPresentation -= OnPuzzlePresentation;
+            }
+            _shot?.StopShot();
             _manager = manager;
             _hasSnapshot = false;
             if (_manager != null)
+            {
                 _manager.ProgressChanged += Refresh;
+                _manager.PuzzleDoorPresentation += OnPuzzlePresentation;
+            }
         }
         Refresh();
     }
@@ -68,6 +76,12 @@ public sealed class ScenarioDoorBinding : MonoBehaviour
         _wasCompleted = completed;
     }
 
+    private void OnPuzzlePresentation(string scenarioId, bool solver)
+    {
+        if (scenarioId == _completedScenarioId && _shot != null)
+            _shot.Present(_door, solver);
+    }
+
     private void RestoreClosed()
     {
         _hasSnapshot = false;
@@ -80,7 +94,11 @@ public sealed class ScenarioDoorBinding : MonoBehaviour
     {
         ScenarioManager.AvailabilityChanged -= BindManager;
         if (_manager != null)
+        {
             _manager.ProgressChanged -= Refresh;
+            _manager.PuzzleDoorPresentation -= OnPuzzlePresentation;
+        }
+        _shot?.StopShot();
         _manager = null;
         _hasSnapshot = false;
         _wasCompleted = false;

@@ -15,6 +15,8 @@ public sealed class SlidingPuzzleUI : UIBase
     [SerializeField, Min(0f)] private float _gap = 4f;
     [SerializeField, Min(0f)] private float _moveDuration = 0.15f;
 
+    [SerializeField] private AudioClip _moveSound;
+    [SerializeField, Range(0f, 1f)] private float _moveVolume = 0.18f;
     private bool _initialized;
     private bool _solved;
     private bool _inputEnabled = true;
@@ -45,6 +47,8 @@ public sealed class SlidingPuzzleUI : UIBase
         Initialize();
         CancelMotion();
         _solved = solved;
+        if (movedTileId > 0 && _moveSound != null)
+            SoundManager.Inst?.PlaySfx(_moveSound, _moveVolume);
         Vector2 start = Vector2.zero;
         Vector2 destination = Vector2.zero;
         RectTransform movingTile = null;

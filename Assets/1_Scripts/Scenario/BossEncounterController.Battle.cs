@@ -71,7 +71,7 @@ public sealed partial class BossEncounterController
 
     partial void UpdateBattleOnServer()
     {
-        if (Phase == BossEncounterPhase.Ready || Phase == BossEncounterPhase.Prompt ||
+        if (Phase == BossEncounterPhase.Ready || Phase == BossEncounterPhase.Waiting ||
             Phase == BossEncounterPhase.Completed || Phase == BossEncounterPhase.Recovering) return;
         if (_encounterBoss == null || !_encounterBoss.IsSpawned)
         {
@@ -92,17 +92,7 @@ public sealed partial class BossEncounterController
     private void OnEncounterBossDied()
     {
         if (_manager == null || !_manager.IsServer || Phase != BossEncounterPhase.Fighting) return;
-        if (!_manager.CompleteWorldEventOnServer(_defeatedEventId))
-        {
-            Debug.LogError("보스 처치 이벤트 기록 실패: " + _defeatedEventId, this);
-            return;
-        }
-        _manager.SetBossPhaseOnServer(BossEncounterPhase.Completed);
-        UnlockParticipants();
-        _participants.Clear();
-        _acknowledged.Clear();
-        if (_encounterBoss != null) _encounterBoss.DiedOnServer -= OnEncounterBossDied;
-        _encounterBoss = null;
+        BeginDefeatOnServer();
     }
 
     partial void StopEncounterBoss()
@@ -110,7 +100,7 @@ public sealed partial class BossEncounterController
         if (_encounterBoss != null)
         {
             _encounterBoss.DiedOnServer -= OnEncounterBossDied;
-            if (_encounterBoss.IsServer && _encounterBoss.IsSpawned) _encounterBoss.NetworkObject.Despawn();
+            if (_encounterBoss.IsServer && _encounterBoss.IsSpawned) _encounterBoss.CompleteDefeatOnServer();
         }
         _encounterBoss = null;
         _introSent = false;

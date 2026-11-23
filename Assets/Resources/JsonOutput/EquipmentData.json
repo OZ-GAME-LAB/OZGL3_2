@@ -9,15 +9,6 @@
     "ValueOperation": 2
   },
   {
-    "Id": "weapon_basic_sword",
-    "EquipmentSlot": 5,
-    "ToolAction": 0,
-    "EquipmentEffectType": 0,
-    "EffectValue": 1,
-    "ValueBasis": 1,
-    "ValueOperation": 2
-  },
-  {
     "Id": "eq_worn_axe",
     "EquipmentSlot": 1,
     "ToolAction": 1,
@@ -41,15 +32,6 @@
     "ToolAction": 3,
     "EquipmentEffectType": 0,
     "EffectValue": 1,
-    "ValueBasis": 1,
-    "ValueOperation": 2
-  },
-  {
-    "Id": "eq_normal_axe",
-    "EquipmentSlot": 1,
-    "ToolAction": 1,
-    "EquipmentEffectType": 0,
-    "EffectValue": 1.5,
     "ValueBasis": 1,
     "ValueOperation": 2
   }

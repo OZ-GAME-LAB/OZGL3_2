@@ -17,9 +17,11 @@ public class MonsterMeleeAtk : MonsterSkillBase
     private Monster _ownerMonster;
     private MonsterNetwork _ownerNetwork;
     private uint _attackId;
+    private bool _preparing;
 
     protected virtual bool CanDashOnAttack => true;
-    public override bool IsDashing => IsAttacking && CanDashOnAttack
+    public override bool StopAtAttackRange => _preparing;
+    public override bool IsDashing => IsAttacking && !_preparing && CanDashOnAttack
         && _ownerMonster != null && _ownerMonster.CanMove;
 
 
@@ -86,10 +88,27 @@ public class MonsterMeleeAtk : MonsterSkillBase
     {
         double startTime = _ownerNetwork.NetworkManager.ServerTime.Time;
         IsAttacking = true;
+        float preparation = _ownerNetwork.MeleePreparation;
+        if (preparation > 0f)
+        {
+            _preparing = true;
+            _ownerMonster.MonsterStopMove();
+            double contactAt = startTime + preparation;
+            _attackId = _ownerNetwork.BeginMeleePreparation(direction, contactAt);
+            while (_ownerNetwork.CanAttack && _ownerNetwork.NetworkManager.ServerTime.Time < contactAt)
+                yield return null;
+            if (!_ownerNetwork.CanAttack)
+            {
+                FinishAttack();
+                yield break;
+            }
+            _preparing = false;
+            startTime = _ownerNetwork.NetworkManager.ServerTime.Time;
+        }
         _attackObject.SetActive(true);
 
         _attackId = _ownerNetwork.BroadcastMeleeAttack(SkillId, _attackObject.transform,
-            _attackObject.GetComponent<BoxCollider2D>().size, startTime, _attackDuration);
+            _attackObject.GetComponent<BoxCollider2D>().size, startTime, _attackDuration, _attackId);
 
         Vector2 velocity = _ownerBody.linearVelocity;
         velocity.x = 0f;
@@ -111,6 +130,7 @@ public class MonsterMeleeAtk : MonsterSkillBase
         if (_ownerNetwork != null)
             _ownerNetwork.BroadcastMeleeAttackFinished(_attackId);
 
+        _preparing = false;
         _attackId = 0;
 
         if (_attackObject != null)

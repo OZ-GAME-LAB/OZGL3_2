@@ -93,6 +93,7 @@ public partial class MonsterNetwork
         TrackTimedAttack(attackId, instance);
         PlayTimedAttackClientRpc(attackId, skillId, position, direction, startTime, duration);
         instance.Play(this, damageInfo, position, direction, startTime, duration);
+        if (IsHost) AttackPresented?.Invoke(direction.x);
         return true;
     }
 
@@ -153,6 +154,7 @@ public partial class MonsterNetwork
 
         TrackTimedAttack(attackId, instance);
         instance.Play(this, default, request.Position, request.Direction, request.StartTime, request.Duration);
+        AttackPresented?.Invoke(request.Direction.x);
     }
 
     private async UniTask<bool> PrepareTimedAttackVisualsAsync(string monsterId)

@@ -39,7 +39,7 @@ public sealed class CinematicEffectUI : UIBase
         if (version != _animationVersion || !isActiveAndEnabled) throw new System.OperationCanceledException();
     }
 
-    private void SetVisibility(float value)
+    internal void SetVisibility(float value)
     {
         _visibility = value;
         _group.alpha = value;

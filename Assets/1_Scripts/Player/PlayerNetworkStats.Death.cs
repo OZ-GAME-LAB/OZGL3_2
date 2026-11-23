@@ -21,6 +21,11 @@ public partial class PlayerNetworkStats
     public event Action<string> RespawnFailed;
     public event Action RespawnSucceeded;
 
+    public void SetGameOverSuppressed(bool suppressed)
+    {
+        if (IsOwner) _gameOverPresenter?.SetSuppressed(suppressed);
+    }
+
     private void InitializeDeathFlow()
     {
         _serverRespawnRequest = 0;

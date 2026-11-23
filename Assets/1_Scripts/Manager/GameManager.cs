@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     private bool _worldInitialized;
     private GameObject _mapWorkspace;
     private FieldInteractionPoint[] _fieldPoints;
+    private MonsterSpawner[] _monsterPoints;
     private Coroutine _connectLocalPlayerRoutine;
     private NetworkObject _connectedLocalPlayer;
 
@@ -71,6 +72,12 @@ public class GameManager : MonoBehaviour
         _fieldPoints = _mapWorkspace.GetComponentsInChildren<FieldInteractionPoint>(true);
 
         _worldInitialized = true;
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            _monsterPoints = _mapWorkspace.GetComponentsInChildren<MonsterSpawner>();
+            foreach (var point in _monsterPoints)
+                point.SpawnPlacedMonsterOnServer();
+        }
         InitializeScenarioManager();
         InitializeFieldPoints();
         BeginConnectLocalPlayer();
@@ -81,6 +88,17 @@ public class GameManager : MonoBehaviour
         if (_fieldPoints == null) return;
         foreach (FieldInteractionPoint point in _fieldPoints)
             if (point != null && point.isActiveAndEnabled) point.InitializeOnServer();
+    }
+
+    public void RestoreDefeatedMonstersOnServer(System.Collections.Generic.List<MonsterSpawner.RestRecovery> recoveries, float timeoutSeconds)
+    {
+        if (_monsterPoints == null) return;
+        foreach (MonsterSpawner point in _monsterPoints)
+        {
+            if (point == null) continue;
+            var recovery = point.RestoreDefeatedOnServer(timeoutSeconds);
+            if (recovery != null) recoveries.Add(recovery);
+        }
     }
 
     private void BeginConnectLocalPlayer()
@@ -234,6 +252,7 @@ public class GameManager : MonoBehaviour
 
         _connectedLocalPlayer = null;
         _fieldPoints = null;
+        _monsterPoints = null;
         _mapWorkspace = null;
         _worldInitialized = false;
 

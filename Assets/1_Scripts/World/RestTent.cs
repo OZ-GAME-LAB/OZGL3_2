@@ -28,6 +28,7 @@ public sealed partial class RestTent : InteractableObject
     private readonly HashSet<ulong> _uiReady = new();
     private readonly HashSet<ulong> _acknowledged = new();
     private readonly List<InteractionNetwork> _restored = new();
+    private readonly List<MonsterSpawner.RestRecovery> _monsterRecoveries = new();
     private readonly List<ulong> _removeIds = new();
     private ScenarioManager _manager;
     private RestStep _phase;
@@ -70,6 +71,7 @@ public sealed partial class RestTent : InteractableObject
         _uiDeadlines.Clear();
         _acknowledged.Clear();
         _restored.Clear();
+        _monsterRecoveries.Clear();
         _run = 0;
         _nextRequest = 0;
         _phase = RestStep.Waiting;
@@ -111,6 +113,20 @@ public sealed partial class RestTent : InteractableObject
         {
             EndOnServer(_effectsCommitted ? "휴식 효과 적용 후 응답을 확인하지 못했습니다." : "휴식 응답이 지연되어 취소했습니다.");
             return;
+        }
+        if (_phase == RestStep.Restoring)
+        {
+            bool pending = false;
+            foreach (var recovery in _monsterRecoveries)
+            {
+                if (!recovery.Finished) pending = true;
+                else if (!recovery.Succeeded)
+                {
+                    EndOnServer("일부 몬스터를 복원하지 못했습니다. 다음 휴식에서 다시 시도할 수 있습니다.");
+                    return;
+                }
+            }
+            if (pending) return;
         }
         if (_acknowledged.Count != _requests.Count) return;
         if (_phase == RestStep.Fading) ApplyRestEffects();
@@ -269,6 +285,7 @@ public sealed partial class RestTent : InteractableObject
             }
             if (!InteractableObjectSpawner.RespawnDepletedResourcesOnServer(_restored))
                 throw new InvalidOperationException("일부 자원을 복원하지 못했습니다.");
+            GameManager.Inst.RestoreDefeatedMonstersOnServer(_monsterRecoveries, _stepTimeout);
             _releaseAfter = Time.realtimeSinceStartupAsDouble + _blackHoldSeconds;
             BeginStep(RestStep.Restoring);
         }
@@ -300,6 +317,7 @@ public sealed partial class RestTent : InteractableObject
             Send(participant.Key, participant.Value, RestStep.Ended, message);
         }
         _restored.Clear();
+        _monsterRecoveries.Clear();
         _phase = RestStep.Waiting;
     }
 }

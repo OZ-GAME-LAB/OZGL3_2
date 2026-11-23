@@ -9,6 +9,7 @@ public class WorldItemSpawnTest : MonoBehaviour
 
     private NetworkObject _spawnedItem;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/아이템 생성")]
     private void SpawnItem()
     {
@@ -40,4 +41,5 @@ public class WorldItemSpawnTest : MonoBehaviour
 
         ObjectManager.Inst.DespawnObject(_spawnedItem);
     }
+#endif
 }

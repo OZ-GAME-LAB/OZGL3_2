@@ -13,6 +13,8 @@ public class NetworkRuneService : IDisposable
     public NetworkRuneService(InventoryService inventoryService)
     {
         _inventoryService = inventoryService;
+        if (_inventoryService != null)
+            _inventoryService.RuneInventoryChanged += OnRuneInventoryChanged;
     }
 
     public RuneInventoryViewModel GetRuneInventoryViewModel()
@@ -93,6 +95,17 @@ public class NetworkRuneService : IDisposable
 
     public void RefreshInventory()
     {
+        RefreshInventory(false);
+    }
+
+    private void OnRuneInventoryChanged()
+    {
+        if (_viewModel != null)
+            RefreshInventory(true);
+    }
+
+    private void RefreshInventory(bool preserveSelection)
+    {
         var ids = new List<string>();
         var addedIds = new HashSet<string>();
 
@@ -101,7 +114,7 @@ public class NetworkRuneService : IDisposable
             var runeTable = DataManager.Inst.ReadData<RuneData>();
 
             foreach (InventoryItemViewModel item
-                     in _inventoryService.GetInventoryItems())
+                     in _inventoryService.GetRuneItems())
             {
                 if (item == null ||
                     item.Count <= 0 ||
@@ -121,9 +134,18 @@ public class NetworkRuneService : IDisposable
         ids.Sort(StringComparer.Ordinal);
 
         var vm = GetRuneInventoryViewModel();
+        string selectedId = vm.SelectedRuneId;
 
         vm.SetInventoryRunes(ids);
-        vm.SetMessage("룬을 선택한 뒤 장착 슬롯을 누르세요.");
+        if (preserveSelection)
+        {
+            if (addedIds.Contains(selectedId))
+                vm.SelectRune(selectedId);
+        }
+        else
+        {
+            vm.SetMessage("룬을 선택한 뒤 장착 슬롯을 누르세요.");
+        }
     }
 
     private void RefreshEquipment()
@@ -219,6 +241,8 @@ public class NetworkRuneService : IDisposable
 
     public void Dispose()
     {
+        if (_inventoryService != null)
+            _inventoryService.RuneInventoryChanged -= OnRuneInventoryChanged;
         DisconnectLocalPlayer();
     }
 

@@ -5,6 +5,7 @@ public class GiveItemsTester : MonoBehaviour
 {
     [SerializeField] private Button _giveItemButton;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     private void Awake()
     {
         if (_giveItemButton == null)
@@ -20,4 +21,10 @@ public class GiveItemsTester : MonoBehaviour
     {
         ServiceManager.Inst.GiveInventoryTestItems();
     }
+#else
+    private void Awake()
+    {
+        if (_giveItemButton != null) _giveItemButton.gameObject.SetActive(false);
+    }
+#endif
 }

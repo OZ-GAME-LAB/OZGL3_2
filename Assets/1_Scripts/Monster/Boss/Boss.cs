@@ -126,6 +126,7 @@ public class Boss : MonoBehaviour
 
 
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/가시덩굴 지면 선택")]
     private void TestSelectGroundAttackArea()
     {
@@ -147,6 +148,7 @@ public class Boss : MonoBehaviour
 
         Debug.Log($"가시덩굴 공격 지면: {selectedArea.name}", selectedArea);
     }
+#endif
 
     public async UniTask<bool> InitSkillsAsync(MonsterData data)
     {

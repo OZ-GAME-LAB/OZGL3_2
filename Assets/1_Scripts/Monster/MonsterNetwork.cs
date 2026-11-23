@@ -21,12 +21,19 @@ public partial class MonsterNetwork : NetworkUnit
     private Rigidbody2D _body;
     private RigidbodyConstraints2D _originalConstraints;
     private float _originalGravityScale;
+    private readonly NetworkVariable<double> _deathStartTime = new(-1d);
+    private FieldMonsterPresentation _fieldPresentation;
+    private Coroutine _deathRoutine;
+    private bool _deathSoundPending;
+    public double DeathStartTime => _deathStartTime.Value;
 
     public bool IsReady { get; private set; }
     protected override bool IsReadyForCombat => IsReady;
+    protected override bool HasDamageSound => _fieldPresentation != null;
     public bool IsStaggered => _staggerRemaining > 0f;
     public bool CanAttack => IsReady && IsAlive && !IsStaggered && AttackPower > 0f;
     public event System.Action<MonsterNetwork> Died;
+    public event System.Action<float> AttackPresented;
     public event System.Action<MonsterNetwork> Despawned;
 
     private void RefreshViewModel()
@@ -100,6 +107,8 @@ public partial class MonsterNetwork : NetworkUnit
     {
         base.OnNetworkSpawn();
 
+        if (IsServer) _deathStartTime.Value = -1d;
+        _deathStartTime.OnValueChanged += OnDeathTimeChanged;
         _staggerRemaining = 0f;
         _nextMeleeAttackId = 0;
         _lastMeleeAttackId = 0;
@@ -166,6 +175,13 @@ public partial class MonsterNetwork : NetworkUnit
             return;
         }
 
+        _fieldPresentation = GetComponentInChildren<FieldMonsterPresentation>();
+        if (DeathStartTime >= 0d)
+        {
+            TryPlayDeathSound();
+            return;
+        }
+
         if (_body != null)
         {
             bool fixedPosition = _monster.MovementType == MoveType.Fix;
@@ -203,6 +219,7 @@ public partial class MonsterNetwork : NetworkUnit
                 return;
         }
 
+        if (DeathStartTime >= 0d) return;
         IsReady = true;
 
         if (IsServer)
@@ -214,6 +231,11 @@ public partial class MonsterNetwork : NetworkUnit
 
     public override void OnNetworkDespawn()
     {
+        _deathStartTime.OnValueChanged -= OnDeathTimeChanged;
+        if (_deathRoutine != null) StopCoroutine(_deathRoutine);
+        _deathRoutine = null;
+        _fieldPresentation = null;
+        _deathSoundPending = false;
         DestroyMeleeVisuals();
         DestroyTimedAttacks();
         _staggerRemaining = 0f;
@@ -325,9 +347,44 @@ public partial class MonsterNetwork : NetworkUnit
             finally
             {
                 if (this != null && IsSpawned)
-                    NetworkObject.Despawn();
+                {
+                    float duration = _fieldPresentation != null ? _fieldPresentation.GetDeathDuration() : 0f;
+                    if (duration > 0f)
+                    {
+                        _deathStartTime.Value = NetworkManager.ServerTime.Time;
+                        _deathRoutine = StartCoroutine(DespawnAfterDeath(DeathStartTime + duration));
+                    }
+                    else NetworkObject.Despawn();
+                }
             }
         }
+    }
+
+    private void OnDeathTimeChanged(double previous, double current)
+    {
+        if (current < 0d) return;
+        IsReady = false;
+        if (_body != null) _body.simulated = false;
+        DestroyMeleeVisuals();
+        DestroyTimedAttacks();
+        _deathSoundPending = IsClient;
+        TryPlayDeathSound();
+    }
+
+    private void TryPlayDeathSound()
+    {
+        if (!_deathSoundPending || _fieldPresentation == null) return;
+        _deathSoundPending = false;
+        if (NetworkManager.ServerTime.Time < DeathStartTime + _fieldPresentation.GetDeathDuration())
+            _fieldPresentation.PlayDeathSound();
+    }
+
+    private System.Collections.IEnumerator DespawnAfterDeath(double endTime)
+    {
+        while (IsSpawned && NetworkManager.ServerTime.Time < endTime)
+            yield return null;
+        _deathRoutine = null;
+        if (IsSpawned) NetworkObject.Despawn();
     }
 
 }

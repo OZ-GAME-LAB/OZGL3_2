@@ -28,6 +28,7 @@ public sealed class SlidingPuzzleInteractable : InteractableObject
     private CancellationTokenSource _opening;
     private bool _interactionActive;
     private bool _completionPending;
+    private bool _closeAfterReply;
     private SharedSlidingPuzzleSession _shared;
     private bool _initialMarkerActive;
     private bool _initialAreaEnabled;
@@ -111,7 +112,7 @@ public sealed class SlidingPuzzleInteractable : InteractableObject
             if (_shared == null)
                 EnsureModel();
             _ui.MoveRequested += OnMoveRequested;
-            _ui.CloseRequested += EndInteraction;
+            _ui.CloseRequested += RequestUserClose;
             _ui.Hidden += EndInteraction;
             Canvas.ForceUpdateCanvases();
             _ui.SetInputEnabled(_shared == null || _shared.CanMove);
@@ -161,8 +162,23 @@ public sealed class SlidingPuzzleInteractable : InteractableObject
     {
         _shared?.Tick(Time.unscaledDeltaTime);
         // 마지막 타일의 이동을 보여준 뒤 기존 상호작용 종료 흐름으로 복귀합니다.
-        if (_completionPending && _ui != null && !_ui.IsAnimating)
+        if ((_completionPending || (_shared != null && _shared.FinalMoveAccepted)) && _ui != null && !_ui.IsAnimating)
+        {
+            if (_shared != null && _shared.FinalMoveAccepted)
+                ScenarioManager.Inst?.PresentSolvedPuzzle(_sharedSource.ScenarioId);
             EndInteraction();
+        }
+    }
+
+    public void RequestUserClose()
+    {
+        if (_completionPending || (_shared != null && _shared.FinalMoveAccepted)) return;
+        if (_shared != null && _shared.AwaitingMove)
+        {
+            _closeAfterReply = true;
+            return;
+        }
+        EndInteraction();
     }
 
     private void EndInteraction()
@@ -176,6 +192,7 @@ public sealed class SlidingPuzzleInteractable : InteractableObject
     public override void CancelInteraction()
     {
         _interactionActive = false;
+        _closeAfterReply = false;
         _shared?.Cancel();
         _completionPending = false;
         ApplyCompletedState();
@@ -188,7 +205,7 @@ public sealed class SlidingPuzzleInteractable : InteractableObject
         if (_ui != null)
         {
             _ui.MoveRequested -= OnMoveRequested;
-            _ui.CloseRequested -= EndInteraction;
+            _ui.CloseRequested -= RequestUserClose;
             _ui.Hidden -= EndInteraction;
         }
         if (_uiManager != null && _uiManager.IsOpen(UIType.SlidingPuzzleUI))
@@ -219,7 +236,11 @@ public sealed class SlidingPuzzleInteractable : InteractableObject
         if (_ui == null)
             OpenAsync(_uiManager, _opening.Token).Forget();
         else
-            _ui.ShowState(_shared.Board, IsSolved, tileId);
+        {
+            _ui.ShowState(_shared.Board, _shared.FinalMoveAccepted || IsSolved, tileId);
+            if (_closeAfterReply && !_shared.FinalMoveAccepted) EndInteraction();
+
+        }
     }
 
     private void ApplyCompletedState()
@@ -230,6 +251,8 @@ public sealed class SlidingPuzzleInteractable : InteractableObject
         if (_activateOnComplete != null && _activateOnComplete != gameObject &&
             _activateOnComplete.transform.IsChildOf(transform))
             _activateOnComplete.SetActive(IsSolved || _initialMarkerActive);
+        if (_interactionActive && _shared != null && IsSolved && (_shared.AwaitingMove || _shared.FinalMoveAccepted))
+            return;
         if (_interactionArea != null && _interactionArea.isTrigger &&
             (_interactionArea.transform == transform || _interactionArea.transform.IsChildOf(transform)))
             _interactionArea.enabled = !IsSolved && _initialAreaEnabled;
