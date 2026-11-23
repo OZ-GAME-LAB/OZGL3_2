@@ -7,6 +7,7 @@ public struct PlayerMovementAnimationState : INetworkSerializable, IEquatable<Pl
     public bool HasSample;
     public uint LifeVersion;
     public uint JumpSequence;
+    public bool FacingRight;
     public bool Moving;
     public bool Grounded;
     public bool Crouching;
@@ -16,18 +17,20 @@ public struct PlayerMovementAnimationState : INetworkSerializable, IEquatable<Pl
     public bool IdleJump;
     public float VerticalSpeed;
 
-    public static PlayerMovementAnimationState Neutral(uint lifeVersion, uint jumpSequence)
+    public static PlayerMovementAnimationState Neutral(uint lifeVersion, uint jumpSequence, bool facingRight)
     {
         return new PlayerMovementAnimationState
         {
-            HasSample = true, LifeVersion = lifeVersion, JumpSequence = jumpSequence, Grounded = true
+            HasSample = true, LifeVersion = lifeVersion, JumpSequence = jumpSequence,
+            FacingRight = facingRight, Grounded = true
         };
     }
 
     public bool SameDiscreteState(PlayerMovementAnimationState other)
     {
         return HasSample == other.HasSample && LifeVersion == other.LifeVersion &&
-            JumpSequence == other.JumpSequence && Moving == other.Moving && Grounded == other.Grounded &&
+            JumpSequence == other.JumpSequence && FacingRight == other.FacingRight &&
+            Moving == other.Moving && Grounded == other.Grounded &&
             Crouching == other.Crouching && WallClinging == other.WallClinging &&
             LedgeHanging == other.LedgeHanging && Jumping == other.Jumping && IdleJump == other.IdleJump;
     }
@@ -42,6 +45,7 @@ public struct PlayerMovementAnimationState : INetworkSerializable, IEquatable<Pl
         serializer.SerializeValue(ref HasSample);
         serializer.SerializeValue(ref LifeVersion);
         serializer.SerializeValue(ref JumpSequence);
+        serializer.SerializeValue(ref FacingRight);
         serializer.SerializeValue(ref Moving);
         serializer.SerializeValue(ref Grounded);
         serializer.SerializeValue(ref Crouching);

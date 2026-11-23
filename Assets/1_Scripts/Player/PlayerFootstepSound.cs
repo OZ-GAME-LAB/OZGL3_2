@@ -100,6 +100,12 @@ public sealed class PlayerFootstepSound : MonoBehaviour
         _nextAllowedTime = Time.time + MinimumInterval;
     }
 
+    public void SuppressLandingStep()
+    {
+        ResetTracking();
+        _nextAllowedTime = Time.time + MinimumInterval;
+    }
+
     public void ResetTracking()
     {
         _tracking = false;

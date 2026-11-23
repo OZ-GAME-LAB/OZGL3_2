@@ -12,6 +12,7 @@ public class RuneInventoryUI : UIBase
     [Header("인벤토리 룬 목록")]
     [SerializeField] private RuneSlotUI Prefab_RuneSlot;
     [SerializeField] private Transform Transform_RuneListRoot;
+    [SerializeField] private RuneDescriptionPopup _descriptionPopup;
 
     [Header("버튼 및 안내")]
     [SerializeField] private Button Button_ClearSelection;
@@ -92,7 +93,7 @@ public class RuneInventoryUI : UIBase
         {
             RuneSlotUI slot = Instantiate(Prefab_RuneSlot, Transform_RuneListRoot);
 
-            slot.Bind(slotVM, OnInventorySlotClicked);
+            slot.Bind(slotVM, OnInventorySlotClicked, _descriptionPopup);
             _inventorySlots.Add(slot);
         }
     }
@@ -148,6 +149,7 @@ public class RuneInventoryUI : UIBase
 
     private void Unbind()
     {
+        if (_descriptionPopup != null) _descriptionPopup.HideAll();
         if (_viewModel != null)
         {
             _viewModel.PropertyChanged -= OnPropertyChanged;

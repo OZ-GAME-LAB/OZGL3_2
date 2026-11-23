@@ -14,6 +14,8 @@ public sealed class SharedSlidingPuzzleSession : IDisposable
     private bool _waiting;
     private float _remaining;
 
+    public bool AwaitingMove => Active && _waiting && _pendingTile > 0;
+    public bool FinalMoveAccepted { get; private set; }
     public int[] Board { get; private set; }
     public bool Active => _requestId != 0;
     public bool CanMove => Active && !_waiting && Board != null && !IsCompleted;
@@ -65,6 +67,7 @@ public sealed class SharedSlidingPuzzleSession : IDisposable
         _requestId = ++_nextRequestId;
         if (_requestId == 0)
             _requestId = ++_nextRequestId;
+        FinalMoveAccepted = false;
         _sequence = 0;
         _pendingTile = 0;
         Board = null;
@@ -96,17 +99,20 @@ public sealed class SharedSlidingPuzzleSession : IDisposable
 
     private void OnReply(string sourceId, ulong requestId, uint sequence, ScenarioPuzzleReply reply, int[] board)
     {
-        if (!Active || sourceId != _source.SourceId || requestId != _requestId || sequence != _sequence || !_waiting)
+        if (FinalMoveAccepted || !Active || sourceId != _source.SourceId || requestId != _requestId || sequence != _sequence || !_waiting)
             return;
         if (reply == ScenarioPuzzleReply.Rejected || board == null || board.Length != 9)
         {
             End();
             return;
         }
+        int movedTile = _pendingTile;
+        _pendingTile = 0;
+        FinalMoveAccepted = reply == ScenarioPuzzleReply.Completed;
         Board = board;
         _waiting = reply == ScenarioPuzzleReply.Completed;
         _remaining = _manager.RequestTimeout;
-        BoardChanged?.Invoke(_pendingTile);
+        BoardChanged?.Invoke(movedTile);
         Changed?.Invoke();
         // 완료 응답만으로 표시를 확정하지 않습니다. 공유 목록의 변경을 기다립니다.
     }
@@ -114,7 +120,7 @@ public sealed class SharedSlidingPuzzleSession : IDisposable
     private void OnProgressChanged()
     {
         Changed?.Invoke();
-        if (Active && !CanStart)
+        if (Active && !CanStart && !(IsCompleted && (AwaitingMove || FinalMoveAccepted)))
             End();
     }
 
@@ -122,7 +128,7 @@ public sealed class SharedSlidingPuzzleSession : IDisposable
     {
         if (!Active)
             return;
-        if (!CanStart || !ContainsLocalPlayer())
+        if ((!CanStart && !(IsCompleted && (AwaitingMove || FinalMoveAccepted))) || !ContainsLocalPlayer())
         {
             End();
             return;

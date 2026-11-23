@@ -10,7 +10,6 @@ public sealed partial class BossEncounterController
     private BossEncounterPhase _localPhase;
     private CancellationTokenSource _localStep;
     private PlayerControllerView _localPlayer;
-    private BossEntryUI _entryUI;
     private ScreenTransitionUI _transitionUI;
     private CinematicEffectUI _cinematicUI;
     private float _localDeadline;
@@ -19,20 +18,12 @@ public sealed partial class BossEncounterController
     public void ReceiveStep(uint run, BossEncounterPhase phase, Vector3 destination)
     {
         if (run < _localRun || (run == _localRun && _localActive && phase == _localPhase)) return;
-        if (run == _localRun && (_localPhase == BossEncounterPhase.Cancelled ||
-            (phase == BossEncounterPhase.Prompt && _localPhase != BossEncounterPhase.Prompt))) return;
         CancelLocalStep();
         if (run != _localRun) CleanupLocal();
         _localRun = run;
         _localPhase = phase;
-        if (phase == BossEncounterPhase.Cancelled)
-        {
-            _nextLocalPrompt = Time.unscaledTime + 2f;
-            CleanupLocal();
-            return;
-        }
         _localActive = true;
-        _localDeadline = Time.unscaledTime + (phase == BossEncounterPhase.Prompt ? _choiceTimeout : _stepTimeout) + 5f;
+        _localDeadline = Time.unscaledTime + _stepTimeout + 5f;
         _localStep = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
         RunLocalStepAsync(run, phase, destination, _localStep.Token).Forget();
     }
@@ -44,18 +35,10 @@ public sealed partial class BossEncounterController
             NetworkObject local = Network != null && Network.LocalClient != null ? Network.LocalClient.PlayerObject : null;
             if (local == null || !local.TryGetComponent(out _localPlayer)) throw new InvalidOperationException("보스전 로컬 플레이어가 없습니다.");
             if (phase != BossEncounterPhase.Recovering && UIManager.Inst == null) throw new InvalidOperationException("UIManager가 준비되지 않았습니다.");
-            if (phase == BossEncounterPhase.Prompt)
-            {
-                _localPlayer.SetEncounterControlLocked(true);
-                _entryUI = await OpenUIAsync<BossEntryUI>(UIType.BossEntryUI, token);
-                _entryUI.transform.SetAsLastSibling();
-                _entryUI.Chosen -= OnEntryChosen;
-                _entryUI.Chosen += OnEntryChosen;
-                return;
-            }
-            CloseEntryUI();
             if (phase == BossEncounterPhase.Fading)
             {
+                if (BossEntrance.Active == null || !BossEntrance.Active.CompleteLocalPreparation())
+                    throw new InvalidOperationException("보스 입장 준비가 취소되었습니다.");
                 _localPlayer.SetEncounterControlLocked(true);
                 _transitionUI = await OpenUIAsync<ScreenTransitionUI>(UIType.ScreenTransitionUI, token);
                 await _transitionUI.FadeAsync(true, token);
@@ -71,6 +54,15 @@ public sealed partial class BossEncounterController
             else if (phase == BossEncounterPhase.Intro)
             {
                 await PlayIntroductionAsync(token);
+            }
+            else if (phase == BossEncounterPhase.DefeatFraming)
+            {
+                await PrepareDefeatAsync(token);
+            }
+            else if (phase == BossEncounterPhase.DefeatSinking)
+            {
+                await PlayDefeatAsync(run, phase, token);
+                return;
             }
             else if (phase == BossEncounterPhase.Recovering)
             {
@@ -132,11 +124,6 @@ public sealed partial class BossEncounterController
         return typed;
     }
 
-    private void OnEntryChosen(bool enter)
-    {
-        ScenarioManager.Inst?.ChooseBossEntry(_localRun, enter);
-    }
-
     private void CompleteLocalStep(uint run, BossEncounterPhase phase)
     {
         if (run == _localRun && phase == _localPhase) ScenarioManager.Inst?.AcknowledgeBossStep(run, phase, true);
@@ -145,9 +132,11 @@ public sealed partial class BossEncounterController
     private void UpdateLocalLifetime()
     {
         if (!_localActive) return;
+        MaintainDefeatLocalLock();
         if (_manager == null || !_manager.IsSpawned || Network == null || !Network.IsListening ||
-            Time.unscaledTime > _localDeadline ||
-            (_localPlayer != null && _localPlayer.TryGetComponent(out PlayerNetworkStats stats) && !stats.IsAlive))
+            (!_readingDemoComplete && Time.unscaledTime > _localDeadline) ||
+            (!IsDefeatPhase(_localPhase) && _localPlayer != null &&
+                _localPlayer.TryGetComponent(out PlayerNetworkStats stats) && !stats.IsAlive))
         {
             _manager?.AcknowledgeBossStep(_localRun, _localPhase, false);
             CleanupLocal();
@@ -162,14 +151,6 @@ public sealed partial class BossEncounterController
         _localStep = null;
     }
 
-    private void CloseEntryUI()
-    {
-        if (_entryUI == null) return;
-        _entryUI.Chosen -= OnEntryChosen;
-        CloseIfOpen(UIType.BossEntryUI);
-        _entryUI = null;
-    }
-
     private static void CloseIfOpen(UIType type)
     {
         if (UIManager.Inst != null && UIManager.Inst.IsOpen(type)) UIManager.Inst.Close(type);
@@ -179,7 +160,6 @@ public sealed partial class BossEncounterController
     {
         CancelLocalStep();
         _localActive = false;
-        CloseEntryUI();
         // 공유 UI 종류라도 이번 보스 흐름에서 얻은 화면만 정리합니다.
         if (_transitionUI != null) CloseIfOpen(UIType.ScreenTransitionUI);
         if (_cinematicUI != null) CloseIfOpen(UIType.CinematicEffectUI);
@@ -187,6 +167,7 @@ public sealed partial class BossEncounterController
         _cinematicUI = null;
         RestoreEncounterCamera();
         if (_localPlayer != null) _localPlayer.SetEncounterControlLocked(false);
+        CleanupDefeatLocal();
         _localPlayer = null;
     }
 

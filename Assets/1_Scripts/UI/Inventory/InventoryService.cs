@@ -1,15 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class InventoryService
+public partial class InventoryService
 {
     private InventoryUIViewModel _inventoryViewModel;
 
     private readonly Dictionary<InventoryItemViewModel, string> _saveItemIds = new();
 
     private int _nextSlotNumber = 1;
+    private InventoryItemViewModel _pendingUseItem;
 
     public Dictionary<EquipmentSlot, string> GetEquipmentItemsId()
     {
@@ -46,6 +47,8 @@ public class InventoryService
             return false;
         }
 
+        if (IsRuneItem(data))
+            return AddRuneItem(data);
 
         if (_inventoryViewModel.InventoryItemViewModelDictionary != null)
         {
@@ -80,8 +83,86 @@ public class InventoryService
         return true;
     }
 
+    internal bool TryCraft(Dictionary<string, int> materials, ItemData result, string supportId = null)
+    {
+        if (result == null || result.MaxStack < 1 || materials.Count == 0)
+            return false;
+
+        var bag = GetInvantoryViewModel();
+        var progress = GameStartSelection.Character?.ProgressIds;
+        if (supportId != null && (progress == null || progress.Contains(supportId)))
+            return false;
+        var remaining = supportId == null ? new Dictionary<string, int>(materials) : new Dictionary<string, int>();
+        var next = new ObservableCollections.ObservableDictionary<string, InventoryItemViewModel>();
+        var changes = new Dictionary<InventoryItemViewModel, int>();
+        InventoryItemViewModel outputStack = null;
+        bool isRune = IsRuneItem(result);
+        foreach (var pair in bag.InventoryItemViewModelDictionary)
+        {
+            var item = pair.Value;
+            int count = item.Count;
+            if (!IsEquippedItem(item) && !IsItemUsePending(item.Id) && remaining.TryGetValue(item.Id, out int needed))
+            {
+                int used = Math.Min(needed, count);
+                count -= used;
+                if (used == needed) remaining.Remove(item.Id);
+                else remaining[item.Id] = needed - used;
+                changes[item] = count;
+            }
+
+            if (count == 0) continue;
+            next.Add(pair.Key, item);
+            if (outputStack == null && item.Id == result.Id && count < item.MaxStack)
+                outputStack = item;
+        }
+        if (remaining.Count != 0)
+            return false;
+
+        if (isRune)
+        {
+            foreach (var rune in _runeItems)
+                if (rune.Id == result.Id) { outputStack = rune; break; }
+            if (outputStack != null && outputStack.Count >= outputStack.MaxStack)
+                return false;
+        }
+        if (outputStack != null)
+        {
+            changes[outputStack] = changes.TryGetValue(outputStack, out int after) ? after + 1 : outputStack.Count + 1;
+        }
+        else
+        {
+            if (!isRune && next.Count >= bag.InventoryMaxSlotNumber)
+                return false;
+            var item = CreateInventoryItemViewModel(result);
+            if (isRune) _runeItems.Add(item);
+            else next.Add((_nextSlotNumber++).ToString(), item);
+        }
+
+        bool slotsChanged = false;
+        foreach (var change in changes)
+        {
+            change.Key.SetCountWithoutNotification(change.Value);
+            if (change.Value != 0) continue;
+            _saveItemIds.Remove(change.Key);
+            for (int i = 0; i < QuickSlotCount; i++)
+            {
+                if (!ReferenceEquals(_quickSlotItems[i], change.Key)) continue;
+                _quickSlotItems[i] = null;
+                slotsChanged = true;
+            }
+        }
+        if (supportId != null) progress.Add(supportId);
+        bag.InventoryItemViewModelDictionary = next;
+        foreach (var item in changes.Keys) item.NotifyCountChanged();
+        if (slotsChanged) QuickSlotsChanged?.Invoke();
+        if (isRune) RuneInventoryChanged?.Invoke();
+        return true;
+    }
+
     public bool DropItem(string itemId)
     {
+        if (IsItemUsePending(itemId))
+            return false;
 
          var position =  ServiceManager.Inst.PlayerService.GetPlayerVectorSelf();
         if (ObjectManager.Inst.SpawnItem(itemId, 1, position) == null)
@@ -97,23 +178,44 @@ public class InventoryService
     {
         var items = _inventoryViewModel?.InventoryItemViewModelDictionary;
 
-        if (string.IsNullOrEmpty(itemId) || items == null)
+        if (string.IsNullOrEmpty(itemId) || items == null || IsItemUsePending(itemId))
             return false;
 
-        string slotKey = null;
         InventoryItemViewModel targetItem = null;
 
         foreach (var pair in items)
         {
             if (pair.Value != null && pair.Value.Id == itemId)
             {
-                slotKey = pair.Key;
                 targetItem = pair.Value;
                 break;
             }
         }
 
-        if (targetItem == null)
+        return RemoveItem(targetItem);
+    }
+
+    // 같은 ID의 저장 스택이 여러 개여도 선택한 객체만 차감한다.
+    public bool RemoveItem(InventoryItemViewModel targetItem)
+    {
+        if (targetItem == null || IsItemUsePending(targetItem.Id))
+            return false;
+
+        var items = _inventoryViewModel?.InventoryItemViewModelDictionary;
+        if (items == null)
+            return false;
+
+        string slotKey = null;
+        foreach (var pair in items)
+        {
+            if (ReferenceEquals(pair.Value, targetItem))
+            {
+                slotKey = pair.Key;
+                break;
+            }
+        }
+
+        if (slotKey == null)
             return false;
 
         if (targetItem.Count > 1)
@@ -122,33 +224,71 @@ public class InventoryService
         }
         else
         {
+            ClearQuickSlotItem(targetItem);
             items.Remove(slotKey);
+            _saveItemIds.Remove(targetItem);
             Debug.Log($"{targetItem.Name}아이템 제거함");
         }
 
         return true;
     }
 
-    public void UseItem(InventoryItemViewModel item)
+    public bool CanUseItem(InventoryItemViewModel item)
     {
-        if (!DataManager.Inst.ReadData<ConsumableData>()
-            .TryGetValue(item.Id, out var consumableData))
+        return item != null && item.Count > 0 && !string.IsNullOrWhiteSpace(item.Id)
+            && DataManager.Inst != null
+            && DataManager.Inst.ReadData<ConsumableData>().TryGetValue(item.Id, out ConsumableData data)
+            && data != null && data.EffectType == nameof(ConsumableEffectType.RestoreHp)
+            && !float.IsNaN(data.EffectValue) && !float.IsInfinity(data.EffectValue)
+            && data.EffectValue != 0f;
+    }
+
+    public bool IsItemUsePending(string itemId)
+    {
+        return _pendingUseItem != null && _pendingUseItem.Id == itemId;
+    }
+
+    // 반환값은 요청 접수 여부입니다. 수량은 서버의 성공 응답을 받은 뒤에만 차감합니다.
+    public bool RequestUseItem(InventoryItemViewModel item)
+    {
+        if (_pendingUseItem != null || !CanUseItem(item) || !OwnsBagItem(item)
+            || ServiceManager.Inst == null || ServiceManager.Inst.PlayerService == null)
+            return false;
+
+        _pendingUseItem = item;
+        if (!ServiceManager.Inst.PlayerService.RequestUseConsumable(item.Id, CompleteItemUse))
         {
+            _pendingUseItem = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool OwnsBagItem(InventoryItemViewModel item)
+    {
+        var items = _inventoryViewModel?.InventoryItemViewModelDictionary;
+        if (items == null)
+            return false;
+
+        foreach (var pair in items)
+        {
+            if (ReferenceEquals(pair.Value, item))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void CompleteItemUse(bool applied)
+    {
+        InventoryItemViewModel item = _pendingUseItem;
+        _pendingUseItem = null;
+        if (!applied || item == null || !OwnsBagItem(item))
             return;
-        }
 
-
-        switch (consumableData.EffectType)
-        {
-            case nameof(ConsumableEffectType.RestoreHp):
-                ServiceManager.Inst.PlayerService.HealOnPlayerSelf(consumableData.EffectValue);
-
-                break;
-            default:
-                break;
-        }
-
-        Debug.Log($"{item.Name}아이템 사용됨");
+        if (RemoveItem(item))
+            Debug.Log($"{item.Name}아이템 사용됨");
     }
 
     public void BindInventoryView(InventoryUIView inventoryView)
@@ -164,7 +304,7 @@ public class InventoryService
 
     public bool TryEquipItem(InventoryItemViewModel item)
     {
-        if (item == null || string.IsNullOrEmpty(item.Id))
+        if (item == null || string.IsNullOrEmpty(item.Id) || IsItemUsePending(item.Id))
             return false;
 
         if (!DataManager.Inst.ReadData<EquipmentData>().TryGetValue(item.Id, out var equipmentData))
@@ -292,6 +432,7 @@ public class InventoryService
     }
 
     //서비스를 가지고 있는 곳에서 실행시켜주기
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     public void InitTestInventoryItem()
     {
         GetInvantoryViewModel();
@@ -304,6 +445,7 @@ public class InventoryService
         }
     }
 
+#endif
     public bool TryGetItem(string itemId, out InventoryItemViewModel itemViewModel)
     {
         return _inventoryViewModel.InventoryItemViewModelDictionary.TryGetValue(itemId, out itemViewModel);
@@ -347,7 +489,6 @@ public class InventoryService
             Price = data.Price,
             SellingPrice = data.SellingPrice,
             IconPath = data.IconPath,
-            PrefabPath = data.PrefabPath,
             Count = 1
         };
         return itemViewModel;
@@ -424,6 +565,12 @@ public class InventoryService
         savedItems = null;
         error = null;
 
+        if (_pendingUseItem != null)
+        {
+            error = "아이템 사용 결과를 기다리고 있습니다. 잠시 후 다시 저장해 주세요.";
+            return false;
+        }
+
         if (DataManager.Inst == null)
         {
             error = "DataManager가 준비되지 않았습니다.";
@@ -481,6 +628,14 @@ public class InventoryService
             {
                 return false;
             }
+
+            result.Add(saved);
+        }
+
+        foreach (InventoryItemViewModel item in _runeItems)
+        {
+            if (!TryCreateSavedItem(item, EquipmentSlot.None, out var saved, out error))
+                return false;
 
             result.Add(saved);
         }
@@ -552,6 +707,12 @@ public class InventoryService
     {
         error = null;
 
+        if (_pendingUseItem != null)
+        {
+            error = "아이템 사용 결과를 기다리는 동안 인벤토리를 불러올 수 없습니다.";
+            return false;
+        }
+
         if (savedItems == null || DataManager.Inst == null)
         {
             error = "인벤토리 저장 데이터 또는 DataManager가 없습니다.";
@@ -562,6 +723,7 @@ public class InventoryService
 
         // 기존 인벤토리를 지우기 전에 전체 데이터를 검사하고 준비.
         var bagItems = new List<InventoryItemViewModel>();
+        var runeItems = new List<InventoryItemViewModel>();
         var equipmentItems =
             new Dictionary<EquipmentSlot, InventoryItemViewModel>();
 
@@ -599,7 +761,10 @@ public class InventoryService
 
             if (saved.EquippedSlot == EquipmentSlot.None)
             {
-                bagItems.Add(item);
+                if (IsRuneItem(data))
+                    runeItems.Add(item);
+                else
+                    bagItems.Add(item);
             }
             else
             {
@@ -634,6 +799,7 @@ public class InventoryService
 
         // 검사가 끝난 뒤 적용.
         // VM과 ObservableDictionary를 교체하지 않아 기존 UI 연결을 유지.
+        ClearQuickSlots();
         inventory.InventoryItemViewModelDictionary.Clear();
 
         inventory.TalismanItemViewModel = GetRestoredEquipment(equipmentItems, EquipmentSlot.Talisman);
@@ -656,6 +822,10 @@ public class InventoryService
         {
             _saveItemIds.Add(pair.Key, pair.Value);
         }
+
+        _runeItems.Clear();
+        _runeItems.AddRange(runeItems);
+        RuneInventoryChanged?.Invoke();
 
         return true;
     }

@@ -54,12 +54,14 @@ public abstract class InteractableObject : MonoBehaviour
     public int GetResourceFacing(Vector3 playerPosition) => _resourceLayout != null && _resourceLayout.RequiresSide
         ? (_resourceLayout.TargetPosition.x >= playerPosition.x ? 1 : -1) : 0;
 
-    public void ConfigureResourceLayout(string type, bool useLayout, Vector2 scale)
+    public void ConfigureResourceLayout(string type, bool useLayout, Vector2 scale,
+        ResourceInteractionLayout layoutPrefab = null)
     {
         if (_resourceLayout != null) Destroy(_resourceLayout.gameObject);
         _resourceLayout = null;
         if (!useLayout) return;
-        ResourceInteractionLayout prefab = type == "Logging" ? _loggingLayoutPrefab :
+        ResourceInteractionLayout prefab = layoutPrefab != null ? layoutPrefab :
+            type == "Logging" ? _loggingLayoutPrefab :
             type == "Mining" ? _miningLayoutPrefab : type == "Gathering" ? _gatheringLayoutPrefab : null;
         if (prefab == null) throw new InvalidOperationException("자원 외형 프리팹이 없습니다: " + type);
         if (TryGetComponent(out BoxCollider2D legacy)) legacy.enabled = false;

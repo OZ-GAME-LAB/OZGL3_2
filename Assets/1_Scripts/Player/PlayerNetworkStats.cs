@@ -1,4 +1,4 @@
-﻿using Unity.Netcode;
+using Unity.Netcode;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -98,7 +98,9 @@ public partial class PlayerNetworkStats : NetworkUnit
 #endif
     }
 
-    public override bool TryTakeDamageOnServer(float finalDamage, out float actualDamage)
+    protected override bool HasDamageSound => true;
+
+    protected override bool ApplyDamageOnServer(float finalDamage, out float actualDamage, bool poisonTick)
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (IsServer && IsSpawned && _developerInvincible)
@@ -107,7 +109,7 @@ public partial class PlayerNetworkStats : NetworkUnit
             return false;
         }
 #endif
-        return base.TryTakeDamageOnServer(finalDamage, out actualDamage);
+        return base.ApplyDamageOnServer(finalDamage, out actualDamage, poisonTick);
     }
 
     public override void OnNetworkSpawn()
@@ -121,6 +123,7 @@ public partial class PlayerNetworkStats : NetworkUnit
         if (IsServer)
         {
             _encounterLocked.Value = false;
+            _bossEntryWaiting.Value = false;
             if (!InitializeUnitOnServer(ValidOrDefault(_initialMaxHp, 100f, 1f),
                 ValidOrDefault(_initialAttackPower, 100f, 0f), canReceiveBossPoison: true))
                 return;
@@ -137,12 +140,14 @@ public partial class PlayerNetworkStats : NetworkUnit
         _jumpForce.OnValueChanged += OnStatChanged;
 
         RefreshViewModel();
+        InitializeConsumableUse();
         InitializeDeathFlow();
         InitializeRestState();
     }
 
     public override void OnNetworkDespawn()
     {
+        ReleaseConsumableUse();
         ReleaseRestState();
         ReleaseDeathFlow();
         StatsChanged -= RefreshViewModel;
@@ -229,6 +234,7 @@ public partial class PlayerNetworkStats : NetworkUnit
         return Mathf.Max(minimum, value);
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/서버에서 피해 25")]
     private void TestDamage()
     {
@@ -239,4 +245,5 @@ public partial class PlayerNetworkStats : NetworkUnit
 
         TryTakeDamageOnServer(25f, out _);
     }
+#endif
 }

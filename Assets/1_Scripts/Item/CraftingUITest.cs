@@ -10,6 +10,7 @@ public class CraftingUITest : MonoBehaviour
     private CraftingUI _craftingUI;
     private bool _isOpening;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     private void Awake()
     {
         if (_openButton == null)
@@ -119,4 +120,10 @@ public class CraftingUITest : MonoBehaviour
             _craftingUI.CloseRequested -= OnCloseRequested;
         }
     }
+#else
+    private void Awake()
+    {
+        if (_openButton != null) _openButton.gameObject.SetActive(false);
+    }
+#endif
 }

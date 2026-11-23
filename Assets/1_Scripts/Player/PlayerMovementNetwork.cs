@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 // 입력 View가 꺼진 원격 플레이어에서도 수신한 표현만 갱신합니다.
@@ -29,6 +30,9 @@ public sealed class PlayerMovementNetwork : NetworkBehaviour
         TryGetComponent(out _view);
         TryGetComponent(out _attack);
         TryGetComponent(out _interaction);
+        // 좌우 반전은 크기 보간 대신 이동 표현 상태가 즉시 적용합니다.
+        if (TryGetComponent(out NetworkTransform networkTransform))
+            networkTransform.SyncScaleX = false;
     }
 
     public override void OnNetworkSpawn()

@@ -146,7 +146,17 @@ public class BossFlowerSummonSkill : MonsterSkillBase
         IsAttacking = false;
     }
 
+    private void OnDisable()
+    {
+        RemoveFlower();
+    }
+
     private void OnDestroy()
+    {
+        RemoveFlower();
+    }
+
+    private void RemoveFlower()
     {
         MonsterNetwork flower = _flower;
         ReleaseFlower();

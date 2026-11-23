@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -15,6 +15,7 @@ public sealed class NetworkSessionSaveService : IDisposable
     private bool _autoSaveRunning;
     private bool _resultHandlerRegistered;
     private float _autoSaveRemaining = AutoSaveInterval;
+    private float _worldRetryRemaining;
     private ulong _nextRequestId;
     private ulong _lastCharacterRequestId;
 
@@ -83,6 +84,13 @@ public sealed class NetworkSessionSaveService : IDisposable
             return;
 
         _autoSaveRemaining -= deltaTime;
+        _worldRetryRemaining -= deltaTime;
+        if (_autoSaveRemaining > 0f && _worldRetryRemaining <= 0f && ScenarioManager.Inst != null &&
+            ScenarioManager.Inst.HasPendingWorldProgress && !TrySaveHostWorld(out string error))
+        {
+            _worldRetryRemaining = 5f;
+            Debug.LogWarning(error, _logContext);
+        }
         if (_autoSaveRemaining > 0f)
             return;
 
@@ -120,7 +128,8 @@ public sealed class NetworkSessionSaveService : IDisposable
         }
 
         RequestLocalCharacterSave(requestId);
-        RequestWorldSave(requestId);
+        if (!TrySaveHostWorld(out string error))
+            Debug.LogWarning(error, _logContext);
         return true;
     }
 
@@ -165,6 +174,7 @@ public sealed class NetworkSessionSaveService : IDisposable
         _messages = null;
         _nextRequestId = 0;
         _lastCharacterRequestId = 0;
+        _worldRetryRemaining = 0f;
     }
 
     private void OnCharacterSaveRequested(ulong senderClientId, FastBufferReader reader)
@@ -213,29 +223,17 @@ public sealed class NetworkSessionSaveService : IDisposable
         Debug.Log($"[캐릭터 저장 요청] 요청: {requestId}, 클라이언트: {_network.LocalClientId}, 실제 저장 연결 대기", _logContext);
     }
 
-    private void RequestWorldSave(ulong requestId)
+    public bool TrySaveHostWorld(out string error)
     {
-        // TODO : 시나리오 상황 저장 구현 후 월드 진행도를 수집하는 처리를 연결한다. 기존 진행도는 유지한다.
-        // TODO(저장 연결) : 저장 함수 구현 후 호스트의 월드 데이터를 저장하고 결과를 확인한다.
-        if (_network.IsHost == false)
-        {
-            return;
-        }
+        error = "호스트 또는 월드 저장 정보를 확인할 수 없습니다.";
+        if (!_network.IsHost || SaveManager.Inst == null || GameStartSelection.World == null)
+            return false;
 
-        SaveManager saves = SaveManager.Inst;
-        WorldSaveData world = GameStartSelection.World;
+        if (!SaveManager.Inst.SaveWorld(GameStartSelection.World, out error))
+            return false;
 
-        if (saves == null || world == null)
-        {
-            Debug.LogWarning($"[월드 저장 실패] 요청 {requestId}: 선택한 월드 또는 SaveManager가 없습니다.", _logContext);
-            return;
-        }
-
-        if (saves.SaveWorld(world, out string error) == false)
-        {
-            Debug.LogWarning($"[월드 저장 실패] 요청 {requestId}: {error}", _logContext);
-            return;
-        }
+        ScenarioManager.Inst?.MarkWorldProgressSaved();
+        return true;
     }
 
     private void OnCharacterSaveResult(ulong senderClientId, FastBufferReader reader)

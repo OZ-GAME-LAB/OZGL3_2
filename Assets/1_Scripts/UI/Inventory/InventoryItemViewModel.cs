@@ -11,7 +11,6 @@ public class InventoryItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(Price));
         OnPropertyChanged(nameof(SellingPrice));
         OnPropertyChanged(nameof(IconPath));
-        OnPropertyChanged(nameof(PrefabPath));
         OnPropertyChanged(nameof(Count));
 
     }
@@ -143,19 +142,8 @@ public class InventoryItemViewModel : ViewModelBase
         }
     }
 
-    private string _prefabPath;
-    public string PrefabPath
-    {
-        get => _prefabPath;
-        set
-        {
-            if (_prefabPath != value)
-            {
-                _prefabPath = value;
-                OnPropertyChanged(nameof(PrefabPath));
-            }
-        }
-    }
+    internal void SetCountWithoutNotification(int value) => _count = value;
+    internal void NotifyCountChanged() => OnPropertyChanged(nameof(Count));
 
     private int _count;
     public int Count

@@ -37,6 +37,7 @@ public sealed class PlayerAnimationPresenter
     private static readonly int FishingIdleHash = Animator.StringToHash("Base Layer.FishingIdle");
     private bool _playingResource;
     public bool IsPlayingResource => _playingResource;
+    public float ResourceEntryNormalized { get; private set; }
     private PlayerResourceAnimationState _displayedResource;
     private float _loggingLength = 1f, _miningLength = 1f, _castLength = 1f, _fishingIdleLength = 1f;
     private bool _remoteInitialized;
@@ -168,7 +169,8 @@ public sealed class PlayerAnimationPresenter
         duration = Mathf.Max(0.01f, duration);
         _animator.SetFloat(InteractionPlaybackRateHash, loggingSwing ? _loggingLength / duration : casting ? _castLength / duration : 1f);
         float normalized = Mathf.Max(0f, (float)((now - state.StartTime) / duration));
-        _animator.Play(hash, 0, casting || loggingSwing ? Mathf.Min(normalized, 0.9999f) : normalized % 1f);
+        ResourceEntryNormalized = casting || loggingSwing ? Mathf.Min(normalized, 0.9999f) : normalized % 1f;
+        _animator.Play(hash, 0, ResourceEntryNormalized);
     }
 
     public void UpdateAttack(PlayerAttackState attack, double now, bool grounded)

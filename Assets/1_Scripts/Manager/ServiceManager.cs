@@ -37,6 +37,7 @@ public class ServiceManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        NetworkRuneService?.Dispose();
         _dialoguePresenter?.Dispose();
         ScenarioService?.Dispose();
         if (Inst == this)
@@ -49,6 +50,7 @@ public class ServiceManager : MonoBehaviour
         InventoryService.InitializeEmptyInventory();
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     public void GiveInventoryTestItems()
     {
         ServiceManager.Inst.InventoryService.InitTestInventoryItem();
@@ -56,4 +58,5 @@ public class ServiceManager : MonoBehaviour
     }
 
 
+#endif
 }

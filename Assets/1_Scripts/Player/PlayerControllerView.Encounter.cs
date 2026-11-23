@@ -5,6 +5,9 @@ using UnityEngine;
 public partial class PlayerControllerView
 {
     private bool _encounterLocalLocked;
+    private bool _encounterConfirmationInput;
+    private bool _encounterStartedWhileDead;
+    internal bool HasLocalEncounterLock => _encounterLocalLocked;
     private string _encounterPreviousMap;
     private PlayerNetworkStats _encounterStats;
     private RigidbodyConstraints2D _encounterPreviousConstraints;
@@ -22,6 +25,7 @@ public partial class PlayerControllerView
         _encounterLocalLocked = locked;
         if (locked)
         {
+            _encounterStartedWhileDead = IsDeathControlLocked;
             _interactionController?.CancelRequestedInteraction();
             _runeAttackController?.CancelAttackInput();
             SetMoveInput(0f);
@@ -43,10 +47,28 @@ public partial class PlayerControllerView
         {
             if (_rigidbody2D != null) _rigidbody2D.constraints = _encounterPreviousConstraints;
             if (_playerInput != null && _playerInput.isActiveAndEnabled && !_isDialogueMode && !_isMiniGameMode &&
-                _playerInput.currentActionMap?.name == "MiniGame" && !string.IsNullOrEmpty(_encounterPreviousMap))
-                _playerInput.SwitchCurrentActionMap(_encounterPreviousMap);
+                (_playerInput.currentActionMap?.name == "MiniGame" ||
+                    (_encounterConfirmationInput && _playerInput.currentActionMap?.name == "UI")) &&
+                !string.IsNullOrEmpty(_encounterPreviousMap))
+            {
+                string restoreMap = _encounterPreviousMap;
+                if (_encounterStartedWhileDead && !IsDeathControlLocked && restoreMap == "UI")
+                    restoreMap = "Player";
+                _playerInput.SwitchCurrentActionMap(restoreMap);
+            }
             _encounterPreviousMap = null;
+            _encounterConfirmationInput = false;
+            _encounterStartedWhileDead = false;
         }
+    }
+
+    public void SetEncounterConfirmationInput()
+    {
+        if (!_encounterLocalLocked || _playerInput == null || !_playerInput.isActiveAndEnabled ||
+            _isDialogueMode || _isMiniGameMode) return;
+        _encounterConfirmationInput = true;
+        _playerInput.SwitchCurrentActionMap("UI");
+        _playerInput.ActivateInput();
     }
 
     public bool PlaceForEncounter(Vector3 footPosition, bool faceRight)

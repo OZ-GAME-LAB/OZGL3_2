@@ -164,5 +164,89 @@
     "MandatoryDropGroupId": null,
     "ProbabilityDropGroupId": null,
     "MonsterAddressableId": "Monster/TestMonsterVisualPrefab"
+  },
+  {
+    "Id": "field_slime",
+    "Name": "슬라임",
+    "Description": "슬라임",
+    "Hp": 24,
+    "Atk": 10,
+    "AtkDistance": 1.5,
+    "PhysicalResistance": 0.1,
+    "FireResistance": 0.1,
+    "IceResistance": 0.1,
+    "ElectricalResistance": 0.1,
+    "PoisonResistance": 0.1,
+    "BleedAble": true,
+    "HaveSkillIdList": [
+      "monster_melee_02"
+    ],
+    "MonsterSkillCollTime": [
+      3
+    ],
+    "MonsterType": 2,
+    "MonsterSpeed": 3,
+    "IsMandatoryDropItem": true,
+    "MandatoryDropGroupId": "drop_monster_01",
+    "ProbabilityDropGroupId": null,
+    "MonsterAddressableId": "Monster/SlimeVisual",
+    "BonusDropGroupId": "drop_field_rune",
+    "BonusDropChance": 0.2
+  },
+  {
+    "Id": "field_boar",
+    "Name": "멧돼지",
+    "Description": "멧돼지",
+    "Hp": 42,
+    "Atk": 10,
+    "AtkDistance": 1.5,
+    "PhysicalResistance": 0.1,
+    "FireResistance": 0.1,
+    "IceResistance": 0.1,
+    "ElectricalResistance": 0.1,
+    "PoisonResistance": 0.1,
+    "BleedAble": true,
+    "HaveSkillIdList": [
+      "monster_melee_01"
+    ],
+    "MonsterSkillCollTime": [
+      3
+    ],
+    "MonsterType": 2,
+    "MonsterSpeed": 3,
+    "IsMandatoryDropItem": true,
+    "MandatoryDropGroupId": "drop_monster_02",
+    "ProbabilityDropGroupId": null,
+    "MonsterAddressableId": "Monster/BoarVisual",
+    "BonusDropGroupId": "drop_field_rune",
+    "BonusDropChance": 0.2
+  },
+  {
+    "Id": "field_bat",
+    "Name": "박쥐",
+    "Description": "박쥐",
+    "Hp": 16,
+    "Atk": 10,
+    "AtkDistance": 5,
+    "PhysicalResistance": 0.1,
+    "FireResistance": 0.1,
+    "IceResistance": 0.1,
+    "ElectricalResistance": 0.1,
+    "PoisonResistance": 0.1,
+    "BleedAble": true,
+    "HaveSkillIdList": [
+      "monster_range_01"
+    ],
+    "MonsterSkillCollTime": [
+      2
+    ],
+    "MonsterType": 3,
+    "MonsterSpeed": 3,
+    "IsMandatoryDropItem": true,
+    "MandatoryDropGroupId": "drop_monster_03",
+    "ProbabilityDropGroupId": null,
+    "MonsterAddressableId": "Monster/BatVisual",
+    "BonusDropGroupId": "drop_field_rune",
+    "BonusDropChance": 0.2
   }
 ]

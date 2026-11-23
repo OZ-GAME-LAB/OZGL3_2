@@ -29,6 +29,7 @@ public partial class BossNetwork : NetworkUnit
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        ResetDefeatState();
 
         IsReady = false;
 
@@ -130,25 +131,7 @@ public partial class BossNetwork : NetworkUnit
 
     protected override void OnDiedOnServer()
     {
-        _combatActive.Value = false;
-        DiedOnServer?.Invoke();
-        IsReady = false;
-
-        if (_bt != null)
-            _bt.enabled = false;
-
-        int playerCount = NetworkManager.ConnectedClientsList.Count;
-
-        try
-        {
-            DropRewardUtil.SpawnMonsterRewardsOnServer(_monsterData, transform.position, playerCount, this);
-        }
-        finally
-        {
-            // TODO: 보스 소멸 연출이 완료된 뒤 Despawn하도록 연결.
-            if (IsSpawned)
-                NetworkObject.Despawn();
-        }
+        HandleDeathOnServer();
     }
 
     private async UniTask InitializeSkillsOnServerAsync(MonsterData data)
@@ -157,7 +140,7 @@ public partial class BossNetwork : NetworkUnit
         {
             bool success = await _boss.InitSkillsAsync(data);
 
-            if (this == null || !IsSpawned)
+            if (this == null || !IsSpawned || !IsAlive)
                 return;
 
             if (!success)
@@ -248,7 +231,7 @@ public partial class BossNetwork : NetworkUnit
 
         try
         {
-            if (string.IsNullOrWhiteSpace(skillId) || this == null || !IsSpawned)
+            if (string.IsNullOrWhiteSpace(skillId) || this == null || !IsSpawned || !IsAlive)
                 return;
 
             visual = GetAvailableThornVisual(skillId);
@@ -268,7 +251,7 @@ public partial class BossNetwork : NetworkUnit
                 }
 
                 GameObject prefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.SkillPrefabPath);
-                if (this == null || !IsSpawned || _thornVisualVersion != visualVersion || prefab == null)
+                if (this == null || !IsSpawned || !IsAlive || _thornVisualVersion != visualVersion || prefab == null)
                     return;
 
                 visual = GetAvailableThornVisual(skillId);
@@ -301,7 +284,7 @@ public partial class BossNetwork : NetworkUnit
             visual.gameObject.SetActive(true);
             visual.PlayClientVisual(startTime);
 
-            await UniTask.WaitUntil(() => this == null || !IsSpawned || _thornVisualVersion != visualVersion
+            await UniTask.WaitUntil(() => this == null || !IsSpawned || !IsAlive || _thornVisualVersion != visualVersion
                 || visual == null || !visual.IsPlaying);
         }
         catch (System.Exception exception)
@@ -460,7 +443,7 @@ public partial class BossNetwork : NetworkUnit
         BossPoisonProjectile visual = null;
         try
         {
-            if (this == null || !IsSpawned || _clientPoisonAttackId != attackId)
+            if (this == null || !IsSpawned || !IsAlive || _clientPoisonAttackId != attackId)
                 return;
 
             if (_poisonVisual == null || _poisonVisualSkillId != skillId)
@@ -472,7 +455,7 @@ public partial class BossNetwork : NetworkUnit
                     return;
 
                 GameObject prefab = await ResourceManager.Inst.LoadAsset<GameObject>(data.SkillPrefabPath);
-                if (this == null || !IsSpawned || _clientPoisonAttackId != attackId || prefab == null)
+                if (this == null || !IsSpawned || !IsAlive || _clientPoisonAttackId != attackId || prefab == null)
                     return;
                 if (NetworkManager.ServerTime.Time >= startTime + warningSeconds + flightSeconds)
                     return;
@@ -497,7 +480,7 @@ public partial class BossNetwork : NetworkUnit
             visual.transform.SetPositionAndRotation(start, Quaternion.identity);
             visual.gameObject.SetActive(true);
             visual.Play(this, false, default, start, control, end, startTime, warningSeconds, flightSeconds);
-            await UniTask.WaitUntil(() => this == null || !IsSpawned
+            await UniTask.WaitUntil(() => this == null || !IsSpawned || !IsAlive
                 || _clientPoisonAttackId != attackId || visual == null || !visual.IsPlaying);
         }
         catch (System.Exception exception)

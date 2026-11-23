@@ -19,6 +19,36 @@ public sealed class PlayerPoisonBlink : MonoBehaviour
     private double _blinkStartedAt;
     private bool _isBlinking;
     private bool _isPurple;
+    [SerializeField] private AudioClip _hitSound;
+    [SerializeField] private AudioClip _poisonTickSound;
+    [SerializeField, Range(0f, 1f)] private float _poisonTickVolume = 0.10f;
+    [SerializeField, Range(0f, 1f)] private float _hitVolume = 0.26f;
+    private float _hitUntil;
+    private bool _showingHit;
+
+    private void OnEnable()
+    {
+        if (_stats != null) _stats.Damaged += OnHit;
+        if (_stats != null) _stats.DamageSoundRequested += PlayDamageSound;
+    }
+
+    private void OnHit()
+    {
+        if (!_isBlinking && !_showingHit) _originalColor = _spriteRenderer.color;
+        _hitUntil = Time.time + 0.13f;
+        _showingHit = true;
+        ApplyColor(new Color(1f, 0.4f, 0.4f));
+    }
+
+    private void PlayDamageSound(bool poisonTick)
+    {
+        AudioClip clip = poisonTick ? _poisonTickSound : _hitSound;
+        float volume = poisonTick ? _poisonTickVolume : _hitVolume;
+        var listener = _stats.NetworkManager?.LocalClient?.PlayerObject;
+        if (listener == null || clip == null || SoundManager.Inst == null) return;
+        float gain = Mathf.Clamp01(1f - Vector2.Distance(listener.transform.position, transform.position) / 20f);
+        if (gain > 0f) SoundManager.Inst.PlaySfx(clip, gain * volume);
+    }
 
     private void Awake()
     {
@@ -30,6 +60,13 @@ public sealed class PlayerPoisonBlink : MonoBehaviour
 
     private void Update()
     {
+        if (_showingHit)
+        {
+            if (_stats.IsAlive && Time.time < _hitUntil) return;
+            _showingHit = false;
+            ApplyColor(_originalColor);
+            _isPurple = false;
+        }
         if (_stats == null || _spriteRenderer == null || !_stats.IsAlive ||
             (!_stats.IsPoisoned && !_stats.IsBossPoisoned))
         {
@@ -84,6 +121,10 @@ public sealed class PlayerPoisonBlink : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_stats != null) _stats.Damaged -= OnHit;
+        if (_stats != null) _stats.DamageSoundRequested -= PlayDamageSound;
+        if (_showingHit && _spriteRenderer != null) ApplyColor(_originalColor);
+        _showingHit = false;
         StopBlinking();
     }
 }

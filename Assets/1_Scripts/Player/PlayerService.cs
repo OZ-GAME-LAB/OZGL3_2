@@ -8,15 +8,25 @@ public class PlayerService
 
     public bool HealOnPlayerSelf(float value)
     {
-
-        if (!NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent<PlayerNetworkStats>(out var stats))
-        {
+        if (!TryGetLocalPlayerStats(out PlayerNetworkStats stats))
             return false;
-        }
 
-        stats.HealOnServer(value);
-        Debug.Log($"{value}만큼 회복됨");
-        return true;
+        return stats.HealOnServer(value);
+    }
+
+    public bool RequestUseConsumable(string itemId, System.Action<bool> onCompleted)
+    {
+        return TryGetLocalPlayerStats(out PlayerNetworkStats stats)
+            && stats.RequestUseConsumable(itemId, onCompleted);
+    }
+
+    private bool TryGetLocalPlayerStats(out PlayerNetworkStats stats)
+    {
+        stats = null;
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager != null && manager.IsListening && manager.LocalClient != null
+            && manager.LocalClient.PlayerObject != null
+            && manager.LocalClient.PlayerObject.TryGetComponent(out stats);
     }
 
     public bool SetUIInputAction(bool open)

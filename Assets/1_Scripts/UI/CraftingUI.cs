@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel;
 using TMPro;
 using UnityEngine;
@@ -24,12 +24,14 @@ public class CraftingUI : UIBase
     private readonly List<CraftingSlotUI> _recipeSlots = new List<CraftingSlotUI>();
     private readonly List<CraftingRequiredItemSlotUI> _requiredItemSlots = new List<CraftingRequiredItemSlotUI>();
 
+    private AudioClip _craftSuccessSound;
     private CraftingViewModel _craftingVM;
     public event Action CloseRequested;
     private float _inventoryRefreshTimer;
 
     private void Awake()
     {
+        _craftSuccessSound = Resources.Load<AudioClip>("Audio/CraftSuccess");
         Button_Craft.onClick.AddListener(OnClickCraft);
         Button_Close.onClick.AddListener(OnClickClose);
         Button_BackClose.onClick.AddListener(OnClickClose);
@@ -57,6 +59,7 @@ public class CraftingUI : UIBase
     private void OnDisable()
     {
         UnBindVM();
+        CloseRequested?.Invoke();
         ClearRecipeSlots();
         ClearRequiredItemSlots();
     }
@@ -214,6 +217,8 @@ public class CraftingUI : UIBase
     {
         bool success = ServiceManager.Inst.CraftingService.RequestCraftSelectedItem();
 
+        if (success && SoundManager.Inst != null)
+            SoundManager.Inst.PlaySfx(_craftSuccessSound, 0.3f);
         Debug.Log(success ? "제작 완료!" : "제작할 수 없습니다.");
     }
 

@@ -19,12 +19,15 @@ public sealed partial class ScenarioManager : NetworkBehaviour
     public static ScenarioManager Inst { get; private set; }
     public static event Action AvailabilityChanged;
     public event Action ProgressChanged;
-    public event Action<ulong, ScenarioReply> ReplyReceived;
+    public event Action<ulong, ScenarioReply, string> ReplyReceived;
 
     [Header("요청 대기")]
     [SerializeField, Min(1f)] private float _requestTimeout = 10f;
     public float RequestTimeout => _requestTimeout;
     public bool IsReady { get; private set; }
+    public bool HasPendingWorldProgress { get; private set; }
+
+    public void MarkWorldProgressSaved() => HasPendingWorldProgress = false;
 
     private NetworkList<FixedString128Bytes> _completedIds;
     private readonly ScenarioProgress _progress = new ScenarioProgress();
@@ -56,6 +59,7 @@ public sealed partial class ScenarioManager : NetworkBehaviour
         if (IsServer) _bossPhase.Value = BossEncounterPhase.Ready;
         BossEncounterController.Active?.ResetEncounterSession(this);
         RestTent.Active?.ResetRestSession(this);
+        BossEntrance.Active?.ResetEntrySession(this);
         // 이 매니저는 한 세션에 한 번만 스폰합니다. 같은 세션의 재스폰은 지원하지 않습니다.
         // 호스트 재시작 시 재사용된 씬 객체에도 이전 완료 기록이 남지 않게 합니다.
         // 클라이언트에는 서버에서 받은 스냅샷이 있으므로 목록을 비우면 안 됩니다.
@@ -63,13 +67,28 @@ public sealed partial class ScenarioManager : NetworkBehaviour
             _completedIds.Clear();
         _puzzles.Clear();
         _progress.Clear();
-        for (int i = 0; i < _completedIds.Count; i++)
-            _progress.ApplyCompleted(_completedIds[i].ToString());
+        HasPendingWorldProgress = false;
+        bool loaded = LoadData();
+        if (loaded && IsServer && GameStartSelection.World?.ProgressIds is List<string> ids)
+        {
+            foreach (string id in ids)
+            {
+                if (string.IsNullOrEmpty(id) || !IsValidWorldReference(id) || _progress.IsCompleted(id))
+                    continue;
+                _progress.ApplyCompleted(id);
+                _completedIds.Add(new FixedString128Bytes(id));
+            }
+        }
+        if (!IsServer)
+        {
+            for (int i = 0; i < _completedIds.Count; i++)
+                _progress.ApplyCompleted(_completedIds[i].ToString());
+        }
         _completedIds.OnListChanged += OnCompletedIdsChanged;
         if (IsServer)
             NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
 
-        IsReady = LoadData();
+        IsReady = loaded;
         AvailabilityChanged?.Invoke();
     }
 
@@ -77,6 +96,7 @@ public sealed partial class ScenarioManager : NetworkBehaviour
     {
         BossEncounterController.Active?.ResetEncounterSession(null);
         RestTent.Active?.ResetRestSession(null);
+        BossEntrance.Active?.ResetEntrySession(null);
         _completedIds.OnListChanged -= OnCompletedIdsChanged;
         if (NetworkManager != null)
             NetworkManager.OnClientDisconnectCallback -= OnClientDisconnected;
@@ -129,6 +149,13 @@ public sealed partial class ScenarioManager : NetworkBehaviour
                 (!data.IsDialogue && !data.IsSlidingPuzzle && !data.IsWorldEvent) ||
                 (data.IsDialogue && (string.IsNullOrWhiteSpace(data.DialogueId) || !_dialogues.ContainsKey(data.DialogueId))) ||
                 ((data.IsSlidingPuzzle || data.IsWorldEvent) && (!data.CompleteWorldOnFinish || !string.IsNullOrEmpty(data.DialogueId))) ||
+                (!string.IsNullOrEmpty(data.RequiredPersonalScenarioId) &&
+                    (!_scenarios.TryGetValue(data.RequiredPersonalScenarioId, out ScenarioData prerequisite) ||
+                     !prerequisite.IsDialogue || !prerequisite.PlayOncePerPlayer || prerequisite.CompleteWorldOnFinish)) ||
+                (!string.IsNullOrEmpty(data.AlternativeWorldForPersonalRequirement) &&
+                    (string.IsNullOrEmpty(data.RequiredPersonalScenarioId) ||
+                     !IsValidWorldReference(data.AlternativeWorldForPersonalRequirement))) ||
+                !IsValidWorldReference(data.StartBlockedByCompletedScenarioId) ||
                 !IsValidWorldReference(data.RequiredCompletedScenarioId) ||
                 !IsValidWorldReference(data.BlockedByCompletedScenarioId))
                 return ReportDataError($"시나리오 ID, 대화 또는 공유 사건 참조를 확인해 주세요: {data.Id}");
@@ -165,6 +192,10 @@ public sealed partial class ScenarioManager : NetworkBehaviour
     }
 
     public bool IsCompleted(string id) => _progress.IsCompleted(id);
+    internal bool CanContinue(ScenarioData data) => IsReady && _progress.CanContinue(data);
+    internal bool CanStartForPlayer(ScenarioData data, HashSet<string> personal) =>
+        IsReady && _progress.CanStartForPlayer(data, personal);
+
     public bool CanStart(ScenarioData data) => IsReady && _progress.CanStart(data);
 
     public void RequestStart(string sourceId, ulong requestId)
@@ -202,10 +233,11 @@ public sealed partial class ScenarioManager : NetworkBehaviour
     private void RequestCompleteServerRpc(ulong requestId, ServerRpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
+        string personalId = _progress.GetPendingPersonalId(clientId, requestId);
         string completedWorldId = null;
         bool accepted = IsReady && _progress.TryComplete(clientId, requestId, out completedWorldId);
         // 완료 응답을 먼저 보내 호스트의 로컬 대화도 정상 완료로 정리합니다.
-        SendReply(clientId, requestId, accepted ? ScenarioReply.Completed : ScenarioReply.Rejected);
+        SendReply(clientId, requestId, accepted ? ScenarioReply.Completed : ScenarioReply.Rejected, accepted ? personalId : null);
         if (!accepted)
             return;
 
@@ -220,25 +252,33 @@ public sealed partial class ScenarioManager : NetworkBehaviour
         _progress.Cancel(rpcParams.Receive.SenderClientId, requestId);
     }
 
-    private void SendReply(ulong clientId, ulong requestId, ScenarioReply reply)
+    private void SendReply(ulong clientId, ulong requestId, ScenarioReply reply, string personalId = null)
     {
         ClientRpcParams parameters = new ClientRpcParams
         {
             Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
         };
-        ReceiveReplyClientRpc(requestId, reply, parameters);
+        ReceiveReplyClientRpc(requestId, reply, personalId ?? string.Empty, parameters);
     }
 
     [ClientRpc]
-    private void ReceiveReplyClientRpc(ulong requestId, ScenarioReply reply, ClientRpcParams rpcParams = default)
+    private void ReceiveReplyClientRpc(ulong requestId, ScenarioReply reply, string personalId, ClientRpcParams rpcParams = default)
     {
-        ReplyReceived?.Invoke(requestId, reply);
+        ReplyReceived?.Invoke(requestId, reply, personalId);
     }
 
     private void OnCompletedIdsChanged(NetworkListEvent<FixedString128Bytes> change)
     {
         if (change.Type == NetworkListEvent<FixedString128Bytes>.EventType.Add)
-            _progress.ApplyCompleted(change.Value.ToString());
+        {
+            string id = change.Value.ToString();
+            _progress.ApplyCompleted(id);
+            if (IsServer && GameStartSelection.World?.ProgressIds is List<string> ids && !ids.Contains(id))
+            {
+                ids.Add(id);
+                HasPendingWorldProgress = true;
+            }
+        }
         if (IsServer)
             _puzzles.PruneUnavailable();
         ProgressChanged?.Invoke();

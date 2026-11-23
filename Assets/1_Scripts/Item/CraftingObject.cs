@@ -3,6 +3,14 @@ using UnityEngine;
 
 public class CraftingObject : InteractableObject
 {
+    [Header("거점 제작 NPC")]
+    [SerializeField] private string _workshopProgressId;
+    [SerializeField] private string _welcomeRuneId;
+    public bool IsWorkshopOpen(string progressId) =>
+        !string.IsNullOrEmpty(progressId) && !string.IsNullOrEmpty(_workshopProgressId) &&
+        _sessionActive && isActiveAndEnabled && _craftingUI != null && _craftingUI.isActiveAndEnabled &&
+        ScenarioManager.Inst != null && ScenarioManager.Inst.IsReady &&
+        ScenarioManager.Inst.IsCompleted(_workshopProgressId) && ScenarioManager.Inst.IsCompleted(progressId);
     private readonly InteractionCraftingVM _viewModel = new InteractionCraftingVM();
 
     public override InteractionVMBase ViewModel => _viewModel;
@@ -63,11 +71,25 @@ public class CraftingObject : InteractableObject
         _openUI = ui;
 
         _craftingUI.CloseRequested += OnCloseRequested;
+        if (IsWorkshopOpen(_workshopProgressId))
+        {
+            ServiceManager.Inst.CraftingService.SetWorkshop(this);
+            if (!string.IsNullOrEmpty(_welcomeRuneId))
+                ServiceManager.Inst.InventoryService.TryReceiveStoryRune(_welcomeRuneId);
+        }
+    }
+
+    protected override void OnDisable()
+    {
+        if (_sessionActive) CloseContent();
+        base.OnDisable();
     }
 
     private void OnCloseRequested()
     {
+        if (!_sessionActive) return;
         RequestInteractionEnd();
+        if (_sessionActive) CloseContent();
     }
 
     public override void CancelInteraction()
@@ -78,6 +100,7 @@ public class CraftingObject : InteractableObject
     public override void CloseContent()
     {
         _sessionActive = false;
+        ServiceManager.Inst?.CraftingService?.ClearWorkshop(this);
         _openVersion++;
 
         if (_craftingUI == null)
@@ -87,7 +110,7 @@ public class CraftingObject : InteractableObject
 
         _craftingUI.CloseRequested -= OnCloseRequested;
 
-        if (UIManager.Inst != null)
+        if (UIManager.Inst != null && _craftingUI.gameObject.activeSelf)
         {
             UIManager.Inst.CloseCraftingUI();
         }

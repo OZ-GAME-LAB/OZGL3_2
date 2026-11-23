@@ -14,13 +14,14 @@ public partial class PlayerControllerView
     public PlayerMovementAnimationState CaptureMovementAnimation(uint lifeVersion, bool alive)
     {
         if (!alive || IsMovementControlLocked || !isActiveAndEnabled)
-            return PlayerMovementAnimationState.Neutral(lifeVersion, _movementJumpSequence);
+            return PlayerMovementAnimationState.Neutral(lifeVersion, _movementJumpSequence, _lookRight);
         bool clinging = _wallCling != null && _wallCling.IsClinging;
         return new PlayerMovementAnimationState
         {
             HasSample = true,
             LifeVersion = lifeVersion,
             JumpSequence = _movementJumpSequence,
+            FacingRight = _lookRight,
             Moving = IsMovingForAnimation,
             Grounded = _movementGrounded && !clinging,
             Crouching = _isCrouching && !_isSpectatorMode,
@@ -48,9 +49,10 @@ public partial class PlayerControllerView
     public void ApplyRemoteMovementPresentation(PlayerMovementAnimationState state, bool valid,
         PlayerAttackState attack, PlayerResourceAnimationState resource, double now)
     {
-        if (!UsesRemoteMovementPresentation || _animationPresenter == null) return;
+        if (!UsesRemoteMovementPresentation) return;
         int facing = valid && resource.PlaysAnimation ? resource.FacingDirection :
-            valid && attack.Step != 0 ? attack.Direction : 0;
+            valid && attack.Step != 0 ? attack.Direction :
+            valid ? (state.FacingRight ? 1 : -1) : 0;
         if (facing != 0)
         {
             _lookRight = facing > 0;
@@ -58,6 +60,7 @@ public partial class PlayerControllerView
             scale.x = Mathf.Abs(scale.x) * (facing > 0 ? 1f : -1f);
             transform.localScale = scale;
         }
+        if (_animationPresenter == null) return;
         bool hasGeometry = _crouchCollider != null;
         float bodyRightEdge = hasGeometry ? _crouchCollider.offset.x + _crouchCollider.size.x * 0.5f : 0f;
         _animationPresenter.UpdateRemoteMovement(state, valid, attack, resource, now,

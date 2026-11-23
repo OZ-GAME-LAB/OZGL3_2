@@ -1232,6 +1232,8 @@ MonoBehaviour:
   _closeButton: {fileID: 9010944394607316519}
   _gap: 4
   _moveDuration: 0.15
+  _moveSound: {fileID: 8300000, guid: 63d3eeb5405851158abd350335a811fd, type: 3}
+  _moveVolume: 0.18
 --- !u!1 &8165281256049996048
 GameObject:
   m_ObjectHideFlags: 0

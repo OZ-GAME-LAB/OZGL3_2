@@ -102,7 +102,6 @@ public class ItemData : GameDataBase
     public int Price;
     public int SellingPrice;
     public string IconPath;
-    public string PrefabPath;
 }
 
 [Serializable]
@@ -148,6 +147,8 @@ public class EffectData : GameDataBase
 [Serializable]
 public class CraftingRecipeData : GameDataBase
 {
+    public string RequiredWorkshopProgressId;
+    public string FirstCraftSupportId;
     public string Item_Id;
     public string[] RequiredMaterialId;
     public int[] RequiredMaterialQuantity;
@@ -206,6 +207,8 @@ public class MonsterData : GameDataBase
     public bool IsMandatoryDropItem;
     public string MandatoryDropGroupId;
     public string ProbabilityDropGroupId;
+    public string BonusDropGroupId;
+    public float BonusDropChance;
     public string MonsterAddressableId;
 }
 

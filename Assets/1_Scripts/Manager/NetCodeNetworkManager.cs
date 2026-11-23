@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using Unity.Netcode;
 using System.Net;
@@ -492,15 +492,7 @@ public class NetCodeNetworkManager : MonoBehaviour
 
             if (_netCodeNetworkManager.IsHost)
             {
-                WorldSaveData world = GameStartSelection.World;
-
-                if (world == null)
-                {
-                    Debug.LogError("저장할 호스트 월드가 없습니다.", this);
-                    return false;
-                }
-
-                if (saves.SaveWorld(world, out error) == false)
+                if (!_sessionSaveService.TrySaveHostWorld(out error))
                 {
                     Debug.LogError(error, this);
                     return false;
@@ -509,11 +501,21 @@ public class NetCodeNetworkManager : MonoBehaviour
 
             // 로비 UI를 열 수 없는 경우에는 연결을 끊지 않는다.
             // 현재 설정창은 Popup Root에 있어 로비보다 앞에 남는다.
+            bool lobbyAlreadyOpen = ui.IsOpen(UIType.LobbyUI);
             LobbyUI lobby = await ui.OpenLobbyUIAsync();
 
             if (lobby == null)
             {
                 Debug.LogError("로비 UI를 열지 못했습니다.", this);
+                return false;
+            }
+
+            if (_netCodeNetworkManager.IsHost && ScenarioManager.Inst != null &&
+                ScenarioManager.Inst.HasPendingWorldProgress && !_sessionSaveService.TrySaveHostWorld(out error))
+            {
+                if (!lobbyAlreadyOpen)
+                    ui.CloseLobbyUI();
+                Debug.LogError(error, this);
                 return false;
             }
 
@@ -532,6 +534,7 @@ public class NetCodeNetworkManager : MonoBehaviour
             GameStartSelection.Clear();
 
             ui.CloseSessionWindows();
+            lobby.PlayLobbyMusic();
 
             return true;
         }

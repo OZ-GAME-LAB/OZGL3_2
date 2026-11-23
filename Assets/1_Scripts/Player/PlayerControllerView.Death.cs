@@ -8,7 +8,24 @@ public partial class PlayerControllerView
     private bool _deathWasSimulated;
     public bool IsDeathControlLocked => _deathControlLocked;
     // 화면 전환은 이동을 허용하지만 공격·상호작용·메뉴는 계속 막습니다.
-    private bool IsMovementControlLocked => IsDeathControlLocked || IsEncounterControlLocked || _restControlLocked;
+    private PuzzleDoorShot _doorShot;
+    internal bool IsWatchingDoor => _doorShot != null;
+    internal bool CanWatchDoor => isActiveAndEnabled && _networkObject != null && _networkObject.IsSpawned &&
+        _networkObject.IsOwner && !IsDeathControlLocked && !IsEncounterControlLocked && !_restControlLocked &&
+        !_bossEntryWaiting && !_isSpectatorMode && !IsScreenTransitioning;
+
+    internal void BeginDoorShot(PuzzleDoorShot shot)
+    {
+        _doorShot = shot;
+        SetMoveInput(0f);
+    }
+
+    internal void EndDoorShot(PuzzleDoorShot shot)
+    {
+        if (_doorShot == shot) _doorShot = null;
+    }
+
+    private bool IsMovementControlLocked => _doorShot != null || IsDeathControlLocked || IsEncounterControlLocked || _restControlLocked || _bossEntryWaiting;
     private bool IsGameplayControlLocked => IsMovementControlLocked || IsScreenTransitioning;
     public bool CanPlaceForRespawn => _rigidbody2D != null && _groundCheck != null &&
         _networkObject != null && _networkObject.IsSpawned;
@@ -57,6 +74,15 @@ public partial class PlayerControllerView
                 !IsEncounterControlLocked && !_isMiniGameMode && !_isDialogueMode)
             {
                 _playerInput.SwitchCurrentActionMap("Player");
+                _playerInput.ActivateInput();
+            }
+            else if (_playerInput != null && _playerInput.isActiveAndEnabled &&
+                _networkObject != null && _networkObject.IsSpawned && _networkObject.IsOwner &&
+                _encounterLocalLocked && !_encounterConfirmationInput && !_isMiniGameMode && !_isDialogueMode &&
+                _playerInput.currentActionMap?.name == "UI")
+            {
+                // 부활 직전 사망 UI가 소유하던 입력을 진행 중인 연출에 돌려줍니다.
+                _playerInput.SwitchCurrentActionMap("MiniGame");
                 _playerInput.ActivateInput();
             }
         }

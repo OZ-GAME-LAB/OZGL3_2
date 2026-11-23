@@ -24,7 +24,12 @@ public class LobbyUI : UIBase
     private void OnEnable()
     {
         RefreshButtons();
+        if (NetCodeNetworkManager.Inst == null || !NetCodeNetworkManager.Inst.IsReturningToLobby)
+            PlayLobbyMusic();
+    }
 
+    public void PlayLobbyMusic()
+    {
         if (_lobbyBgm != null && SoundManager.Inst != null)
         {
             SoundManager.Inst.PlayBgm(_lobbyBgm);

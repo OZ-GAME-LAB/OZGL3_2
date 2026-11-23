@@ -3,7 +3,7 @@ using UnityEngine;
 
 public enum BossEncounterPhase : byte
 {
-    Ready, Prompt, Fading, Moving, Framing, Intro, Releasing, Fighting, Completed, Recovering, Cancelled
+    Ready, Waiting, Fading, Moving, Framing, Intro, Releasing, Fighting, Completed, Recovering, DefeatFraming, DefeatSinking
 }
 
 public sealed partial class ScenarioManager
@@ -22,29 +22,11 @@ public sealed partial class ScenarioManager
         if (IsServer && IsSpawned) _bossPhase.Value = phase;
     }
 
-    public void RequestBossPrompt()
-    {
-        if (IsSpawned && IsClient) RequestBossPromptServerRpc();
-    }
-    public void ChooseBossEntry(uint run, bool enter)
-    {
-        if (IsSpawned && IsClient) ChooseBossEntryServerRpc(run, enter);
-    }
     public void AcknowledgeBossStep(uint run, BossEncounterPhase phase, bool success)
     {
         if (IsSpawned && IsClient) AcknowledgeBossStepServerRpc(run, phase, success);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestBossPromptServerRpc(ServerRpcParams rpc = default)
-    {
-        if (IsReady) BossEncounterController.Active?.RequestPromptOnServer(rpc.Receive.SenderClientId);
-    }
-    [ServerRpc(RequireOwnership = false)]
-    private void ChooseBossEntryServerRpc(uint run, bool enter, ServerRpcParams rpc = default)
-    {
-        if (IsReady) BossEncounterController.Active?.ChooseOnServer(rpc.Receive.SenderClientId, run, enter);
-    }
     [ServerRpc(RequireOwnership = false)]
     private void AcknowledgeBossStepServerRpc(uint run, BossEncounterPhase phase, bool success, ServerRpcParams rpc = default)
     {

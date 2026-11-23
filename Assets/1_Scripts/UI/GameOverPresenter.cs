@@ -13,6 +13,7 @@ public sealed class GameOverPresenter : IDisposable
     private GameOverUI _ui;
     private bool _dead;
     private bool _disposed;
+    private bool _suppressed;
 
     public GameOverPresenter(PlayerNetworkStats stats, PlayerControllerView view)
     {
@@ -35,6 +36,20 @@ public sealed class GameOverPresenter : IDisposable
         if (_dead) return;
         _dead = true;
         _view?.SetDeathControlLocked(true);
+        if (!_suppressed) StartOpening();
+    }
+
+    public void SetSuppressed(bool suppressed)
+    {
+        if (_disposed || _suppressed == suppressed) return;
+        _suppressed = suppressed;
+        if (suppressed) ReleaseUI();
+        else if (_dead && _stats.IsSpawned && !_stats.IsAlive &&
+            _stats.NetworkManager != null && _stats.NetworkManager.IsListening) StartOpening();
+    }
+
+    private void StartOpening()
+    {
         _opening = new CancellationTokenSource();
         OpenAsync(_opening.Token).Forget();
     }
@@ -59,7 +74,7 @@ public sealed class GameOverPresenter : IDisposable
             _manager = UIManager.Inst;
             if (_manager == null) throw new InvalidOperationException("Game Over 화면에 UIManager가 필요합니다.");
             GameOverUI ui = await _manager.OpenGameOverUIAsync(token);
-            if (_disposed || token.IsCancellationRequested || !_dead) return;
+            if (_disposed || token.IsCancellationRequested || !_dead || _suppressed) return;
             if (ui == null) throw new InvalidOperationException("UI/GameOverUI 프리팹을 불러오지 못했습니다.");
             _ui = ui;
             _ui.transform.SetAsLastSibling();
@@ -75,7 +90,7 @@ public sealed class GameOverPresenter : IDisposable
 
     private void OnRespawnRequested()
     {
-        if (_disposed || !_dead || _stats.IsRespawning) return;
+        if (_disposed || _suppressed || !_dead || _stats.IsRespawning) return;
         _ui?.SetState(true);
         if (!_stats.RequestRespawn())
         {

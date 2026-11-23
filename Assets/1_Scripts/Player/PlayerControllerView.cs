@@ -40,6 +40,10 @@ public partial class PlayerControllerView : MonoBehaviour
     private bool _wasGroundedForAnimation = true;
     private PlayerAnimationPresenter _animationPresenter;
     private PlayerFootstepSound _footstepSound;
+    private PlayerActionSound _actionSound;
+    public bool CanPlayActionSound => isActiveAndEnabled && _networkObject != null &&
+        _networkObject.IsSpawned && _networkObject.IsOwner && !_isSpectatorMode &&
+        !IsGameplayControlLocked && _playerStatViewModel != null && _playerStatViewModel.CurHp > 0f;
     private bool _footstepGrounded;
     private float _footstepHorizontalSpeed;
     private bool _wasAttackLocked;
@@ -169,6 +173,7 @@ public partial class PlayerControllerView : MonoBehaviour
         TryGetComponent(out _networkObject);
         TryGetComponent(out _movementNetwork);
         TryGetComponent(out _footstepSound);
+        TryGetComponent(out _actionSound);
 
         if (_runeAttackController == null)
         {
@@ -341,6 +346,8 @@ public partial class PlayerControllerView : MonoBehaviour
         {
             UpdateMouseAttackBlocking();
         }
+
+        HandleQuickSlotInput();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         HandleDeveloperInvincibilityInput();
@@ -1138,6 +1145,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
     private void ResetJumpTracking()
     {
+        _actionSound?.ResetTracking();
         _footstepGrounded = false;
         _footstepHorizontalSpeed = 0f;
         _footstepSound?.ResetTracking();
@@ -1194,6 +1202,16 @@ public partial class PlayerControllerView : MonoBehaviour
             (verticalSpeed <= 0.1f && HasGroundContact());
         // 이동 속도를 쓰기 전의 물리 결과를 이용해 벽에 막힌 입력에서는 재생하지 않습니다.
         _footstepGrounded = rawGrounded;
+        if (_actionSound != null)
+        {
+            if (!CanPlayActionSound || _isMiniGameMode || _loggingAlignmentRequest != 0 ||
+                !_rigidbody2D.simulated)
+                _actionSound.ResetGround();
+            else if (_wallCling != null && _wallCling.IsClinging)
+                _actionSound.SetFallOrigin(_rigidbody2D.position.y);
+            else if (_actionSound.TickGround(rawGrounded, _rigidbody2D.position.y))
+                _footstepSound?.SuppressLandingStep();
+        }
         _footstepHorizontalSpeed = Mathf.Abs(_rigidbody2D.linearVelocity.x);
         bool grounded = ResolveAnimationGrounded(rawGrounded);
         _movementGrounded = grounded;
@@ -1660,6 +1678,15 @@ public partial class PlayerControllerView : MonoBehaviour
         }
         bool ending = _animationPresenter.IsPlayingResource && !state.PlaysAnimation;
         _animationPresenter.UpdateResource(state, now, ending && IsGroundedForAttack());
+        if (_actionSound == null || _interactionController == null) return;
+        if (!CanPlayActionSound || !_animationPresenter.IsPlayingResource)
+        {
+            _actionSound.TickMotion(_animator, default, 0f);
+            return;
+        }
+        // Animator.Play takes effect on the next evaluation, especially for consecutive swings in the same state.
+        if (!_actionSound.ObserveMotionStart(state, _animationPresenter.ResourceEntryNormalized))
+            _actionSound.TickMotion(_animator, state, _interactionController.LoggingImpactNormalized);
     }
 
     private void OnSpecialAttack(InputAction.CallbackContext context)
@@ -1992,6 +2019,11 @@ public partial class PlayerControllerView : MonoBehaviour
         if (!_isMiniGameMode)
             return;
 
+        if (_interactionController?.LockedTarget is SlidingPuzzleInteractable puzzle)
+        {
+            puzzle.RequestUserClose();
+            return;
+        }
         _interactionController?.CancelRequestedInteraction();
     }
 

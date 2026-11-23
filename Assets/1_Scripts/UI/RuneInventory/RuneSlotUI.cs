@@ -4,8 +4,9 @@ using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class RuneSlotUI : UIBase
+public class RuneSlotUI : UIBase, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
 {
     [SerializeField] private Button Button_Select;
     [SerializeField] private Image Image_Icon;
@@ -15,18 +16,22 @@ public class RuneSlotUI : UIBase
     private RuneSlotViewModel _viewModel;
     private Action<RuneSlotViewModel> _onClicked;
     private int _iconVersion;
+    private ItemData _itemData;
+    private RuneDescriptionPopup _descriptionPopup;
+    private PointerEventData _hoverPointer;
 
     private void Awake()
     {
         Button_Select.onClick.AddListener(OnClick);
     }
 
-    public void Bind(RuneSlotViewModel viewModel, Action<RuneSlotViewModel> onClicked)
+    public void Bind(RuneSlotViewModel viewModel, Action<RuneSlotViewModel> onClicked, RuneDescriptionPopup descriptionPopup = null)
     {
         Unbind();
 
         _viewModel = viewModel;
         _onClicked = onClicked;
+        _descriptionPopup = descriptionPopup;
 
         if (_viewModel == null)
         {
@@ -39,6 +44,9 @@ public class RuneSlotUI : UIBase
 
     public void Unbind()
     {
+        EndHover();
+        _descriptionPopup = null;
+        _itemData = null;
         if (_viewModel != null)
         {
             _viewModel.PropertyChanged -= OnPropertyChanged;
@@ -86,6 +94,7 @@ public class RuneSlotUI : UIBase
     {
         int version = ++_iconVersion;
         string runeId = _viewModel.RuneId;
+        _itemData = null;
 
         if (Image_Icon != null)
         {
@@ -100,10 +109,13 @@ public class RuneSlotUI : UIBase
 
         if (string.IsNullOrEmpty(runeId) || DataManager.Inst == null)
         {
+            RefreshDescription();
             return;
         }
 
         ItemData data = DataManager.Inst.GetData<ItemData>(runeId);
+        _itemData = data;
+        RefreshDescription();
 
         if (Text_Name != null)
         {
@@ -143,6 +155,36 @@ public class RuneSlotUI : UIBase
             _onClicked?.Invoke(_viewModel);
         }
     }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        _hoverPointer = eventData;
+        RefreshDescription();
+    }
+
+    public void OnPointerMove(PointerEventData eventData)
+    {
+        if (_hoverPointer == null) return;
+        _hoverPointer = eventData;
+        _descriptionPopup?.Move(this, eventData);
+    }
+
+    public void OnPointerExit(PointerEventData eventData) { EndHover(); }
+
+    private void RefreshDescription()
+    {
+        if (_descriptionPopup == null) return;
+        if (_hoverPointer != null && _itemData != null) _descriptionPopup.Show(this, _itemData, _hoverPointer);
+        else _descriptionPopup.Hide(this);
+    }
+
+    private void EndHover()
+    {
+        _hoverPointer = null;
+        _descriptionPopup?.Hide(this);
+    }
+
+    private void OnDisable() { EndHover(); }
 
     private void OnDestroy()
     {

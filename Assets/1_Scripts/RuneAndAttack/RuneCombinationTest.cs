@@ -3,6 +3,7 @@
 public class RuneCombinationTest : MonoBehaviour
 {
     [SerializeField] private string[] _runeIds;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/룬 조합 계산")]
 
     private void TestCombination()
@@ -56,4 +57,5 @@ public class RuneCombinationTest : MonoBehaviour
             $"적중 상태이상: {string.Join(", ", profile._onHitStatusProfileIdList)}",
             this);
     }
+#endif
 }

@@ -5,6 +5,7 @@ public class RuneInventoryUITest : MonoBehaviour
 {
     private bool _opening;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [ContextMenu("테스트/내 룬 UI 열기")]
     private void Open()
     {
@@ -54,4 +55,5 @@ public class RuneInventoryUITest : MonoBehaviour
             _opening = false;
         }
     }
+#endif
 }

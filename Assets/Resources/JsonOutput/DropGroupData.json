@@ -15,8 +15,8 @@
     "ItemId": [
       "mat_slime_lump"
     ],
-    "MinQuantity": null,
-    "MaxQuantity": null,
+    "MinQuantity": 1,
+    "MaxQuantity": 1,
     "DropChance": [
       1
     ]
@@ -26,8 +26,8 @@
     "ItemId": [
       "mat_monster_02"
     ],
-    "MinQuantity": null,
-    "MaxQuantity": null,
+    "MinQuantity": 1,
+    "MaxQuantity": 1,
     "DropChance": [
       1
     ]
@@ -37,8 +37,8 @@
     "ItemId": [
       "mat_monster_03"
     ],
-    "MinQuantity": null,
-    "MaxQuantity": null,
+    "MinQuantity": 1,
+    "MaxQuantity": 1,
     "DropChance": [
       1
     ]
@@ -90,6 +90,17 @@
     ]
   },
   {
+    "Id": "drop_berry_rare_blue",
+    "ItemId": [
+      "con_berry_02"
+    ],
+    "MinQuantity": 1,
+    "MaxQuantity": 1,
+    "DropChance": [
+      1
+    ]
+  },
+  {
     "Id": "drop_mining_01",
     "ItemId": [
       "mat_ore_01",
@@ -100,6 +111,35 @@
     "DropChance": [
       0.5,
       0.5
+    ]
+  },
+  {
+    "Id": "drop_field_rune",
+    "ItemId": [
+      "rune_triple",
+      "rune_projectile",
+      "rune_heavy",
+      "rune_fire",
+      "rune_ice",
+      "rune_lightning",
+      "rune_bear",
+      "rune_snake",
+      "rune_mosquito",
+      "rune_bat"
+    ],
+    "MinQuantity": 1,
+    "MaxQuantity": 1,
+    "DropChance": [
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1,
+      0.1
     ]
   }
 ]

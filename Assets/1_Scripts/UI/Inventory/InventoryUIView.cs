@@ -1,4 +1,4 @@
-﻿using ObservableCollections;
+using ObservableCollections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using TMPro;
@@ -139,7 +139,6 @@ public class InventoryUIView : UIBase
         if (_InventoryUIViewModel?.InventoryItemViewModelDictionary != null)
         {
             EnsureSlots();
-            _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged += OnInventoryChanged;
             _InventoryUIViewModel.PropertyChanged += OnPropertyChanged;
         }
 
@@ -151,27 +150,23 @@ public class InventoryUIView : UIBase
     {
         if (_InventoryUIViewModel != null)
         {
-            if (_InventoryUIViewModel.InventoryItemViewModelDictionary != null)
-            {
-                _InventoryUIViewModel.InventoryItemViewModelDictionary.CollectionChanged
-                    -= OnInventoryChanged;
-            }
+
 
             _InventoryUIViewModel.PropertyChanged -= OnPropertyChanged;
         }
 
     }
 
-    private void OnInventoryChanged(in NotifyCollectionChangedEventArgs<KeyValuePair<string, InventoryItemViewModel>> e)
-    {
-        CloseItemPopup();
-        RefreshSlots();
-    }
+
 
     private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
         {
+            case nameof(InventoryUIViewModel.InventoryItemViewModelDictionary):
+                CloseItemPopup();
+                RefreshSlots();
+                break;
             case nameof(InventoryUIViewModel.TalismanItemViewModel):
             case nameof(InventoryUIViewModel.FishingItemViewModel):
             case nameof(InventoryUIViewModel.LoggingItemViewModel):
@@ -271,30 +266,36 @@ public class InventoryUIView : UIBase
 
         _ItemUseButton.gameObject.SetActive(false);
         _ItemAddQuickSlotButton.gameObject.SetActive(false);
-        // 아이템 타입에 따른 사용 버튼 텍스트 설정
-
-        switch (item.ItemType)
+        InventoryService inventory = ServiceManager.Inst.InventoryService;
+        if (item.ItemType == nameof(ItemType.Equipment))
         {
-            case nameof(ItemType.Equipment):
-                _ItemUseButton.gameObject.SetActive(true);
-
-                bool isEquipped =
-                    ServiceManager.Inst.InventoryService.IsEquippedItem(item);
-
-                _ItemUseText.text = isEquipped ? "장비 해제" : "장비 장착";
-                break;
-
-            case nameof(ItemType.Consumable):
-                _ItemUseButton.gameObject.SetActive(true);
-                _ItemUseText.text = "아이템 사용";
-
-                //_ItemAddQuickSlotButton.gameObject.SetActive(true);
-                //_ItemAddQuickSlotText.text = "아이템 퀵슬롯 등록";
-
-                break;
+            _ItemUseButton.gameObject.SetActive(true);
+            _ItemUseText.text = inventory.IsEquippedItem(item) ? "장비 해제" : "장비 장착";
+        }
+        else if (inventory.CanUseItem(item))
+        {
+            // 재료도 소비 효과 데이터가 있으면 사용할 수 있습니다.
+            _ItemUseButton.gameObject.SetActive(true);
+            _ItemUseText.text = "아이템 사용";
         }
 
+        if (item.ItemType == nameof(ItemType.Consumable))
+        {
+            _ItemAddQuickSlotButton.gameObject.SetActive(true);
+            _ItemUseButton.gameObject.SetActive(true);
+            _ItemUseText.text = "사용";
+            int registeredIndex = inventory.GetQuickSlotIndex(item.Id);
+            bool canRegister = inventory.CanRegisterQuickSlot(item);
+            _ItemAddQuickSlotButton.interactable = canRegister;
+            _ItemAddQuickSlotText.text = registeredIndex >= 0
+                ? $"등록됨 ({registeredIndex + 1})"
+                : canRegister ? "퀵슬롯" : "등록 불가";
+        }
+
+        _ItemUseButton.interactable = item.ItemType == nameof(ItemType.Equipment)
+            || inventory.CanUseItem(item);
         _ItemRemoveText.text = "아이템 제거";
+        _ItemRemoveButton.interactable = !inventory.IsEquippedItem(item);
 
         _itemPopupUI.SetActive(true);
 
@@ -402,10 +403,10 @@ public class InventoryUIView : UIBase
             return;
         }
 
-        inventory.UseItem(item);
+        if (!inventory.RequestUseItem(item))
+            return;
 
         CloseItemPopup();
-        RemoveItemRequest(item);
     }
 
     // 아이템 퀵슬롯 등록 버튼
@@ -414,6 +415,8 @@ public class InventoryUIView : UIBase
         if (_selectedItem == null)
             return;
 
+        if (ServiceManager.Inst.InventoryService.TryRegisterQuickSlot(_selectedItem))
+            CloseItemPopup();
     }
 
     // 아이템 제거 버튼
@@ -424,18 +427,16 @@ public class InventoryUIView : UIBase
 
         InventoryItemViewModel item = _selectedItem;
 
-        CloseItemPopup();
-        DropItemRequest(item);
-        RemoveItemRequest(item);
-    }
+        InventoryService inventory = ServiceManager.Inst.InventoryService;
+        if (inventory.IsEquippedItem(item) || !inventory.DropItem(item.Id))
+            return;
 
-    private void DropItemRequest(InventoryItemViewModel item)
-    {
-        ServiceManager.Inst.InventoryService.DropItem(item.Id);
+        inventory.RemoveItem(item);
+        CloseItemPopup();
     }
     private void RemoveItemRequest(InventoryItemViewModel item)
     {
-        ServiceManager.Inst.InventoryService.RemoveItem(item.Id);
+        ServiceManager.Inst.InventoryService.RemoveItem(item);
     }
 
     private void OnDestroy()

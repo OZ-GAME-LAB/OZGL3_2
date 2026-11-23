@@ -27,6 +27,24 @@ public static class DropRewardUtil
             return;
 
         SpawnItemsOnServer(selectedItems, playerCount, position, context);
+
+        if (string.IsNullOrEmpty(data.BonusDropGroupId) || data.BonusDropChance <= 0f)
+            return;
+
+        if (float.IsNaN(data.BonusDropChance) || data.BonusDropChance > 1f)
+        {
+            Debug.LogError($"몬스터 추가 드롭 확률을 확인해 주세요: {data.Id}", context);
+            return;
+        }
+        if (data.BonusDropChance < 1f && Random.value >= data.BonusDropChance)
+            return;
+
+        if (TryGetRewardGroup(data.BonusDropGroupId, false, out DropGroupData bonus, context))
+        {
+            selectedItems.Clear();
+            selectedItems.Add(SelectRewardItem(bonus, 1f));
+            SpawnItemsOnServer(selectedItems, 1, position, context);
+        }
     }
 
     public static void SpawnItemsOnServer(IReadOnlyList<string> selectedItems, int playerCount, Vector3 position, Object context = null)
