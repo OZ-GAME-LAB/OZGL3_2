@@ -359,7 +359,7 @@ public partial class InventoryService
 
             case EquipmentSlot.Talisman:
                 inventory.TalismanItemViewModel = item;
-                CheckTalismanEffectType(inventory.TalismanItemViewModel,true);
+                SyncEquippedTalisman();
                 break;
         }
 
@@ -392,8 +392,8 @@ public partial class InventoryService
         switch (slot)
         {
             case EquipmentSlot.Talisman:
-                CheckTalismanEffectType(inventory.TalismanItemViewModel, false);
                 inventory.TalismanItemViewModel = new InventoryItemViewModel();
+                SyncEquippedTalisman();
                 break;
 
             case EquipmentSlot.FishingRod:
@@ -487,34 +487,6 @@ public partial class InventoryService
             || ReferenceEquals(inventory.LoggingItemViewModel, item)
             || ReferenceEquals(inventory.MiningItemViewModel, item);
     }
-
-    private bool CheckTalismanEffectType(InventoryItemViewModel item, bool isEquipment)
-    {
-        if (!DataManager.Inst.ReadData<EquipmentData>().TryGetValue(item.Id, out var equipmentData))
-        {
-            return false;
-        }
-
-
-        switch (equipmentData.EquipmentEffectType)
-        {
-            case EquipmentEffectType.None:
-                break;
-            case EquipmentEffectType.InstantHeal:
-                break;
-            case EquipmentEffectType.StatusDamage:
-                break;
-            case EquipmentEffectType.ReducePoisonDamageTaken:
-                ServiceManager.Inst.PlayerService.SetPlayerPoisonProtectionAmulet(isEquipment);
-                break;
-
-            default:
-                return false;
-
-        }
-        return true;
-    }
-
 
     //인벤토리 아이템들을 반환하는 메서드 추가
     public IEnumerable<InventoryItemViewModel> GetInventoryItems()
@@ -836,20 +808,9 @@ public partial class InventoryService
             || slot == EquipmentSlot.PickAxe;
     }
 
-    // 로컬 플레이어가 생성되고 PlayerService 연결이 끝난 뒤 호출.
-    public void ReapplyEquipmentEffectsAfterLoad()
+    public void SyncEquippedTalisman()
     {
-        var inventory = GetInvantoryViewModel();
-
-        // 이전 캐릭터의 부적 효과가 남지 않도록 해제 후 재적용.
-        ServiceManager.Inst.PlayerService .SetPlayerPoisonProtectionAmulet(false);
-
-        InventoryItemViewModel talisman = inventory.TalismanItemViewModel;
-
-        if (talisman != null && !string.IsNullOrWhiteSpace(talisman.Id))
-        {
-            CheckTalismanEffectType(talisman, true);
-        }
+        ServiceManager.Inst.PlayerService.SyncEquippedTalisman(GetEquipmentItemId(EquipmentSlot.Talisman));
     }
 
 }

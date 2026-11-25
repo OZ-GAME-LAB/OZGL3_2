@@ -66,6 +66,25 @@ public partial class PlayerNetworkStats : NetworkUnit
     public float Hp => CurrentHp;
     public float BaseAttackInterval => _baseAttackInterval.Value;
 
+    public void RequestSyncEquippedTalisman(string itemId)
+    {
+        if (IsSpawned && IsClient && IsOwner)
+            SyncEquippedTalismanServerRpc(itemId ?? string.Empty);
+    }
+
+    [ServerRpc]
+    private void SyncEquippedTalismanServerRpc(string itemId, ServerRpcParams rpcParams = default)
+    {
+        if (!IsServer || !IsSpawned || rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        bool protects = !string.IsNullOrEmpty(itemId) && DataManager.Inst != null &&
+            DataManager.Inst.ReadData<EquipmentData>().TryGetValue(itemId, out var equipment) &&
+            equipment.EquipmentSlot == EquipmentSlot.Talisman &&
+            equipment.EquipmentEffectType == EquipmentEffectType.ReducePoisonDamageTaken;
+        SetPoisonProtectionAmuletOnServer(protects);
+    }
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private bool _developerInvincible;
 #endif

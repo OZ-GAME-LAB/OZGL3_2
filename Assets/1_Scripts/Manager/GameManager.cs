@@ -162,6 +162,7 @@ public class GameManager : MonoBehaviour
         }
 
         runeEquipment.RequestRestoreRunes(character.EquippedRuneIds);
+        ServiceManager.Inst.InventoryService.SyncEquippedTalisman();
 
         // LocalClient.PlayerObject이므로 본인 플레이어만 활성화합니다.
         _connectedLocalPlayer = playerObject;
