@@ -27,14 +27,6 @@ public class NetworkCraftingService
         (string.IsNullOrEmpty(recipe.RequiredWorkshopProgressId) ||
          (_workshop != null && _workshop.IsWorkshopOpen(recipe.RequiredWorkshopProgressId)));
 
-    private string GetSupportId(CraftingRecipeData recipe)
-    {
-        var progress = GameStartSelection.Character?.ProgressIds;
-        return IsAvailable(recipe) && !string.IsNullOrEmpty(recipe.RequiredWorkshopProgressId) &&
-            !string.IsNullOrEmpty(recipe.FirstCraftSupportId) && progress != null &&
-            !progress.Contains(recipe.FirstCraftSupportId) ? recipe.FirstCraftSupportId : null;
-    }
-
     public CraftingViewModel GetCraftingViewModel()
     {
         if (_craftingViewModel == null)
@@ -130,12 +122,10 @@ public class NetworkCraftingService
         var selected = _craftingViewModel.SelectedRecipe;
         var recipe = selected == null ? null : DataManager.Inst.GetData<CraftingRecipeData>(selected.RecipeDataId);
         bool canCraft = IsAvailable(recipe);
-        bool supported = GetSupportId(recipe) != null;
 
         foreach (var materialVm in _craftingViewModel.RequiredItemList)
         {
             materialVm.OwnedCount = GetOwnedMaterialCount(materialVm.ItemDataId);
-            materialVm.IsSupplied = supported;
 
             if (materialVm.IsEnough == false)
             {
@@ -171,7 +161,7 @@ public class NetworkCraftingService
         }
 
         InventoryService inventory = ServiceManager.Inst.InventoryService;
-        bool crafted = inventory.TryCraft(materials, DataManager.Inst.GetData<ItemData>(recipe.Item_Id), GetSupportId(recipe));
+        bool crafted = inventory.TryCraft(materials, DataManager.Inst.GetData<ItemData>(recipe.Item_Id));
         RefreshInventoryState();
         return crafted;
     }

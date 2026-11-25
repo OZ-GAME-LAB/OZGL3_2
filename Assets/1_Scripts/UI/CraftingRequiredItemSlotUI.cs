@@ -44,7 +44,6 @@ public class CraftingRequiredItemSlotUI : UIBase
 
             case nameof(CraftingRequiredItemSlotViewModel.RequiredCount):
             case nameof(CraftingRequiredItemSlotViewModel.OwnedCount):
-            case nameof(CraftingRequiredItemSlotViewModel.IsSupplied):
                 RefreshCount();
                 break;
 
@@ -98,9 +97,7 @@ public class CraftingRequiredItemSlotUI : UIBase
 
     private void RefreshCount()
     {
-        Text_Count.text = _slotVM.IsSupplied
-            ? $"가방 {_slotVM.OwnedCount} · NPC 제공 {_slotVM.RequiredCount}"
-            : $"{_slotVM.OwnedCount} / {_slotVM.RequiredCount}";
+        Text_Count.text = $"{_slotVM.OwnedCount}/{_slotVM.RequiredCount}";
     }
 
     private void RefreshColor()

@@ -1,20 +1,15 @@
 [
   {
-    "Id": "recipe_worn_axe",
-    "Item_Id": "eq_worn_axe",
-    "RequiredMaterialId": [
-      "mat_slime_lump"
-    ],
-    "RequiredMaterialQuantity": [
-      5
-    ]
-  },
-  {
     "Id": "recipe_poison_charm",
     "Item_Id": "equipment_poison_charm",
-    "RequiredMaterialId": ["mat_slime_lump"],
-    "RequiredMaterialQuantity": [3],
-    "RequiredWorkshopProgressId": "UndergroundAncientPlateSolved",
-    "FirstCraftSupportId": "WorkshopFirstPoisonCharm"
+    "RequiredMaterialId": [
+      "mat_slime_lump",
+      "mat_monster_03",
+      "mat_monster_02",
+      "con_berry_02",
+      "con_fish_02"
+    ],
+    "RequiredMaterialQuantity": [2, 2, 1, 1, 1],
+    "RequiredWorkshopProgressId": "NPCJoinedCamp"
   }
 ]
