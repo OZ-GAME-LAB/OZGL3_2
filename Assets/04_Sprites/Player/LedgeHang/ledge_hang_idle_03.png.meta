@@ -113,12 +113,12 @@ TextureImporter:
       name: ledge_hang_idle_030
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 704
-        height: 1088
+        x: 4
+        y: 6
+        width: 643
+        height: 966
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.524105754277, y: 0.00144927536232}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: ledge_hang_idle_031
       rect:
         serializedVersion: 2
-        x: 704
-        y: 0
-        width: 704
-        height: 1088
+        x: 656
+        y: 6
+        width: 644
+        height: 966
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.524844720497, y: 0.00144927536232}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

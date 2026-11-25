@@ -454,6 +454,9 @@ public class PlayerRuneAttackController : NetworkBehaviour
 
             RuneCombatActor target = hit.GetComponentInParent<RuneCombatActor>();
 
+            if (target is MonsterRuneCombatActor monster && !monster.AcceptsWeaponContact(hit, includeOtherTriggers: true))
+                continue;
+
             if (target == null || _hitTargets.Add(target) == false)
             {
                 continue;

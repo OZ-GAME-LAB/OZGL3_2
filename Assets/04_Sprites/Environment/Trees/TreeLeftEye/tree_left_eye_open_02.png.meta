@@ -84,12 +84,12 @@ TextureImporter:
     buildTarget: Standalone
     maxTextureSize: 4096
     resizeAlgorithm: 0
-    textureFormat: -1
+    textureFormat: 25
     textureCompression: 0
-    compressionQuality: 50
+    compressionQuality: 100
     crunchedCompression: 0
     allowsAlphaSplitting: 0
-    overridden: 0
+    overridden: 1
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
@@ -113,8 +113,8 @@ TextureImporter:
       name: tree_left_eye_open_009
       rect:
         serializedVersion: 2
-        x: 0
-        y: 2508
+        x: 4
+        y: 2532
         width: 1254
         height: 1254
       alignment: 9
@@ -135,8 +135,8 @@ TextureImporter:
       name: tree_left_eye_open_010
       rect:
         serializedVersion: 2
-        x: 1254
-        y: 2508
+        x: 1268
+        y: 2532
         width: 1254
         height: 1254
       alignment: 9
@@ -157,8 +157,8 @@ TextureImporter:
       name: tree_left_eye_open_011
       rect:
         serializedVersion: 2
-        x: 2508
-        y: 2508
+        x: 2532
+        y: 2532
         width: 1254
         height: 1254
       alignment: 9
@@ -179,8 +179,8 @@ TextureImporter:
       name: tree_left_eye_open_012
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1254
+        x: 4
+        y: 1268
         width: 1254
         height: 1254
       alignment: 9
@@ -201,8 +201,8 @@ TextureImporter:
       name: tree_left_eye_open_013
       rect:
         serializedVersion: 2
-        x: 1254
-        y: 1254
+        x: 1268
+        y: 1268
         width: 1254
         height: 1254
       alignment: 9
@@ -223,8 +223,8 @@ TextureImporter:
       name: tree_left_eye_open_014
       rect:
         serializedVersion: 2
-        x: 2508
-        y: 1254
+        x: 2532
+        y: 1268
         width: 1254
         height: 1254
       alignment: 9
@@ -245,8 +245,8 @@ TextureImporter:
       name: tree_left_eye_open_015
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
+        x: 4
+        y: 4
         width: 1254
         height: 1254
       alignment: 9
@@ -267,8 +267,8 @@ TextureImporter:
       name: tree_left_eye_open_016
       rect:
         serializedVersion: 2
-        x: 1254
-        y: 0
+        x: 1268
+        y: 4
         width: 1254
         height: 1254
       alignment: 9
@@ -289,8 +289,8 @@ TextureImporter:
       name: tree_left_eye_open_017
       rect:
         serializedVersion: 2
-        x: 2508
-        y: 0
+        x: 2532
+        y: 4
         width: 1254
         height: 1254
       alignment: 9

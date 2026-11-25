@@ -84,12 +84,12 @@ TextureImporter:
     buildTarget: Standalone
     maxTextureSize: 4096
     resizeAlgorithm: 0
-    textureFormat: -1
+    textureFormat: 25
     textureCompression: 0
-    compressionQuality: 50
+    compressionQuality: 100
     crunchedCompression: 0
     allowsAlphaSplitting: 0
-    overridden: 0
+    overridden: 1
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
@@ -113,12 +113,12 @@ TextureImporter:
       name: crouch_walk_00
       rect:
         serializedVersion: 2
-        x: 0
-        y: 3200
-        width: 640
-        height: 800
+        x: 2304
+        y: 19
+        width: 384
+        height: 477
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.513020833333, y: 0.0062893081761}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: crouch_walk_01
       rect:
         serializedVersion: 2
-        x: 640
-        y: 3200
-        width: 640
-        height: 800
+        x: 1148
+        y: 12
+        width: 386
+        height: 484
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.515544041451, y: 0.00619834710744}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -157,12 +157,12 @@ TextureImporter:
       name: crouch_walk_02
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 3200
-        width: 640
-        height: 800
+        x: 3012
+        y: 522
+        width: 384
+        height: 494
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.513020833333, y: 0.00607287449393}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -179,12 +179,12 @@ TextureImporter:
       name: crouch_walk_03
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 3200
-        width: 640
-        height: 800
+        x: 1504
+        y: 514
+        width: 364
+        height: 502
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.486263736264, y: 0.00597609561753}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -201,12 +201,12 @@ TextureImporter:
       name: crouch_walk_04
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 3200
-        width: 640
-        height: 800
+        x: 1132
+        y: 508
+        width: 362
+        height: 508
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.483425414365, y: 0.00590551181102}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -223,12 +223,12 @@ TextureImporter:
       name: crouch_walk_05
       rect:
         serializedVersion: 2
-        x: 3200
-        y: 3200
-        width: 640
-        height: 800
+        x: 1900
+        y: 1030
+        width: 362
+        height: 510
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.483425414365, y: 0.00588235294118}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -245,12 +245,12 @@ TextureImporter:
       name: crouch_walk_06
       rect:
         serializedVersion: 2
-        x: 0
-        y: 2400
-        width: 640
-        height: 800
+        x: 1148
+        y: 1028
+        width: 366
+        height: 512
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.489071038251, y: 0.005859375}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -267,12 +267,12 @@ TextureImporter:
       name: crouch_walk_07
       rect:
         serializedVersion: 2
-        x: 640
-        y: 2400
-        width: 640
-        height: 800
+        x: 4
+        y: 1026
+        width: 369
+        height: 514
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.493224932249, y: 0.00583657587549}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -289,12 +289,12 @@ TextureImporter:
       name: crouch_walk_08
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 2400
-        width: 640
-        height: 800
+        x: 384
+        y: 1026
+        width: 372
+        height: 514
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.497311827957, y: 0.00583657587549}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -311,12 +311,12 @@ TextureImporter:
       name: crouch_walk_09
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 2400
-        width: 640
-        height: 800
+        x: 764
+        y: 1030
+        width: 373
+        height: 510
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.498659517426, y: 0.00588235294118}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -333,12 +333,12 @@ TextureImporter:
       name: crouch_walk_10
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 2400
-        width: 640
-        height: 800
+        x: 372
+        y: 510
+        width: 374
+        height: 506
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.5, y: 0.0098814229249}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -355,12 +355,12 @@ TextureImporter:
       name: crouch_walk_11
       rect:
         serializedVersion: 2
-        x: 3200
-        y: 2400
-        width: 640
-        height: 800
+        x: 2248
+        y: 518
+        width: 376
+        height: 498
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.502659574468, y: 0.0100401606426}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -377,12 +377,12 @@ TextureImporter:
       name: crouch_walk_12
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1600
-        width: 640
-        height: 800
+        x: 4
+        y: 6
+        width: 374
+        height: 490
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.5, y: 0.0102040816327}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -399,12 +399,12 @@ TextureImporter:
       name: crouch_walk_13
       rect:
         serializedVersion: 2
-        x: 640
-        y: 1600
-        width: 640
-        height: 800
+        x: 1544
+        y: 12
+        width: 373
+        height: 484
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.498659517426, y: 0.0103305785124}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -421,12 +421,12 @@ TextureImporter:
       name: crouch_walk_14
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 1600
-        width: 640
-        height: 800
+        x: 3084
+        y: 16
+        width: 372
+        height: 480
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.497311827957, y: 0.0104166666667}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -443,12 +443,12 @@ TextureImporter:
       name: crouch_walk_15
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 1600
-        width: 640
-        height: 800
+        x: 1928
+        y: 12
+        width: 366
+        height: 484
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.489071038251, y: 0.00619834710744}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -465,12 +465,12 @@ TextureImporter:
       name: crouch_walk_16
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 1600
-        width: 640
-        height: 800
+        x: 388
+        y: 4
+        width: 362
+        height: 492
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.483425414365, y: 0.00609756097561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -487,12 +487,12 @@ TextureImporter:
       name: crouch_walk_17
       rect:
         serializedVersion: 2
-        x: 3200
-        y: 1600
-        width: 640
-        height: 800
+        x: 1876
+        y: 514
+        width: 362
+        height: 502
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.483425414365, y: 0.00996015936255}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -509,12 +509,12 @@ TextureImporter:
       name: crouch_walk_18
       rect:
         serializedVersion: 2
-        x: 0
-        y: 800
-        width: 640
-        height: 800
+        x: 2644
+        y: 1030
+        width: 358
+        height: 510
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.477653631285, y: 0.0137254901961}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -531,12 +531,12 @@ TextureImporter:
       name: crouch_walk_19
       rect:
         serializedVersion: 2
-        x: 640
-        y: 800
-        width: 640
-        height: 800
+        x: 3012
+        y: 1028
+        width: 358
+        height: 512
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.477653631285, y: 0.009765625}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -553,12 +553,12 @@ TextureImporter:
       name: crouch_walk_20
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 800
-        width: 640
-        height: 800
+        x: 3380
+        y: 1030
+        width: 358
+        height: 510
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.477653631285, y: 0.00196078431373}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -575,12 +575,12 @@ TextureImporter:
       name: crouch_walk_21
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 800
-        width: 640
-        height: 800
+        x: 4
+        y: 504
+        width: 360
+        height: 512
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.480555555556, y: 0.001953125}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -597,12 +597,12 @@ TextureImporter:
       name: crouch_walk_22
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 800
-        width: 640
-        height: 800
+        x: 2272
+        y: 1028
+        width: 362
+        height: 512
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.483425414365, y: 0.001953125}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -619,12 +619,12 @@ TextureImporter:
       name: crouch_walk_23
       rect:
         serializedVersion: 2
-        x: 3200
-        y: 800
-        width: 640
-        height: 800
+        x: 1524
+        y: 1030
+        width: 366
+        height: 510
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.489071038251, y: 0.00196078431373}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -641,12 +641,12 @@ TextureImporter:
       name: crouch_walk_24
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 640
-        height: 800
+        x: 756
+        y: 510
+        width: 368
+        height: 506
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.491847826087, y: 0.00197628458498}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -663,12 +663,12 @@ TextureImporter:
       name: crouch_walk_25
       rect:
         serializedVersion: 2
-        x: 640
-        y: 0
-        width: 640
-        height: 800
+        x: 2632
+        y: 516
+        width: 371
+        height: 500
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.495956873315, y: 0.002}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -685,12 +685,12 @@ TextureImporter:
       name: crouch_walk_26
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 0
-        width: 640
-        height: 800
+        x: 3404
+        y: 522
+        width: 372
+        height: 494
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.497311827957, y: 0.00607287449393}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -707,12 +707,12 @@ TextureImporter:
       name: crouch_walk_27
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 0
-        width: 640
-        height: 800
+        x: 760
+        y: 10
+        width: 378
+        height: 486
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.505291005291, y: 0.00617283950617}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -729,12 +729,12 @@ TextureImporter:
       name: crouch_walk_28
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 0
-        width: 640
-        height: 800
+        x: 2696
+        y: 16
+        width: 380
+        height: 480
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.507894736842, y: 0.00625}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

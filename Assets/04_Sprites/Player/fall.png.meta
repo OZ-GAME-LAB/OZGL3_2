@@ -113,12 +113,12 @@ TextureImporter:
       name: fall_00
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1024
-        width: 640
-        height: 1024
+        x: 488
+        y: 943
+        width: 482
+        height: 921
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.573350287137, y: 0.00157612723561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: fall_01
       rect:
         serializedVersion: 2
-        x: 640
-        y: 1024
-        width: 640
-        height: 1024
+        x: 4
+        y: 6
+        width: 480
+        height: 922
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.57157258, y: 0.00157441777007}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -157,12 +157,12 @@ TextureImporter:
       name: fall_02
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 1024
-        width: 640
-        height: 1024
+        x: 4
+        y: 939
+        width: 476
+        height: 925
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.56797234958, y: 0.00156931155027}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -179,12 +179,12 @@ TextureImporter:
       name: fall_03
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 1024
-        width: 640
-        height: 1024
+        x: 1964
+        y: 941
+        width: 476
+        height: 923
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.56797234958, y: 0.00157271200867}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -201,12 +201,12 @@ TextureImporter:
       name: fall_04
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 1024
-        width: 640
-        height: 1024
+        x: 1956
+        y: 6
+        width: 476
+        height: 922
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.56797234958, y: 0.00157441777007}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -223,12 +223,12 @@ TextureImporter:
       name: fall_05
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 640
-        height: 1024
+        x: 492
+        y: 5
+        width: 478
+        height: 923
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.569779996653, y: 0.00157271200867}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -245,12 +245,12 @@ TextureImporter:
       name: fall_06
       rect:
         serializedVersion: 2
-        x: 640
-        y: 0
-        width: 640
-        height: 1024
+        x: 980
+        y: 6
+        width: 478
+        height: 922
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.573964097071, y: 0.00157441777007}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -267,12 +267,12 @@ TextureImporter:
       name: fall_07
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 0
-        width: 640
-        height: 1024
+        x: 1468
+        y: 7
+        width: 480
+        height: 921
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.575739246667, y: 0.00157612723561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -289,12 +289,12 @@ TextureImporter:
       name: fall_08
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 0
-        width: 640
-        height: 1024
+        x: 980
+        y: 943
+        width: 482
+        height: 921
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.573350287137, y: 0.00157612723561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -311,12 +311,12 @@ TextureImporter:
       name: fall_09
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 0
-        width: 640
-        height: 1024
+        x: 1472
+        y: 942
+        width: 482
+        height: 922
       alignment: 9
-      pivot: {x: 0.502116935, y: 0.044386341}
+      pivot: {x: 0.573350287137, y: 0.00157441777007}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

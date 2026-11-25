@@ -113,12 +113,12 @@ TextureImporter:
       name: idle_to_run_00
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1600
-        width: 640
-        height: 800
+        x: 972
+        y: 756
+        width: 220
+        height: 748
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.459090909091, y: 0.00668449197861}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: idle_to_run_01
       rect:
         serializedVersion: 2
-        x: 640
-        y: 1600
-        width: 640
-        height: 800
+        x: 500
+        y: 756
+        width: 226
+        height: 748
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.464601769912, y: 0.00668449197861}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -157,12 +157,12 @@ TextureImporter:
       name: idle_to_run_02
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 1600
-        width: 640
-        height: 800
+        x: 736
+        y: 756
+        width: 228
+        height: 748
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.469298245614, y: 0.00668449197861}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -179,12 +179,12 @@ TextureImporter:
       name: idle_to_run_03
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 1600
-        width: 640
-        height: 800
+        x: 4
+        y: 758
+        width: 240
+        height: 746
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.4625, y: 0.00938337801609}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -201,12 +201,12 @@ TextureImporter:
       name: idle_to_run_04
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 1600
-        width: 640
-        height: 800
+        x: 252
+        y: 758
+        width: 240
+        height: 746
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.4625, y: 0.00938337801609}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -223,12 +223,12 @@ TextureImporter:
       name: idle_to_run_05
       rect:
         serializedVersion: 2
-        x: 0
-        y: 800
-        width: 640
-        height: 800
+        x: 1000
+        y: 10
+        width: 262
+        height: 738
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.469465648855, y: 0.00677506775068}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -245,12 +245,12 @@ TextureImporter:
       name: idle_to_run_06
       rect:
         serializedVersion: 2
-        x: 640
-        y: 800
-        width: 640
-        height: 800
+        x: 1272
+        y: 10
+        width: 262
+        height: 738
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.469465648855, y: 0.00677506775068}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -267,12 +267,12 @@ TextureImporter:
       name: idle_to_run_07
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 800
-        width: 640
-        height: 800
+        x: 432
+        y: 10
+        width: 274
+        height: 738
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.478102189781, y: 0.00948509485095}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -289,12 +289,12 @@ TextureImporter:
       name: idle_to_run_08
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 800
-        width: 640
-        height: 800
+        x: 716
+        y: 10
+        width: 274
+        height: 738
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.478102189781, y: 0.00948509485095}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -311,12 +311,12 @@ TextureImporter:
       name: idle_to_run_09
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 800
-        width: 640
-        height: 800
+        x: 1200
+        y: 764
+        width: 316
+        height: 740
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.534810126582, y: 0.00675675675676}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -333,12 +333,12 @@ TextureImporter:
       name: idle_to_run_10
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 640
-        height: 800
+        x: 4
+        y: 4
+        width: 418
+        height: 744
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.552631578947, y: 0.00134408602151}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -355,12 +355,12 @@ TextureImporter:
       name: idle_to_run_11
       rect:
         serializedVersion: 2
-        x: 640
-        y: 0
-        width: 640
-        height: 800
+        x: 1104
+        y: 1518
+        width: 448
+        height: 750
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.569196428571, y: 0.00133333333333}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -377,12 +377,12 @@ TextureImporter:
       name: idle_to_run_12
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 0
-        width: 640
-        height: 800
+        x: 4
+        y: 1514
+        width: 516
+        height: 754
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.579457364341, y: 0.00132625994695}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -399,12 +399,12 @@ TextureImporter:
       name: idle_to_run_13
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 0
-        width: 640
-        height: 800
+        x: 528
+        y: 1516
+        width: 566
+        height: 752
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.517667844523, y: 0.00132978723404}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

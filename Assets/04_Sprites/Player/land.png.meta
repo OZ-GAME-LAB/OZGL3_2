@@ -113,12 +113,12 @@ TextureImporter:
       name: land_00
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1024
-        width: 640
-        height: 1024
+        x: 720
+        y: 756
+        width: 326
+        height: 756
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.610429447853, y: 0.00396825396825}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: land_01
       rect:
         serializedVersion: 2
-        x: 640
-        y: 1024
-        width: 640
-        height: 1024
+        x: 280
+        y: 36
+        width: 320
+        height: 692
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.559375, y: 0.00433526011561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -157,12 +157,12 @@ TextureImporter:
       name: land_02
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 1024
-        width: 640
-        height: 1024
+        x: 928
+        y: 44
+        width: 330
+        height: 684
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.566666666667, y: 0.00438596491228}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -179,12 +179,12 @@ TextureImporter:
       name: land_03
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 1024
-        width: 640
-        height: 1024
+        x: 608
+        y: 40
+        width: 310
+        height: 688
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.532258064516, y: 0.00436046511628}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -201,12 +201,12 @@ TextureImporter:
       name: land_04
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 1024
-        width: 640
-        height: 1024
+        x: 4
+        y: 6
+        width: 266
+        height: 722
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.492481203008, y: 0.00415512465374}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -223,12 +223,12 @@ TextureImporter:
       name: land_05
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 640
-        height: 1024
+        x: 1056
+        y: 760
+        width: 236
+        height: 752
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.487288135593, y: 0.00398936170213}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -245,12 +245,12 @@ TextureImporter:
       name: land_06
       rect:
         serializedVersion: 2
-        x: 640
-        y: 0
-        width: 640
-        height: 1024
+        x: 484
+        y: 746
+        width: 228
+        height: 766
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.486842105263, y: 0.00391644908616}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -267,12 +267,12 @@ TextureImporter:
       name: land_07
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 0
-        width: 640
-        height: 1024
+        x: 4
+        y: 738
+        width: 230
+        height: 774
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.508695652174, y: 0.00387596899225}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -289,12 +289,12 @@ TextureImporter:
       name: land_08
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 0
-        width: 640
-        height: 1024
+        x: 244
+        y: 736
+        width: 232
+        height: 776
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.521551724138, y: 0.00386597938144}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

@@ -113,12 +113,12 @@ TextureImporter:
       name: FishingCast_006
       rect:
         serializedVersion: 2
-        x: 0
-        y: 2176
-        width: 1536
-        height: 1088
+        x: 4
+        y: 3274
+        width: 604
+        height: 646
       alignment: 9
-      pivot: {x: 0.403645833, y: 0.148897059}
+      pivot: {x: 0.806291389881, y: 0.00773993837771}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: FishingCast_007
       rect:
         serializedVersion: 2
-        x: 1536
-        y: 2176
-        width: 1536
-        height: 1088
+        x: 4
+        y: 2618
+        width: 604
+        height: 646
       alignment: 9
-      pivot: {x: 0.403645833, y: 0.148897059}
+      pivot: {x: 0.806291389881, y: 0.00773993837771}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -157,12 +157,12 @@ TextureImporter:
       name: FishingCast_008
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1088
-        width: 1536
-        height: 1088
+        x: 4
+        y: 1962
+        width: 603
+        height: 646
       alignment: 9
-      pivot: {x: 0.403645833, y: 0.148897059}
+      pivot: {x: 0.805970148405, y: 0.00773993837771}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -179,12 +179,12 @@ TextureImporter:
       name: FishingCast_009
       rect:
         serializedVersion: 2
-        x: 1536
-        y: 1088
-        width: 1536
-        height: 1088
+        x: 4
+        y: 1306
+        width: 602
+        height: 646
       alignment: 9
-      pivot: {x: 0.403645833, y: 0.148897059}
+      pivot: {x: 0.805647839681, y: 0.00773993837771}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -201,12 +201,12 @@ TextureImporter:
       name: FishingCast_010
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1536
-        height: 1088
+        x: 4
+        y: 650
+        width: 602
+        height: 646
       alignment: 9
-      pivot: {x: 0.403645833, y: 0.148897059}
+      pivot: {x: 0.805647839681, y: 0.00773993837771}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -223,12 +223,12 @@ TextureImporter:
       name: FishingCast_011
       rect:
         serializedVersion: 2
-        x: 1536
-        y: 0
-        width: 1536
-        height: 1088
+        x: 4
+        y: 6
+        width: 603
+        height: 634
       alignment: 9
-      pivot: {x: 0.403645833, y: 0.148897059}
+      pivot: {x: 0.802653398819, y: 0.00788643563407}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

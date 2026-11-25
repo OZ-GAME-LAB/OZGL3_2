@@ -21,6 +21,8 @@ public class NetCodeNetworkManager : MonoBehaviour
 
     [SerializeField] private NetworkManager _netCodeNetworkManager;
     [SerializeField] private UnityTransport _transport;
+    [Tooltip("로비가 화면을 덮으면 필드의 하늘 배경으로 복원할 시작 카메라입니다.")]
+    [SerializeField] private Camera _startupCamera;
     [SerializeField, Min(1f)] private float _connectionTimeout = 8f;
     [SerializeField] private HostDisconnectedUI _hostDisconnectedUIPrefab;
 
@@ -134,7 +136,11 @@ public class NetCodeNetworkManager : MonoBehaviour
         try
         {
             if (!token.IsCancellationRequested && !_isQuitting && ui != null)
-                await ui.OpenLobbyUIAsync(token);
+            {
+                LobbyUI lobby = await ui.OpenLobbyUIAsync(token);
+                if (lobby != null && lobby.isActiveAndEnabled && _startupCamera != null)
+                    _startupCamera.clearFlags = CameraClearFlags.Skybox;
+            }
         }
         finally
         {

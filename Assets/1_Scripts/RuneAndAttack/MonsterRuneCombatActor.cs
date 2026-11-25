@@ -3,17 +3,27 @@
 [DisallowMultipleComponent]
 public class MonsterRuneCombatActor : RuneCombatActor
 {
+    private Monster _fieldMonster;
     private NetworkUnit _unit;
     protected override NetworkUnit Unit => _unit;
 
     private void Awake()
     {
         _unit = GetComponent<NetworkUnit>();
+        _fieldMonster = GetComponent<Monster>();
         if ((_unit is MonsterNetwork == false) && (_unit is BossNetwork == false))
         {
             Debug.LogError("몬스터 전투 컴포넌트에는 MonsterNetwork 또는 BossNetwork가 필요합니다.", this);
             _unit = null;
         }
+    }
+
+    public bool AcceptsWeaponContact(Collider2D hit, bool includeOtherTriggers)
+    {
+        if (_fieldMonster != null)
+            return hit == _fieldMonster.Hurtbox;
+
+        return includeOtherTriggers || !hit.isTrigger;
     }
 
     public override bool IsAlive => IsSpawned && _unit != null && _unit.IsAlive;
