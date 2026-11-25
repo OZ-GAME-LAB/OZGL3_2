@@ -1,5 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using TMPro;
+using System.Collections;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -18,7 +20,7 @@ public class FieldItemObject : NetworkBehaviour
 
     public string ItemDataId => _itemDataId.Value.ToString();
     public int Count => _count.Value;
-    public bool CanMerge => (IsSpawned == true && Count > 0 && _maxStack > 0 && Count < _maxStack);
+    public bool CanMerge => (IsSpawned == true && Count > 0 && _maxStack > 0 && Count < _maxStack && !_reserved && Time.time >= _mergeAllowedAt && _dropper == null);
 
     private int _visualVersion;
     private int _maxStack;
@@ -27,6 +29,15 @@ public class FieldItemObject : NetworkBehaviour
     [SerializeField, Min(0f)] private float _pickupDelay = 1f;
 
     private float _pickupAllowedAt;
+    private float _mergeAllowedAt;
+    private bool _reserved;
+    private PlayerNetworkStats _dropper;
+    private readonly List<Collider2D> _pickupContacts = new();
+    private readonly HashSet<PlayerNetworkStats> _checkedPlayers = new();
+    private Collider2D _pickupArea;
+    private Coroutine _contactCheck;
+    private int _nextContact;
+
 
     private void Awake()
     {
@@ -38,6 +49,12 @@ public class FieldItemObject : NetworkBehaviour
         if (Collider_Body == null)
         {
             Collider_Body = GetComponent<BoxCollider2D>();
+        }
+        foreach (var collider in GetComponentsInChildren<Collider2D>())
+        {
+            if (!collider.isTrigger) continue;
+            _pickupArea = collider;
+            break;
         }
     }
 
@@ -62,6 +79,10 @@ public class FieldItemObject : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        StopAllCoroutines();
+        _contactCheck = null;
+        _pickupContacts.Clear();
+        _checkedPlayers.Clear();
         _itemDataId.OnValueChanged -= OnItemDataIdChanged;
         _count.OnValueChanged -= OnCountChanged;
 
@@ -217,7 +238,20 @@ public class FieldItemObject : NetworkBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        OnPlayerCollision(Count, collision);
+        if (!IsServer || !IsSpawned || _pickupArea == null || collision.isTrigger ||
+            collision.gameObject.layer != LayerMask.NameToLayer("Player") || collision.attachedRigidbody == null ||
+            !collision.attachedRigidbody.TryGetComponent<PlayerNetworkStats>(out _) || _pickupContacts.Contains(collision))
+            return;
+        _pickupContacts.Add(collision);
+        if (_contactCheck == null) _contactCheck = StartCoroutine(CheckPickupContacts());
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (!IsServer || !_pickupContacts.Remove(collision) || _pickupContacts.Count != 0 || _contactCheck == null)
+            return;
+        StopCoroutine(_contactCheck);
+        _contactCheck = null;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -291,36 +325,83 @@ public class FieldItemObject : NetworkBehaviour
         }
     }
 
-    private void OnPlayerCollision(int itemCount, Collider2D collision)
+    // 잠든 Rigidbody에는 Stay가 오지 않는다. 접촉 중에만 서버가 실제 겹침을 다시 확인한다.
+    private IEnumerator CheckPickupContacts()
     {
-        if (!IsServer || !IsSpawned || Count <= 0)
+        yield return new WaitForFixedUpdate();
+        float initialDelay = _pickupAllowedAt - Time.time;
+        if (initialDelay > 0f) yield return new WaitForSeconds(initialDelay);
+        var retry = new WaitForSeconds(1f);
+        while (IsSpawned && _pickupArea.isActiveAndEnabled)
         {
-            return;
-        }
-
-        if (Time.time < _pickupAllowedAt)
-        {
-            return;
-        }
-
-        if (collision.gameObject.layer != LayerMask.NameToLayer("Player"))
-        {
-            return;
-        }
-
-
-        for (int i = 0; i < itemCount; i++)
-        {
-            if (!ServiceManager.Inst.InventoryService.AddItem(ItemDataId))
+            for (int i = _pickupContacts.Count - 1; i >= 0; --i)
             {
-                break;
+                var body = _pickupContacts[i];
+                if (body == null || !body.isActiveAndEnabled || body.isTrigger || body.attachedRigidbody == null ||
+                    !body.attachedRigidbody.simulated || !_pickupArea.Distance(body).isOverlapped)
+                    _pickupContacts.RemoveAt(i);
             }
-            _count.Value--;
+            if (_pickupContacts.Count == 0) break;
+            _checkedPlayers.Clear();
+            for (int i = 0; !_reserved && i < _pickupContacts.Count; ++i)
+            {
+                _nextContact %= _pickupContacts.Count;
+                var body = _pickupContacts[_nextContact++].attachedRigidbody;
+                if (body.TryGetComponent(out PlayerNetworkStats player) && player != _dropper && _checkedPlayers.Add(player))
+                    player.TryReservePickup(this);
+            }
+            yield return retry;
         }
+        _checkedPlayers.Clear();
+        _contactCheck = null;
+    }
 
-        if (Count == 0)
+    internal bool ReserveForTransfer()
+    {
+        if (!IsServer || !IsSpawned || _reserved || Count < 1) return false;
+        _reserved = true;
+        return true;
+    }
+
+    internal void FinishPickup(int accepted)
+    {
+        if (!_reserved) return;
+        _reserved = false;
+        _count.Value -= accepted;
+        if (Count == 0) NetworkObject.Despawn();
+    }
+
+    internal void FinishDrop(bool committed, PlayerNetworkStats dropper)
+    {
+        if (!_reserved) return;
+        _reserved = false;
+        if (!committed)
         {
-            NetworkObject.Despawn(destroy: true);
+            NetworkObject.Despawn();
+            return;
         }
+        _dropper = dropper;
+        _mergeAllowedAt = Time.time + _pickupDelay;
+        if (dropper != null) StartCoroutine(WaitForDropperToLeave());
+    }
+
+    private IEnumerator WaitForDropperToLeave()
+    {
+        var delay = new WaitForSeconds(0.2f);
+        var colliders = GetComponentsInChildren<Collider2D>();
+        var bodies = _dropper.GetComponentsInChildren<Collider2D>();
+        do
+        {
+            yield return delay;
+            if (_dropper == null || !_dropper.IsSpawned) break;
+            bool touching = false;
+            foreach (var trigger in colliders)
+                foreach (var body in bodies)
+                    if (trigger != null && trigger.enabled && trigger.isTrigger && body != null &&
+                        body.enabled && !body.isTrigger && trigger.bounds.Intersects(body.bounds))
+                        touching = true;
+            if (!touching && Time.time >= _mergeAllowedAt) break;
+        } while (IsSpawned);
+        _dropper = null;
     }
 }

@@ -59,8 +59,8 @@ public partial class InventoryService
                 if (existingItem.Id != data.Id)
                     continue;
 
-                if (existingItem.Count >= existingItem.MaxStack)
-                    return false;
+                if (existingItem.Count >= existingItem.MaxStack || existingItem == _dropReservation)
+                    continue;
 
                 existingItem.Count++;
                 return true;
@@ -83,16 +83,13 @@ public partial class InventoryService
         return true;
     }
 
-    internal bool TryCraft(Dictionary<string, int> materials, ItemData result, string supportId = null)
+    internal bool TryCraft(Dictionary<string, int> materials, ItemData result)
     {
         if (result == null || result.MaxStack < 1 || materials.Count == 0)
             return false;
 
         var bag = GetInvantoryViewModel();
-        var progress = GameStartSelection.Character?.ProgressIds;
-        if (supportId != null && (progress == null || progress.Contains(supportId)))
-            return false;
-        var remaining = supportId == null ? new Dictionary<string, int>(materials) : new Dictionary<string, int>();
+        var remaining = new Dictionary<string, int>(materials);
         var next = new ObservableCollections.ObservableDictionary<string, InventoryItemViewModel>();
         var changes = new Dictionary<InventoryItemViewModel, int>();
         InventoryItemViewModel outputStack = null;
@@ -101,7 +98,7 @@ public partial class InventoryService
         {
             var item = pair.Value;
             int count = item.Count;
-            if (!IsEquippedItem(item) && !IsItemUsePending(item.Id) && remaining.TryGetValue(item.Id, out int needed))
+            if (item != _dropReservation && !IsEquippedItem(item) && !IsItemUsePending(item.Id) && remaining.TryGetValue(item.Id, out int needed))
             {
                 int used = Math.Min(needed, count);
                 count -= used;
@@ -112,7 +109,7 @@ public partial class InventoryService
 
             if (count == 0) continue;
             next.Add(pair.Key, item);
-            if (outputStack == null && item.Id == result.Id && count < item.MaxStack)
+            if (outputStack == null && item != _dropReservation && item.Id == result.Id && count < item.MaxStack)
                 outputStack = item;
         }
         if (remaining.Count != 0)
@@ -151,26 +148,10 @@ public partial class InventoryService
                 slotsChanged = true;
             }
         }
-        if (supportId != null) progress.Add(supportId);
         bag.InventoryItemViewModelDictionary = next;
         foreach (var item in changes.Keys) item.NotifyCountChanged();
         if (slotsChanged) QuickSlotsChanged?.Invoke();
         if (isRune) RuneInventoryChanged?.Invoke();
-        return true;
-    }
-
-    public bool DropItem(string itemId)
-    {
-        if (IsItemUsePending(itemId))
-            return false;
-
-         var position =  ServiceManager.Inst.PlayerService.GetPlayerVectorSelf();
-        if (ObjectManager.Inst.SpawnItem(itemId, 1, position) == null)
-        {
-            Debug.LogError($"아이템 드롭 실패: {itemId}");
-            return false;
-        }
-
         return true;
     }
 
@@ -198,7 +179,7 @@ public partial class InventoryService
     // 같은 ID의 저장 스택이 여러 개여도 선택한 객체만 차감한다.
     public bool RemoveItem(InventoryItemViewModel targetItem)
     {
-        if (targetItem == null || IsItemUsePending(targetItem.Id))
+        if (targetItem == null || targetItem == _dropReservation || IsItemUsePending(targetItem.Id))
             return false;
 
         var items = _inventoryViewModel?.InventoryItemViewModelDictionary;
@@ -251,7 +232,7 @@ public partial class InventoryService
     // 반환값은 요청 접수 여부입니다. 수량은 서버의 성공 응답을 받은 뒤에만 차감합니다.
     public bool RequestUseItem(InventoryItemViewModel item)
     {
-        if (_pendingUseItem != null || !CanUseItem(item) || !OwnsBagItem(item)
+        if (_pendingUseItem != null || item == _dropReservation || !CanUseItem(item) || !OwnsBagItem(item)
             || ServiceManager.Inst == null || ServiceManager.Inst.PlayerService == null)
             return false;
 
@@ -304,7 +285,7 @@ public partial class InventoryService
 
     public bool TryEquipItem(InventoryItemViewModel item)
     {
-        if (item == null || string.IsNullOrEmpty(item.Id) || IsItemUsePending(item.Id))
+        if (item == null || item == _dropReservation || string.IsNullOrEmpty(item.Id) || IsItemUsePending(item.Id))
             return false;
 
         if (!DataManager.Inst.ReadData<EquipmentData>().TryGetValue(item.Id, out var equipmentData))

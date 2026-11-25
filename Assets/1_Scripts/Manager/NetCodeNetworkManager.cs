@@ -333,6 +333,8 @@ public class NetCodeNetworkManager : MonoBehaviour
             _serverSideService.EndServerService();
             _clientSideService.EndClientService();
 
+            PlayerNetworkStats.ClearFieldSession();
+            ConfigureFieldConnection();
             _serverSideService.InitServerService();
             _clientSideService.InitClientService();
 
@@ -394,6 +396,7 @@ public class NetCodeNetworkManager : MonoBehaviour
             _clientSideService.EndClientService();
             _clientSideService.InitClientService();
 
+            ConfigureFieldConnection();
             _isConnecting = true;
             _connectionDeadLine = Time.realtimeSinceStartupAsDouble + _connectionTimeout;
 
@@ -418,6 +421,12 @@ public class NetCodeNetworkManager : MonoBehaviour
         {
             _isStarting = false;
         }
+    }
+
+    private void ConfigureFieldConnection()
+    {
+        _netCodeNetworkManager.NetworkConfig.ConnectionApproval = true;
+        _netCodeNetworkManager.NetworkConfig.ConnectionData = PlayerNetworkStats.FieldConnectionData();
     }
 
     private bool CheckConnectionReady(out string error)

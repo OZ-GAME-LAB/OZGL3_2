@@ -143,10 +143,12 @@ public partial class PlayerNetworkStats : NetworkUnit
         InitializeConsumableUse();
         InitializeDeathFlow();
         InitializeRestState();
+        InitializeFieldTransfers();
     }
 
     public override void OnNetworkDespawn()
     {
+        ReleaseFieldTransfers();
         ReleaseConsumableUse();
         ReleaseRestState();
         ReleaseDeathFlow();
