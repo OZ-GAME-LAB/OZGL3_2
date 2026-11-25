@@ -79,6 +79,27 @@ public class SaveManager : MonoBehaviour
         return SaveCharacter(snapshot, out error);
     }
 
+    internal bool TrySaveFieldTransfer(List<SavedItemData> items, FieldTransferReceipt receipt, out string error)
+    {
+        var character = GameStartSelection.Character;
+        if (character == null || ServiceManager.Inst == null)
+        {
+            error = "거래를 저장할 캐릭터가 없습니다.";
+            return false;
+        }
+        if (!ServiceManager.Inst.NetworkRuneService.TryCaptureEquippedRuneIds(out var runes, out error))
+            return false;
+
+        var snapshot = JsonUtility.FromJson<CharacterSaveData>(JsonUtility.ToJson(character));
+        snapshot.Items = items;
+        snapshot.EquippedRuneIds = runes;
+        snapshot.FieldReceipts ??= new List<FieldTransferReceipt>();
+        snapshot.FieldReceipts.Add(receipt);
+        if (!SaveCharacter(snapshot, out error)) return false;
+        character.FieldReceipts = snapshot.FieldReceipts;
+        return true;
+    }
+
     public bool SaveWorld(WorldSaveData data, out string error, bool createOnly = false)
     {
         return SaveFile(
@@ -128,7 +149,13 @@ public class SaveManager : MonoBehaviour
         try
         {
             string path = GetSlotPath(CharacterDirectory, slot.CharacterId, slot.CharacterName);
-            return LoadFileAtPath(path, slot.CharacterId, ValidateCharacter, out data, out message);
+            var result = LoadFileAtPath(path, slot.CharacterId, ValidateCharacter, out data, out message);
+            if (data != null)
+            {
+                data.LoadedPrimary = result == SaveLoadResult.Success;
+                if (result == SaveLoadResult.RecoveredFromBackup) data.FieldHistoryId = Guid.NewGuid().ToString("N");
+            }
+            return result;
         }
         catch (Exception exception)
         {
@@ -460,6 +487,16 @@ public class SaveManager : MonoBehaviour
             data.ProgressIds == null)
         {
             throw new InvalidDataException("캐릭터 데이터가 올바르지 않습니다.");
+        }
+
+        if (!string.IsNullOrEmpty(data.FieldHistoryId)) ValidateId(data.FieldHistoryId);
+        if (data.FieldReceipts != null)
+        {
+            var tokens = new HashSet<string>();
+            foreach (var receipt in data.FieldReceipts)
+                if (receipt == null || !Guid.TryParseExact(receipt.Token, "N", out _) ||
+                    !tokens.Add(receipt.Token) || receipt.Count < 1)
+                    throw new InvalidDataException("필드 아이템 거래 기록이 잘못되었습니다.");
         }
 
         var instanceIds = new HashSet<string>();

@@ -5,7 +5,7 @@ using Cysharp.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 
-public class NetworkSelectUI : UIBase
+public partial class NetworkSelectUI : UIBase
 {
     [Header("방 만들기")]
     [SerializeField] private TMP_InputField Input_HostPort;
@@ -138,6 +138,7 @@ public class NetworkSelectUI : UIBase
             _boundManager != null &&
             _boundManager.CanStartConnection &&
             !_returningToLobby &&
+            !_enteringField &&
             !_openingSaveSelection &&
             !selectionOpen;
 
@@ -370,60 +371,7 @@ public class NetworkSelectUI : UIBase
             return;
         }
 
-        string characterName = GameStartSelection.Character.CharacterName;
-
-        bool started;
-        string error;
-
-        InventoryService inventory = ServiceManager.Inst != null ? ServiceManager.Inst.InventoryService : null;
-
-        if (inventory == null)
-        {
-            SetMessage("InventoryService가 준비되지 않았습니다.");
-            return;
-        }
-
-        if (inventory.TryRestoreSaveItems(GameStartSelection.Character.Items, out string restoreError) == false)
-        {
-            SetMessage($"캐릭터 인벤토리를 불러오지 못했습니다.\n{restoreError}");
-            return;
-        }
-
-        if (GameStartSelection.IsHost)
-        {
-            if (GameStartSelection.World == null)
-            {
-                SetMessage("먼저 월드를 선택해 주세요.");
-                return;
-            }
-
-            SetMessage(
-                $"월드: {GameStartSelection.World.WorldName}\n" +
-                $"캐릭터: {characterName}\n" +
-                "방을 생성하고 있습니다.");
-
-            started = manager.TryStartHost(GameStartSelection.Port, out error);
-        }
-        else
-        {
-            SetMessage($"캐릭터: {characterName}\n" + "호스트에 접속하고 있습니다.");
-
-            started = manager.TryStartClient(GameStartSelection.Address, GameStartSelection.Port, out error);
-        }
-
-        if (this == null)
-        {
-            return;
-        }
-
-        if (started == false)
-        {
-            SetMessage(string.IsNullOrWhiteSpace(error) ? "네트워크 시작에 실패했습니다." : error);
-        }
-
-        if (isActiveAndEnabled)
-        {
-            RefreshInteractable();
-        }
+        if (!_enteringField)
+            EnterFieldAsync(manager).Forget();
     }
 }

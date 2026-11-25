@@ -16,6 +16,9 @@ public sealed partial class BossEncounterController
     {
         if (_defeatStarted || _encounterBoss == null) return;
         _defeatStarted = true;
+        // 처치 연출 대상과 전투 참가자는 다를 수 있으므로 전투 명단을 사용할 때 정화합니다.
+        foreach (ulong id in _participants)
+            if (TryGetPlayer(id, out PlayerNetworkStats fighter)) fighter.ClearBossPoisonOnServer();
         ++_run;
         _manager.SetBossPhaseOnServer(BossEncounterPhase.DefeatFraming);
         _encounterBoss.HoldDefeatOnServer(_stepTimeout * 2f + _encounterBoss.DefeatDuration + 10f);

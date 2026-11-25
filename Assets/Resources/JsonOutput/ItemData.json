@@ -91,10 +91,10 @@
   },
   {
     "Id": "equipment_poison_charm",
-    "Name": "독저항장신구1",
+    "Name": "해독의 아뮬렛",
     "Tier": 1,
     "ItemType": "Equipment",
-    "Description": null,
+    "Description": "숲의 재료들을 모아 만든 아뮬렛. 독 피해를 대폭 경감시킨다",
     "MaxStack": 99,
     "IconPath": "equipment_poison_charm"
   },
@@ -103,16 +103,16 @@
     "Name": "슬라임의 핵",
     "Tier": 1,
     "ItemType": "Material",
-    "Description": null,
+    "Description": "숲 슬라임의 정수가 담긴 핵. 미약한 정화 효과가 있다고 여겨진다.",
     "MaxStack": 99,
     "IconPath": "mat_slime_lump"
   },
   {
     "Id": "con_red_berry",
-    "Name": "나무열매1",
+    "Name": "붉은 베리",
     "Tier": 1,
     "ItemType": "Consumable",
-    "Description": null,
+    "Description": "흔히 볼 수 있는 붉은 베리. 씹으면 상큼한 맛이 터진다.",
     "MaxStack": 99,
     "IconPath": "con_red_berry"
   },
@@ -121,7 +121,7 @@
     "Name": "낡은 도끼",
     "Tier": 1,
     "ItemType": "Equipment",
-    "Description": "벌목용 기본 도끼. 도끼 슬롯에 장착해야 사용할 수 있다.",
+    "Description": "낡은 기본 도끼",
     "MaxStack": 1,
     "IconPath": "eq_worn_axe"
   },
@@ -130,7 +130,7 @@
     "Name": "낡은 낚시대",
     "Tier": 1,
     "ItemType": "Equipment",
-    "Description": "기본 낚시대. 낚시 슬롯에 장착해야 사용할 수 있다.",
+    "Description": "낡은 기본 낚시대",
     "MaxStack": 1,
     "IconPath": "eq_worn_fishingrod"
   },
@@ -139,16 +139,16 @@
     "Name": "낡은 곡괭이",
     "Tier": 1,
     "ItemType": "Equipment",
-    "Description": "기본 곡괭이. 곡괭이 슬롯에 장착해야 사용할 수 있다.",
+    "Description": "낡은 기본 곡괭이",
     "MaxStack": 1,
     "IconPath": "eq_worn_pickaxe"
   },
   {
     "Id": "mat_monster_02",
-    "Name": "동굴 멧돼지의 엄니",
+    "Name": "멧돼지 엄니",
     "Tier": 1,
     "ItemType": "Material",
-    "Description": null,
+    "Description": "동굴에 서식하는 멧돼지의 엄니. 단단해서 장식과 무기에 고루 사용된다.",
     "MaxStack": 99,
     "IconPath": "mat_monster_02"
   },
@@ -157,62 +157,62 @@
     "Name": "박쥐의 독샘",
     "Tier": 1,
     "ItemType": "Material",
-    "Description": null,
+    "Description": "맹독을 품은 박쥐의 독샘. 독샘의 가죽은 강한 맹독 저항력을 가졌다.",
     "MaxStack": 99,
     "IconPath": "mat_monster_03"
   },
   {
     "Id": "con_fish_01",
-    "Name": "물고기1",
+    "Name": "은등어",
     "Tier": 1,
     "ItemType": "Material",
-    "Description": null,
+    "Description": "위더월드에서 흔히 볼 수 있는 민물고기. 먹을 수 있지만 맛은 별로 없다.",
     "MaxStack": 99,
     "IconPath": "con_fish_01"
   },
   {
     "Id": "con_fish_02",
-    "Name": "물고기2",
+    "Name": "잠식된 고기",
     "Tier": 1,
     "ItemType": "Material",
-    "Description": null,
+    "Description": "독기에 침식되어 가는 물고기. 뒤틀린 비늘 사이로 악취가 풍긴다.",
     "MaxStack": 99,
     "IconPath": "con_fish_02"
   },
   {
     "Id": "mat_wood_01",
-    "Name": "목재1",
+    "Name": "원목",
     "Tier": 1,
     "ItemType": "Material",
-    "Description": null,
+    "Description": "벌목으로 얻은 목재. 다양한 건축에 사용된다.",
     "MaxStack": 99,
     "IconPath": "mat_wood_01"
   },
   {
     "Id": "con_berry_02",
-    "Name": "나무열매2",
+    "Name": "푸른 베리",
     "Tier": 1,
     "ItemType": "Consumable",
-    "Description": null,
+    "Description": "고지대에 열리는 붉은 베리의 아종. 과육과 씨앗에 약효가 있다.",
     "MaxStack": 99,
     "IconPath": "con_berry_02"
   },
   {
     "Id": "mat_ore_01",
-    "Name": "광석1",
+    "Name": "돌",
     "Tier": 1,
     "ItemType": "Material",
-    "Description": null,
+    "Description": "평범한 돌이다. 가공해서 석재로 만들 수 있다.",
     "MaxStack": 99,
-    "IconPath": "mat_ore_01"
+    "IconPath": "mat_stone"
   },
   {
     "Id": "mat_ore_02",
-    "Name": "광석2",
+    "Name": "철 광석",
     "Tier": 1,
     "ItemType": "Material",
-    "Description": null,
+    "Description": "단단한 철 광석이다. 무기나 장비 제련에 사용할 수 있다.",
     "MaxStack": 99,
-    "IconPath": "mat_ore_02"
+    "IconPath": "mat_iron_ore"
   }
 ]

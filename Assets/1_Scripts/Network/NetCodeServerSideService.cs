@@ -7,6 +7,8 @@ public class NetCodeServerSideService
     {
         if (NetworkManager.Singleton != null)
         {
+            NetworkManager.Singleton.ConnectionApprovalCallback = PlayerNetworkStats.ApproveFieldCharacter;
+            NetworkManager.Singleton.OnClientDisconnectCallback += PlayerNetworkStats.ForgetFieldClient;
             NetworkManager.Singleton.OnClientConnectedCallback += OnServerClientConnected;
             NetworkManager.Singleton.OnServerStarted += OnServerStarted;
             NetworkManager.Singleton.OnServerStopped += OnServerStopped;
@@ -17,6 +19,8 @@ public class NetCodeServerSideService
     {
         if (NetworkManager.Singleton != null)
         {
+            NetworkManager.Singleton.ConnectionApprovalCallback = null;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= PlayerNetworkStats.ForgetFieldClient;
             NetworkManager.Singleton.OnClientConnectedCallback -= OnServerClientConnected;
             NetworkManager.Singleton.OnServerStarted -= OnServerStarted;
             NetworkManager.Singleton.OnServerStopped -= OnServerStopped;
@@ -33,6 +37,7 @@ public class NetCodeServerSideService
 
     private void OnServerStopped(bool isHost)
     {
+        PlayerNetworkStats.ClearFieldSession();
         if (isHost)
         {
             Debug.Log("호스트 서버가 중지되었습니다.");

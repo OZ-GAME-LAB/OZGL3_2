@@ -1,31 +1,5 @@
 [
   {
-    "Id": "GatherObj_01",
-    "Name": "베리 나무",
-    "Description": null,
-    "InteractionType": "Gathering",
-    "DestroyAfterUse": true,
-    "RequiredToolAction": null,
-    "Tier": 1,
-    "IsMandatoryDropItem": true,
-    "MandatoryDropGroupId": "Drop_Gather_01",
-    "ProbabilityDropGroupId": "Drop_Gather_01",
-    "PrefabPath": "Prefab/Mesh/TestPrefab"
-  },
-  {
-    "Id": "GatherObj_02",
-    "Name": "베리 나무",
-    "Description": null,
-    "InteractionType": "Logging",
-    "DestroyAfterUse": true,
-    "RequiredToolAction": "Logging",
-    "Tier": 1,
-    "IsMandatoryDropItem": null,
-    "MandatoryDropGroupId": null,
-    "ProbabilityDropGroupId": "Drop_Gather_01",
-    "PrefabPath": "Prefab/Mesh/TestLoggingMiningPrefab"
-  },
-  {
     "Id": "field_fishing_01",
     "Name": "낚시터1",
     "Description": null,

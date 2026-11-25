@@ -305,8 +305,16 @@ public abstract class NetworkUnit : NetworkBehaviour
         return true;
     }
 
-    // TO USE : 서버에서 독 보호 부적의 장착·해제 결과를 전달할 때 사용. true는 장착, false는 해제.
-    // 보스 독 피해에만 적용되며, 실제 인벤토리 장착 연동은 호출하는 쪽에서 담당.
+    public void ClearBossPoisonOnServer()
+    {
+        if (!CanChangeStats)
+            return;
+
+        BattleUtil.ClearBossPoison(StatusState);
+        SynchronizeStatusOnServer();
+    }
+
+    // 이미 발생한 틱은 기존 장비로 정산한 뒤 새 부적 상태를 적용합니다.
     public bool SetPoisonProtectionAmuletOnServer(bool hasAmulet)
     {
         if (!CanChangeStats)

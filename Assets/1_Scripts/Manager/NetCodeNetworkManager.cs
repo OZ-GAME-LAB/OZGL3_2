@@ -11,6 +11,13 @@ using UnityEngine.SceneManagement;
 public class NetCodeNetworkManager : MonoBehaviour
 {
     public static NetCodeNetworkManager Inst { get; private set; }
+    private static bool _introAttempted;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStartupIntro()
+    {
+        _introAttempted = false;
+    }
 
     [SerializeField] private NetworkManager _netCodeNetworkManager;
     [SerializeField] private UnityTransport _transport;
@@ -31,6 +38,29 @@ public class NetCodeNetworkManager : MonoBehaviour
     private bool _isConnectingStopped;
     private bool _isConnecting;
     public bool IsConnecting => _isConnecting;
+    public bool IsFieldSessionActive => _netCodeNetworkManager != null &&
+        _netCodeNetworkManager.IsListening && !_netCodeNetworkManager.ShutdownInProgress &&
+        !_isConnectingStopped && !_hostDisconnected && !IsReturningToLobby;
+
+    // 플레이 준비가 실패한 세션의 불완전한 상태는 캐릭터 저장에 반영하지 않는다.
+    public async UniTask AbortFieldEntryAsync()
+    {
+        if (!IsFieldSessionActive) return;
+        _connectedAsClient = false;
+        _netCodeNetworkManager.Shutdown();
+        var token = this.GetCancellationTokenOnDestroy();
+        while (_netCodeNetworkManager.IsListening || _netCodeNetworkManager.ShutdownInProgress)
+            await UniTask.NextFrame(cancellationToken: token);
+        _clientSideService.EndClientService();
+        _serverSideService.EndServerService();
+        GameManager.Inst?.ClearSessionWorld();
+        GameStartSelection.Clear();
+        if (UIManager.Inst != null)
+        {
+            UIManager.Inst.CloseSessionWindows();
+            await UIManager.Inst.OpenLobbyUIAsync(token);
+        }
+    }
 
     private bool _isStarting;
     public bool CanStartConnection =>
@@ -76,7 +106,41 @@ public class NetCodeNetworkManager : MonoBehaviour
             return;
         }
 
-        UIManager.Inst.OpenLobbyUIAsync().Forget();
+        OpenStartupLobbyAsync(UIManager.Inst).Forget();
+    }
+
+    private async UniTask OpenStartupLobbyAsync(UIManager ui)
+    {
+        var token = this.GetCancellationTokenOnDestroy();
+        if (!_introAttempted)
+        {
+            _introAttempted = true;
+            try
+            {
+                FourGuysIntroUI intro = await ui.OpenFourGuysIntroUIAsync(token);
+                if (intro != null)
+                    await intro.PlayAsync(token);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception error)
+            {
+                Debug.LogWarning($"개발사 인트로를 재생하지 못했습니다: {error.Message}", this);
+            }
+        }
+
+        try
+        {
+            if (!token.IsCancellationRequested && !_isQuitting && ui != null)
+                await ui.OpenLobbyUIAsync(token);
+        }
+        finally
+        {
+            if (ui != null && ui.IsOpen(UIType.FourGuysIntroUI))
+                ui.Close(UIType.FourGuysIntroUI);
+        }
     }
 
     private void OnDestroy()
@@ -333,6 +397,8 @@ public class NetCodeNetworkManager : MonoBehaviour
             _serverSideService.EndServerService();
             _clientSideService.EndClientService();
 
+            PlayerNetworkStats.ClearFieldSession();
+            ConfigureFieldConnection();
             _serverSideService.InitServerService();
             _clientSideService.InitClientService();
 
@@ -394,6 +460,7 @@ public class NetCodeNetworkManager : MonoBehaviour
             _clientSideService.EndClientService();
             _clientSideService.InitClientService();
 
+            ConfigureFieldConnection();
             _isConnecting = true;
             _connectionDeadLine = Time.realtimeSinceStartupAsDouble + _connectionTimeout;
 
@@ -418,6 +485,12 @@ public class NetCodeNetworkManager : MonoBehaviour
         {
             _isStarting = false;
         }
+    }
+
+    private void ConfigureFieldConnection()
+    {
+        _netCodeNetworkManager.NetworkConfig.ConnectionApproval = true;
+        _netCodeNetworkManager.NetworkConfig.ConnectionData = PlayerNetworkStats.FieldConnectionData();
     }
 
     private bool CheckConnectionReady(out string error)

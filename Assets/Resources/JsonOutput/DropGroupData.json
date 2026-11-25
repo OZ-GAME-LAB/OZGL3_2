@@ -1,16 +1,5 @@
 [
   {
-    "Id": "Drop_Gather_01",
-    "ItemId": [
-      "mat_slime_lump"
-    ],
-    "MinQuantity": 2,
-    "MaxQuantity": 4,
-    "DropChance": [
-      1
-    ]
-  },
-  {
     "Id": "drop_monster_01",
     "ItemId": [
       "mat_slime_lump"

@@ -3,32 +3,96 @@
     "Id": "NPCGirlEncounterDialogue_01",
     "DialogueId": "NPCGirlEncounterDialogue",
     "Order": 1,
-    "SpeakerName": "",
-    "Text": "퍼즐 이벤트 대화입니다.",
+    "SpeakerName": "???",
+    "Text": "...살려주세요! 거기 누구 없어요?",
     "NpcSpriteAddress": ""
   },
   {
     "Id": "NPCGirlEncounterDialogue_02",
     "DialogueId": "NPCGirlEncounterDialogue",
     "Order": 2,
-    "SpeakerName": "",
-    "Text": "해당 위치에 처음 진입하면 NPC구출 이벤트가 열립니다.",
+    "SpeakerName": "???",
+    "Text": "이런 데에서 갇히다니, 이젠 정말 끝이야...",
+    "NpcSpriteAddress": ""
+  },
+  {
+    "Id": "NPCGirlEncounterDialogue_03",
+    "DialogueId": "NPCGirlEncounterDialogue",
+    "Order": 3,
+    "SpeakerName": "???",
+    "Text": "...어, 방금 인기척이 들린 것 같은데?",
+    "NpcSpriteAddress": ""
+  },
+  {
+    "Id": "NPCGirlEncounterDialogue_04",
+    "DialogueId": "NPCGirlEncounterDialogue",
+    "Order": 4,
+    "SpeakerName": "???",
+    "Text": "도와주세요! 벽이 갑자기 아래로 내려가서 나갈 수가 없어요...",
+    "NpcSpriteAddress": ""
+  },
+  {
+    "Id": "NPCGirlEncounterDialogue_05",
+    "DialogueId": "NPCGirlEncounterDialogue",
+    "Order": 5,
+    "SpeakerName": "???",
+    "Text": "그쪽을 잘 찾아 보면 문을 열 수 있는 장치가 있을 거에요!",
     "NpcSpriteAddress": ""
   },
   {
     "Id": "NPCJoinCampDialogue_01",
     "DialogueId": "NPCJoinCampDialogue",
     "Order": 1,
-    "SpeakerName": "소녀",
-    "Text": "다시 만났네. 여기까지 와 줘서 고마워.",
-    "NpcSpriteAddress": ""
+    "SpeakerName": "???",
+    "Text": "휴... 살았다. 진짜로 죽을 뻔했네...",
+    "NpcSpriteAddress": "NPC/Girl/RelievedSigh"
   },
   {
     "Id": "NPCJoinCampDialogue_02",
     "DialogueId": "NPCJoinCampDialogue",
     "Order": 2,
-    "SpeakerName": "소녀",
-    "Text": "나는 먼저 거점으로 갈게. 만들고 싶은 게 있으면 텐트 옆으로 찾아와.",
-    "NpcSpriteAddress": ""
+    "SpeakerName": "얀",
+    "Text": "구해주셔서 감사합니다. 저는 얀이라고 해요.  이 근방의 독기가 갑자기 강해져서 조사하러 왔는데, 갇혀 버려서 큰일나는 줄 알았어요. ",
+    "NpcSpriteAddress": "NPC/Girl/Smile"
+  },
+  {
+    "Id": "NPCJoinCampDialogue_03",
+    "DialogueId": "NPCJoinCampDialogue",
+    "Order": 3,
+    "SpeakerName": "얀",
+    "Text": "모험가님도 이곳의 독기를 조사하러 오신 건가요?",
+    "NpcSpriteAddress": "NPC/Girl/Neutral"
+  },
+  {
+    "Id": "NPCJoinCampDialogue_04",
+    "DialogueId": "NPCJoinCampDialogue",
+    "Order": 4,
+    "SpeakerName": "얀",
+    "Text": "이 위쪽으로 올라가실 생각이라면 조심하세요. 위쪽에서 독기의 원천이 감지되고 있어요.",
+    "NpcSpriteAddress": "NPC/Girl/Neutral"
+  },
+  {
+    "Id": "NPCJoinCampDialogue_05",
+    "DialogueId": "NPCJoinCampDialogue",
+    "Order": 5,
+    "SpeakerName": "얀",
+    "Text": "...전설에 따르면 저곳에는 이 지역에 퍼지는 독을 정화시켜 주던 신목이 있었다고 하는데, 어쩌면 신목에 뭔가 문제가 생긴 걸지도 모르겠네요.",
+    "NpcSpriteAddress": "NPC/Girl/Neutral"
+  },
+  {
+    "Id": "NPCJoinCampDialogue_06",
+    "DialogueId": "NPCJoinCampDialogue",
+    "Order": 6,
+    "SpeakerName": "얀",
+    "Text": "그래도 저 위로 향하실 생각이라면, 독에 저항하는 장비가 필요할 거에요. 이 주변의 재료들을 조금 모아 주시면, 제가 장비를 만들어 드릴게요.",
+    "NpcSpriteAddress": "NPC/Girl/Neutral"
+  },
+  {
+    "Id": "NPCJoinCampDialogue_07",
+    "DialogueId": "NPCJoinCampDialogue",
+    "Order": 7,
+    "SpeakerName": "얀",
+    "Text": "그럼 저는 거점에서 기다리고 있을게요!",
+    "NpcSpriteAddress": "NPC/Girl/Neutral"
   }
 ]

@@ -41,18 +41,10 @@ public class PlayerService
         return true;
     }
 
-    public bool SetPlayerPoisonProtectionAmulet(bool isEquipment)
+    public void SyncEquippedTalisman(string itemId)
     {
-
-        if (!NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent<PlayerNetworkStats>(out var stats))
-        {
-            return false;
-        }
-
-        stats.SetPoisonProtectionAmuletOnServer(isEquipment);
-
-        Debug.Log($"독 저항 탈리스만 {isEquipment}");
-        return true;
+        if (TryGetLocalPlayerStats(out PlayerNetworkStats stats))
+            stats.RequestSyncEquippedTalisman(itemId);
     }
 
     public Vector3 GetPlayerVectorSelf()

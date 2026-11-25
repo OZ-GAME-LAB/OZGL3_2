@@ -38,6 +38,10 @@ public class CharacterSaveData
     public string SavedAtUtc;
     public string SpawnPointId;
 
+    // v1 캐릭터에는 이 목록이 없을 수 있다. 가방 변경과 같은 파일에 저장한다.
+    public List<FieldTransferReceipt> FieldReceipts;
+    public string FieldHistoryId;
+    [NonSerialized] public bool LoadedPrimary;
     public List<SavedItemData> Items;
     public List<string> EquippedRuneIds;
     public List<string> ProgressIds;
@@ -52,12 +56,28 @@ public class CharacterSaveData
             SavedAtUtc = "",
             SpawnPointId = DefaultSpawnPointId,
 
-            Items = new List<SavedItemData>(),
+            Items = new List<SavedItemData>
+            {
+                CreateStartingTool("eq_worn_axe", EquipmentSlot.Axe),
+                CreateStartingTool("eq_worn_fishingrod", EquipmentSlot.FishingRod),
+                CreateStartingTool("eq_worn_pickaxe", EquipmentSlot.PickAxe)
+            },
             EquippedRuneIds = new List<string>
             {
                 "", "", ""
             },
             ProgressIds = new List<string>()
+        };
+    }
+
+    private static SavedItemData CreateStartingTool(string itemId, EquipmentSlot slot)
+    {
+        return new SavedItemData
+        {
+            InstanceId = Guid.NewGuid().ToString("N"),
+            ItemId = itemId,
+            Count = 1,
+            EquippedSlot = slot
         };
     }
 }
@@ -72,3 +92,10 @@ public class SavedItemData
     public EquipmentSlot EquippedSlot;
 }
 
+
+[Serializable]
+public class FieldTransferReceipt
+{
+    public string Token;
+    public int Count;
+}

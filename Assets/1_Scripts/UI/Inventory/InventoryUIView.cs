@@ -19,6 +19,8 @@ public class InventoryUIView : UIBase
     [SerializeField] private Button _ItemAddQuickSlotButton;
     [SerializeField] private Button _ItemRemoveButton;
 
+    [SerializeField] private Slider _dropQuantity;
+
     [SerializeField] private TMP_Text _ItemUseText;
     [SerializeField] private TMP_Text _ItemAddQuickSlotText;
     [SerializeField] private TMP_Text _ItemRemoveText;
@@ -38,6 +40,7 @@ public class InventoryUIView : UIBase
 
     private readonly List<InventorySlotUIView> _equipmentSlots = new();
 
+    private bool _confirmingDrop;
     private InventoryItemViewModel _selectedItem;
     private PointerEventData _pointerEventData;
     private EventSystem _pointerEventSystem;
@@ -77,6 +80,7 @@ public class InventoryUIView : UIBase
 
     private void OnEnable()
     {
+        _dropQuantity.onValueChanged.AddListener(ShowDropQuantity);
         SetMouseOnlyNavigation(_ItemUseButton);
         SetMouseOnlyNavigation(_ItemAddQuickSlotButton);
         SetMouseOnlyNavigation(_ItemRemoveButton);
@@ -107,6 +111,7 @@ public class InventoryUIView : UIBase
 
     private void OnDisable()
     {
+        _dropQuantity.onValueChanged.RemoveListener(ShowDropQuantity);
         if (_popupCloseButton != null)
         {
             _popupCloseButton.onClick.RemoveListener(OnClickPopupCloseButton);
@@ -258,7 +263,10 @@ public class InventoryUIView : UIBase
     private void OpenItemPopup(InventorySlotUIView slot, InventoryItemViewModel item)
     {
         ClearInventorySelection();
+        _confirmingDrop = false;
         _selectedItem = item;
+        _dropQuantity.gameObject.SetActive(false);
+        _descriptionText.gameObject.SetActive(true);
 
         // 아이템 정보 표시
         _nameText.text = item.Name;
@@ -294,8 +302,8 @@ public class InventoryUIView : UIBase
 
         _ItemUseButton.interactable = item.ItemType == nameof(ItemType.Equipment)
             || inventory.CanUseItem(item);
-        _ItemRemoveText.text = "아이템 제거";
-        _ItemRemoveButton.interactable = !inventory.IsEquippedItem(item);
+        _ItemRemoveText.text = "버리기";
+        _ItemRemoveButton.interactable = inventory.CanDrop(item);
 
         _itemPopupUI.SetActive(true);
 
@@ -347,7 +355,9 @@ public class InventoryUIView : UIBase
     private void CloseItemPopup()
     {
         ClearInventorySelection();
+        _confirmingDrop = false;
         _selectedItem = null;
+        _dropQuantity.gameObject.SetActive(false);
 
         if (_itemPopupUI != null)
             _itemPopupUI.SetActive(false);
@@ -374,6 +384,11 @@ public class InventoryUIView : UIBase
     // 아이템 사용 / 장착 버튼
     private void OnClickItemUseButton()
     {
+        if (_confirmingDrop)
+        {
+            CloseItemPopup();
+            return;
+        }
         if (_selectedItem == null)
             return;
 
@@ -419,7 +434,12 @@ public class InventoryUIView : UIBase
             CloseItemPopup();
     }
 
-    // 아이템 제거 버튼
+    private void ShowDropQuantity(float value)
+    {
+        _ItemRemoveText.text = $"{Mathf.RoundToInt(value)}개 버리기";
+    }
+
+    // 선택한 스택에서만 버릴 수량을 고른다.
     private void OnClickItemRemoveButton()
     {
         if (_selectedItem == null)
@@ -428,12 +448,38 @@ public class InventoryUIView : UIBase
         InventoryItemViewModel item = _selectedItem;
 
         InventoryService inventory = ServiceManager.Inst.InventoryService;
-        if (inventory.IsEquippedItem(item) || !inventory.DropItem(item.Id))
+        if (!inventory.CanDrop(item))
+        {
+            CloseItemPopup();
             return;
+        }
 
-        inventory.RemoveItem(item);
-        CloseItemPopup();
+        if (!_confirmingDrop)
+        {
+            _confirmingDrop = true;
+            _ItemUseButton.gameObject.SetActive(true);
+            _ItemUseButton.interactable = true;
+            _ItemUseText.text = "취소";
+            _ItemAddQuickSlotButton.gameObject.SetActive(false);
+            _descriptionText.gameObject.SetActive(false);
+            _dropQuantity.minValue = 1;
+            _dropQuantity.maxValue = item.Count;
+            _dropQuantity.SetValueWithoutNotify(1);
+            _dropQuantity.gameObject.SetActive(item.Count > 1);
+            ShowDropQuantity(1);
+            return;
+        }
+
+        int count = _dropQuantity.gameObject.activeSelf ? Mathf.RoundToInt(_dropQuantity.value) : 1;
+        if (count > item.Count)
+        {
+            _dropQuantity.maxValue = item.Count;
+            ShowDropQuantity(_dropQuantity.value);
+            return;
+        }
+        if (inventory.RequestDrop(item, count)) CloseItemPopup();
     }
+
     private void RemoveItemRequest(InventoryItemViewModel item)
     {
         ServiceManager.Inst.InventoryService.RemoveItem(item);

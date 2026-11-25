@@ -361,6 +361,7 @@ public partial class PlayerControllerView : MonoBehaviour
             _interactionController?.TickInteraction(Time.deltaTime);
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (_isMiniGameMode)
             return;
 
@@ -382,6 +383,7 @@ public partial class PlayerControllerView : MonoBehaviour
 
         // 물리 시뮬레이션이 꺼져 있으므로 위치를 직접 옮깁니다.
         transform.position += (Vector3)(direction.normalized * _spectatorMoveSpeed * Time.deltaTime);
+#endif
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

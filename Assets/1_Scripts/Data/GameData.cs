@@ -148,7 +148,6 @@ public class EffectData : GameDataBase
 public class CraftingRecipeData : GameDataBase
 {
     public string RequiredWorkshopProgressId;
-    public string FirstCraftSupportId;
     public string Item_Id;
     public string[] RequiredMaterialId;
     public int[] RequiredMaterialQuantity;
