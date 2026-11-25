@@ -113,12 +113,12 @@ TextureImporter:
       name: FishingIdle_012
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1536
-        height: 1088
+        x: 4
+        y: 4
+        width: 509
+        height: 584
       alignment: 9
-      pivot: {x: 0.403645833, y: 0.148897059}
+      pivot: {x: 0.237721020605, y: 0.0119863016986}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: FishingIdle_013
       rect:
         serializedVersion: 2
-        x: 1536
-        y: 0
-        width: 1536
-        height: 1088
+        x: 524
+        y: 4
+        width: 511
+        height: 584
       alignment: 9
-      pivot: {x: 0.403645833, y: 0.148897059}
+      pivot: {x: 0.236790605652, y: 0.0119863016986}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

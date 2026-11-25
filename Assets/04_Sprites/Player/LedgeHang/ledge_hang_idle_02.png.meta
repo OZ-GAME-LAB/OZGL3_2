@@ -113,12 +113,12 @@ TextureImporter:
       name: ledge_hang_idle_015
       rect:
         serializedVersion: 2
-        x: 0
-        y: 2176
-        width: 704
-        height: 1088
+        x: 660
+        y: 999
+        width: 641
+        height: 1025
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.522620904836, y: 0.00136585365854}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: ledge_hang_idle_016
       rect:
         serializedVersion: 2
-        x: 704
-        y: 2176
-        width: 704
-        height: 1088
+        x: 1312
+        y: 998
+        width: 643
+        height: 1026
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.524105754277, y: 0.00136452241715}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -157,12 +157,12 @@ TextureImporter:
       name: ledge_hang_idle_017
       rect:
         serializedVersion: 2
-        x: 1408
-        y: 2176
-        width: 704
-        height: 1088
+        x: 1984
+        y: 2033
+        width: 645
+        height: 1027
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.525581395349, y: 0.00136319376826}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -179,12 +179,12 @@ TextureImporter:
       name: ledge_hang_idle_018
       rect:
         serializedVersion: 2
-        x: 2112
-        y: 2176
-        width: 704
-        height: 1088
+        x: 2640
+        y: 2033
+        width: 647
+        height: 1027
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.527047913447, y: 0.00136319376826}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -201,12 +201,12 @@ TextureImporter:
       name: ledge_hang_idle_019
       rect:
         serializedVersion: 2
-        x: 2816
-        y: 2176
-        width: 704
-        height: 1088
+        x: 4
+        y: 997
+        width: 648
+        height: 1027
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.527777777778, y: 0.00136319376826}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -223,12 +223,12 @@ TextureImporter:
       name: ledge_hang_idle_020
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1088
-        width: 704
-        height: 1088
+        x: 4
+        y: 2033
+        width: 649
+        height: 1027
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.528505392912, y: 0.00136319376826}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -245,12 +245,12 @@ TextureImporter:
       name: ledge_hang_idle_021
       rect:
         serializedVersion: 2
-        x: 704
-        y: 1088
-        width: 704
-        height: 1088
+        x: 664
+        y: 2033
+        width: 649
+        height: 1027
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.528505392912, y: 0.00136319376826}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -267,12 +267,12 @@ TextureImporter:
       name: ledge_hang_idle_022
       rect:
         serializedVersion: 2
-        x: 1408
-        y: 1088
-        width: 704
-        height: 1088
+        x: 1324
+        y: 2034
+        width: 649
+        height: 1026
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.528505392912, y: 0.00136452241715}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -289,12 +289,12 @@ TextureImporter:
       name: ledge_hang_idle_023
       rect:
         serializedVersion: 2
-        x: 2112
-        y: 1088
-        width: 704
-        height: 1088
+        x: 1964
+        y: 1002
+        width: 649
+        height: 1022
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.528505392912, y: 0.0013698630137}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -311,12 +311,12 @@ TextureImporter:
       name: ledge_hang_idle_024
       rect:
         serializedVersion: 2
-        x: 2816
-        y: 1088
-        width: 704
-        height: 1088
+        x: 2624
+        y: 1018
+        width: 649
+        height: 1006
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.528505392912, y: 0.0013916500994}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -333,12 +333,12 @@ TextureImporter:
       name: ledge_hang_idle_025
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 704
-        height: 1088
+        x: 4
+        y: 4
+        width: 655
+        height: 984
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.532824427481, y: 0.00142276422764}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -355,12 +355,12 @@ TextureImporter:
       name: ledge_hang_idle_026
       rect:
         serializedVersion: 2
-        x: 704
-        y: 0
-        width: 704
-        height: 1088
+        x: 668
+        y: 13
+        width: 658
+        height: 975
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.534954407295, y: 0.0014358974359}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -377,12 +377,12 @@ TextureImporter:
       name: ledge_hang_idle_027
       rect:
         serializedVersion: 2
-        x: 1408
-        y: 0
-        width: 704
-        height: 1088
+        x: 1336
+        y: 18
+        width: 651
+        height: 970
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.529953917051, y: 0.00144329896907}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -399,12 +399,12 @@ TextureImporter:
       name: ledge_hang_idle_028
       rect:
         serializedVersion: 2
-        x: 2112
-        y: 0
-        width: 704
-        height: 1088
+        x: 1996
+        y: 22
+        width: 645
+        height: 966
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.525581395349, y: 0.00144927536232}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -421,12 +421,12 @@ TextureImporter:
       name: ledge_hang_idle_029
       rect:
         serializedVersion: 2
-        x: 2816
-        y: 0
-        width: 704
-        height: 1088
+        x: 2652
+        y: 22
+        width: 642
+        height: 966
       alignment: 9
-      pivot: {x: 0.5, y: 0.05}
+      pivot: {x: 0.523364485981, y: 0.00144927536232}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

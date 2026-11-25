@@ -113,12 +113,12 @@ TextureImporter:
       name: crouch_idle_00
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 640
-        height: 800
+        x: 4
+        y: 6
+        width: 384
+        height: 478
       alignment: 9
-      pivot: {x: 0.5, y: 0.04}
+      pivot: {x: 0.513020833333, y: 0.00627615062762}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

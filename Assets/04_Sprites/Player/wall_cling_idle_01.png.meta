@@ -113,12 +113,12 @@ TextureImporter:
       name: wall_cling_idle_000
       rect:
         serializedVersion: 2
-        x: 0
-        y: 3072
-        width: 640
-        height: 1024
+        x: 1684
+        y: 1492
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,12 +135,12 @@ TextureImporter:
       name: wall_cling_idle_001
       rect:
         serializedVersion: 2
-        x: 640
-        y: 3072
-        width: 640
-        height: 1024
+        x: 4
+        y: 1492
+        width: 409
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.479217603912, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -157,12 +157,12 @@ TextureImporter:
       name: wall_cling_idle_002
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 3072
-        width: 640
-        height: 1024
+        x: 2100
+        y: 1492
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -179,12 +179,12 @@ TextureImporter:
       name: wall_cling_idle_003
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 3072
-        width: 640
-        height: 1024
+        x: 2516
+        y: 1492
+        width: 406
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.475369458128, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -201,12 +201,12 @@ TextureImporter:
       name: wall_cling_idle_004
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 3072
-        width: 640
-        height: 1024
+        x: 424
+        y: 1492
+        width: 409
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.479217603912, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -223,12 +223,12 @@ TextureImporter:
       name: wall_cling_idle_005
       rect:
         serializedVersion: 2
-        x: 3200
-        y: 3072
-        width: 640
-        height: 1024
+        x: 844
+        y: 1492
+        width: 410
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.480487804878, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -245,12 +245,12 @@ TextureImporter:
       name: wall_cling_idle_006
       rect:
         serializedVersion: 2
-        x: 0
-        y: 2048
-        width: 640
-        height: 1024
+        x: 1264
+        y: 1492
+        width: 410
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.480487804878, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -267,12 +267,12 @@ TextureImporter:
       name: wall_cling_idle_007
       rect:
         serializedVersion: 2
-        x: 640
-        y: 2048
-        width: 640
-        height: 1024
+        x: 2932
+        y: 1492
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -289,12 +289,12 @@ TextureImporter:
       name: wall_cling_idle_008
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 2048
-        width: 640
-        height: 1024
+        x: 4
+        y: 748
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -311,12 +311,12 @@ TextureImporter:
       name: wall_cling_idle_009
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 2048
-        width: 640
-        height: 1024
+        x: 420
+        y: 748
+        width: 406
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.475369458128, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -333,12 +333,12 @@ TextureImporter:
       name: wall_cling_idle_010
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 2048
-        width: 640
-        height: 1024
+        x: 836
+        y: 748
+        width: 405
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.474074074074, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -355,12 +355,12 @@ TextureImporter:
       name: wall_cling_idle_011
       rect:
         serializedVersion: 2
-        x: 3200
-        y: 2048
-        width: 640
-        height: 1024
+        x: 2916
+        y: 4
+        width: 404
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.472772277228, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -377,12 +377,12 @@ TextureImporter:
       name: wall_cling_idle_012
       rect:
         serializedVersion: 2
-        x: 0
-        y: 1024
-        width: 640
-        height: 1024
+        x: 1252
+        y: 748
+        width: 407
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.476658476658, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -399,12 +399,12 @@ TextureImporter:
       name: wall_cling_idle_013
       rect:
         serializedVersion: 2
-        x: 640
-        y: 1024
-        width: 640
-        height: 1024
+        x: 1668
+        y: 748
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -421,12 +421,12 @@ TextureImporter:
       name: wall_cling_idle_014
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 1024
-        width: 640
-        height: 1024
+        x: 2084
+        y: 748
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -443,12 +443,12 @@ TextureImporter:
       name: wall_cling_idle_015
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 1024
-        width: 640
-        height: 1024
+        x: 2500
+        y: 748
+        width: 406
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.475369458128, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -465,12 +465,12 @@ TextureImporter:
       name: wall_cling_idle_016
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 1024
-        width: 640
-        height: 1024
+        x: 2916
+        y: 748
+        width: 406
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.475369458128, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -487,12 +487,12 @@ TextureImporter:
       name: wall_cling_idle_017
       rect:
         serializedVersion: 2
-        x: 3200
-        y: 1024
-        width: 640
-        height: 1024
+        x: 4
+        y: 4
+        width: 406
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.475369458128, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -509,12 +509,12 @@ TextureImporter:
       name: wall_cling_idle_018
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 640
-        height: 1024
+        x: 420
+        y: 4
+        width: 406
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.475369458128, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -531,12 +531,12 @@ TextureImporter:
       name: wall_cling_idle_019
       rect:
         serializedVersion: 2
-        x: 640
-        y: 0
-        width: 640
-        height: 1024
+        x: 836
+        y: 4
+        width: 406
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.475369458128, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -553,12 +553,12 @@ TextureImporter:
       name: wall_cling_idle_020
       rect:
         serializedVersion: 2
-        x: 1280
-        y: 0
-        width: 640
-        height: 1024
+        x: 1252
+        y: 4
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -575,12 +575,12 @@ TextureImporter:
       name: wall_cling_idle_021
       rect:
         serializedVersion: 2
-        x: 1920
-        y: 0
-        width: 640
-        height: 1024
+        x: 1668
+        y: 4
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -597,12 +597,12 @@ TextureImporter:
       name: wall_cling_idle_022
       rect:
         serializedVersion: 2
-        x: 2560
-        y: 0
-        width: 640
-        height: 1024
+        x: 2084
+        y: 4
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -619,12 +619,12 @@ TextureImporter:
       name: wall_cling_idle_023
       rect:
         serializedVersion: 2
-        x: 3200
-        y: 0
-        width: 640
-        height: 1024
+        x: 2500
+        y: 4
+        width: 408
+        height: 736
       alignment: 9
-      pivot: {x: 0.5, y: 0.0625}
+      pivot: {x: 0.477941176471, y: 0.00815217391304}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
