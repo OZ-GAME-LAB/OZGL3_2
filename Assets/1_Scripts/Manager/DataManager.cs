@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class DataManager : MonoBehaviour
@@ -8,6 +10,32 @@ public class DataManager : MonoBehaviour
     public static DataManager Inst { get; private set; }
 
     private readonly Dictionary<Type, object> dataTableList = new();
+
+    private static readonly Action<DataManager>[] FieldTables =
+    {
+        Prepare<ItemData>, Prepare<EquipmentData>, Prepare<RuneData>, Prepare<EffectData>,
+        Prepare<CraftingRecipeData>, Prepare<FieldObjectData>, Prepare<DropGroupData>,
+        Prepare<MonsterData>, Prepare<MonsterSkillData>, Prepare<ConsumableData>,
+        Prepare<ScenarioData>, Prepare<DialogueLineData>
+    };
+
+    public async UniTask PrepareFieldTablesAsync(Action<float> progress, CancellationToken token)
+    {
+        for (int i = 0; i < FieldTables.Length; i++)
+        {
+            token.ThrowIfCancellationRequested();
+            FieldTables[i](this);
+            progress((float)(i + 1) / FieldTables.Length);
+            await UniTask.NextFrame(cancellationToken: token);
+        }
+    }
+
+    private static void Prepare<T>(DataManager manager) where T : GameDataBase
+    {
+        manager.ReadData<T>();
+        if (!manager.dataTableList.ContainsKey(typeof(T)))
+            throw new InvalidOperationException($"{typeof(T).Name} 데이터를 불러오지 못했습니다.");
+    }
 
     private void Awake()
     {
@@ -29,7 +57,7 @@ public class DataManager : MonoBehaviour
         if (textAsset == null)
         {
             Debug.LogError($"[Error] 리소스를 찾을 수 없습니다 : Resources/{resourcePath}");
-            return new Dictionary<string, T>();
+            return null;
         }
 
         try
@@ -50,7 +78,7 @@ public class DataManager : MonoBehaviour
             Debug.LogError($"[{typeof(T).Name} JSON 로드 오류] {ex.Message}");
         }
 
-        return new Dictionary<string, T>();
+        return null;
     }
 
     public Dictionary<string, T> ReadData<T>() where T : GameDataBase
@@ -61,7 +89,8 @@ public class DataManager : MonoBehaviour
         {
             string tableName = type.Name;
             var table = LoadData<T>(tableName);
-
+            if (table == null)
+                return new Dictionary<string, T>();
             dataTableList.Add(type, table);
             return table;
         }

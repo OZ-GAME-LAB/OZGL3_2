@@ -6,6 +6,7 @@ public class LobbyUI : UIBase
 {
     [Header("버튼")]
     [SerializeField] private Button Button_StartGame;
+    [SerializeField] private Button Button_ControlsHelp;
     [SerializeField] private Button Button_QuitGame;
     [SerializeField] private Button Button_Setting;
 
@@ -13,10 +14,12 @@ public class LobbyUI : UIBase
     [SerializeField] private AudioClip _clickSound;
 
     private bool _opening;
+    private ControlsHelpUI _helpPopup;
 
     private void Awake()
     {
         Button_StartGame.onClick.AddListener(OnClickStartGame);
+        Button_ControlsHelp.onClick.AddListener(OnClickControlsHelp);
         Button_QuitGame.onClick.AddListener(OnClickQuitGame);
         Button_Setting.onClick.AddListener(OnClickSetting);
     }
@@ -39,6 +42,9 @@ public class LobbyUI : UIBase
     private void OnDestroy()
     {
         Button_StartGame.onClick.RemoveListener(OnClickStartGame);
+        Button_ControlsHelp.onClick.RemoveListener(OnClickControlsHelp);
+        if (_helpPopup != null)
+            _helpPopup.Closed -= OnHelpClosed;
         Button_QuitGame.onClick.RemoveListener(OnClickQuitGame);
         Button_Setting.onClick.RemoveListener(OnClickSetting);
     }
@@ -89,12 +95,19 @@ public class LobbyUI : UIBase
 
     private void OnClickSetting()
     {
-        OpenSettingAsync().Forget();
+        OpenLobbyPopupAsync(UIType.SettingUI).Forget();
     }
 
-    private async UniTask OpenSettingAsync()
+    private void OnClickControlsHelp()
     {
-        if (_opening || UIManager.Inst == null)
+        PlayClickSound();
+        OpenLobbyPopupAsync(UIType.ControlsHelpUI).Forget();
+    }
+
+    private async UniTask OpenLobbyPopupAsync(UIType type)
+    {
+        UIManager uiManager = UIManager.Inst;
+        if (_opening || _helpPopup != null || uiManager == null)
         {
             return;
         }
@@ -104,7 +117,23 @@ public class LobbyUI : UIBase
 
         try
         {
-            await UIManager.Inst.OpenSettingUIAsync();
+            if (type == UIType.SettingUI)
+            {
+                await uiManager.OpenSettingUIAsync();
+                return;
+            }
+
+            ControlsHelpUI popup = await uiManager.OpenControlsHelpUIAsync();
+            if (popup == null)
+                return;
+            if (this == null || !isActiveAndEnabled)
+            {
+                uiManager.Close(UIType.ControlsHelpUI);
+                return;
+            }
+
+            _helpPopup = popup;
+            _helpPopup.Closed += OnHelpClosed;
         }
         finally
         {
@@ -124,10 +153,21 @@ public class LobbyUI : UIBase
         }
     }
 
+    private void OnHelpClosed()
+    {
+        _helpPopup.Closed -= OnHelpClosed;
+        _helpPopup = null;
+        RefreshButtons();
+        if (isActiveAndEnabled)
+            Button_ControlsHelp.Select();
+    }
+
     private void RefreshButtons()
     {
-        Button_StartGame.interactable = !_opening;
-        Button_QuitGame.interactable = !_opening;
-        Button_Setting.interactable = !_opening;
+        bool available = !_opening && _helpPopup == null;
+        Button_StartGame.interactable = available;
+        Button_ControlsHelp.interactable = available;
+        Button_QuitGame.interactable = available;
+        Button_Setting.interactable = available;
     }
 }

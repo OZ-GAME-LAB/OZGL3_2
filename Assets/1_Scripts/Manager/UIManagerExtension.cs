@@ -40,12 +40,27 @@ public enum UIType
     PlayerHudUI,
     GameOverUI,
     RestUI,
-    DemoCompleteUI
+    DemoCompleteUI,
+    FourGuysIntroUI,
+    LoadingUI,
+    ControlsHelpUI
 }
 
 
 public static class UIManagerExtension
 {
+    public static async UniTask<LoadingUI> OpenLoadingUIAsync(this UIManager uiManager, CancellationToken token)
+    {
+        UIBase view = await uiManager.OpenVeryFrontRootAsync(UIType.LoadingUI, token);
+        return GetView<LoadingUI>(view, UIType.LoadingUI);
+    }
+
+    public static async UniTask<FourGuysIntroUI> OpenFourGuysIntroUIAsync(this UIManager uiManager, CancellationToken cancellationToken)
+    {
+        UIBase view = await uiManager.OpenMainRootAsync(UIType.FourGuysIntroUI, cancellationToken);
+        return GetView<FourGuysIntroUI>(view, UIType.FourGuysIntroUI);
+    }
+
     public static async UniTask<GameOverUI> OpenGameOverUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)
     {
         while (uiManager != null && uiManager.IsLoading(UIType.GameOverUI))
@@ -185,6 +200,12 @@ public static class UIManagerExtension
     public static void CloseSettingUI(this UIManager uiManager)
     {
         uiManager.Close(UIType.SettingUI);
+    }
+
+    public static async UniTask<ControlsHelpUI> OpenControlsHelpUIAsync(this UIManager uiManager)
+    {
+        UIBase view = await uiManager.OpenPopupRootAsync(UIType.ControlsHelpUI);
+        return GetView<ControlsHelpUI>(view, UIType.ControlsHelpUI);
     }
 
     public static async UniTask OpenPlayerHudUIAsync(this UIManager uiManager, CancellationToken cancellationToken = default)

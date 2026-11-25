@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
     private MonsterSpawner[] _monsterPoints;
     private Coroutine _connectLocalPlayerRoutine;
     private NetworkObject _connectedLocalPlayer;
+    public bool IsFieldWorldReady => _worldInitialized;
+    public NetworkObject ReadyLocalPlayer { get; private set; }
 
     private readonly GameObject[] _sessionWorkspaces = new GameObject[4];
 
@@ -181,6 +183,7 @@ public class GameManager : MonoBehaviour
 
         // 실제 로컬 플레이어를 확보한 뒤 배경과 장식에 연결합니다.
         InitializeBackground(_mapWorkspace, player);
+        ReadyLocalPlayer = playerObject;
     }
 
     private void InitializeBackground(
@@ -252,6 +255,7 @@ public class GameManager : MonoBehaviour
         }
 
         _connectedLocalPlayer = null;
+        ReadyLocalPlayer = null;
         _fieldPoints = null;
         _monsterPoints = null;
         _mapWorkspace = null;
