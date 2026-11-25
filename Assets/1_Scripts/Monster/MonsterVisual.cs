@@ -8,6 +8,9 @@ public class MonsterVisual : MonoBehaviour
     [SerializeField] private Transform _eyePosition;
     [SerializeField] private Collider2D _monsterCollider;
 
+    [SerializeField] private BoxCollider2D _hurtbox;
+    public Collider2D Hurtbox => _hurtbox;
+
     public bool CheckMonsterVisualReady(MoveType movementType = MoveType.Move, bool canAttack = true)
     {
         bool movementReady = movementType != MoveType.Move ||
@@ -15,7 +18,7 @@ public class MonsterVisual : MonoBehaviour
         bool attackReady = !canAttack ||
             (_eyePosition != null && _rightWallCheck != null && _leftWallCheck != null);
 
-        if (_monsterCollider == null || !movementReady || !attackReady)
+        if (_monsterCollider == null || _hurtbox == null || !_hurtbox.isTrigger || !movementReady || !attackReady)
         {
             Debug.Log("몬스터 외형 프리팹에 체크용 오브젝트가 할당되지 않았습니다.");
             return false;

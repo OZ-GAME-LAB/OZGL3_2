@@ -42,6 +42,8 @@ public class Monster : MonoBehaviour
     }
     public bool HasPatrolPoints => _patricListCount > 0;
 
+    public Collider2D Hurtbox { get; private set; }
+
     [SerializeField] private Collider2D _monsterCollider;
     [SerializeField] private Collider2D _monsterSight;
     [SerializeField] private Transform _eyePosition;
@@ -193,6 +195,7 @@ public class Monster : MonoBehaviour
         _leftWallCheck = visual.LeftCheckReturn();
         _eyePosition = visual.EyePositionReturn();
         _monsterCollider = visual.MonsterColliderReturn();
+        Hurtbox = visual.Hurtbox;
         _attackRange = data.AtkDistance;
 
         if (MovementType == MoveType.Fix && _monsterSight != null)

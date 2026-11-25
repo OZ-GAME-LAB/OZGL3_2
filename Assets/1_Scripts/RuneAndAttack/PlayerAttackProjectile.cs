@@ -75,7 +75,7 @@ public class PlayerAttackProjectile : NetworkBehaviour
         _hitFilter = new ContactFilter2D();
         _hitFilter.SetLayerMask(_targetLayer.value | _wallLayer.value);
 
-        _hitFilter.useTriggers = false;
+        _hitFilter.useTriggers = true;
 
         _initialized = true;
     }
@@ -122,13 +122,13 @@ public class PlayerAttackProjectile : NetworkBehaviour
                 continue;
             }
 
-            if (IsInLayer(hit.collider.gameObject.layer, _wallLayer))
+            if (!hit.collider.isTrigger && IsInLayer(hit.collider.gameObject.layer, _wallLayer))
             {
                 DespawnOnServer();
                 return;
             }
 
-            if (target == null)
+            if (target is not MonsterRuneCombatActor monster || !monster.AcceptsWeaponContact(hit.collider, includeOtherTriggers: false))
             {
                 continue;
             }
